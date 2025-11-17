@@ -10,6 +10,7 @@ export default function CollaboratorsPage() {
   const [error, setError] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [currentUserId, setCurrentUserId] = useState(null)
+  const [removing, setRemoving] = useState(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -53,6 +54,33 @@ export default function CollaboratorsPage() {
     const isSender = collab.sender_id === currentUserId
     const collaborator = isSender ? collab.receiver : collab.sender
     return collaborator || {}
+  }
+
+  const handleRemoveConnection = async (collabId, collaboratorName) => {
+    if (!confirm(`Are you sure you want to remove your connection with ${collaboratorName}? This will delete all your messages and you'll need to send a new request to collaborate again.`)) {
+      return
+    }
+
+    setRemoving(collabId)
+
+    try {
+      const response = await fetch(`/api/collabs/${collabId}`, {
+        method: 'DELETE'
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to remove connection')
+      }
+
+      // Remove from local state
+      setCollaborators(prev => prev.filter(c => c.id !== collabId))
+    } catch (err) {
+      alert('Error removing connection: ' + err.message)
+    } finally {
+      setRemoving(null)
+    }
   }
 
   const filteredCollaborators = collaborators.filter((collab) => {
@@ -175,15 +203,14 @@ export default function CollaboratorsPage() {
           {filteredCollaborators.map((collab) => {
             const collaborator = getCollaboratorInfo(collab)
             return (
-              <Link
+              <div
                 key={collab.id}
-                href={`/user/${collaborator.id}`}
-                className="card hover:shadow-lg transition-all cursor-pointer hover:scale-[1.02] duration-200"
+                className="card hover:shadow-lg transition-all duration-200"
               >
                 {/* Header */}
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 hover:text-primary-600 transition-colors">
+                    <h3 className="text-lg font-semibold text-gray-900">
                       {collaborator.full_name}
                     </h3>
                     {collaborator.job_title && (
@@ -230,21 +257,37 @@ export default function CollaboratorsPage() {
                   )}
                 </div>
 
-                {/* Footer */}
-                <div className="pt-4 border-t border-gray-200">
+                {/* Footer with Actions */}
+                <div className="pt-4 border-t border-gray-200 space-y-3">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-500">
                       Since {new Date(collab.updated_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                     </span>
-                    <span className="text-primary-600 font-medium flex items-center gap-1">
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Link
+                      href={`/user/${collaborator.id}`}
+                      className="flex-1 text-center px-3 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 transition-colors text-sm font-medium"
+                    >
                       View Profile
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </span>
+                    </Link>
+                    <button
+                      onClick={() => handleRemoveConnection(collab.id, collaborator.full_name)}
+                      disabled={removing === collab.id}
+                      className="px-3 py-2 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {removing === collab.id ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      )}
+                    </button>
                   </div>
                 </div>
-              </Link>
+              </div>
             )
           })}
         </div>

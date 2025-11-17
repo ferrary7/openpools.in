@@ -18,6 +18,8 @@ export default function ChatPage() {
   const [messages, setMessages] = useState([])
   const [sending, setSending] = useState(false)
   const [currentUserId, setCurrentUserId] = useState(null)
+  const [removing, setRemoving] = useState(false)
+  const [collabId, setCollabId] = useState(null)
 
   // Fetch current user
   useEffect(() => {
@@ -44,11 +46,6 @@ export default function ChatPage() {
     }
   }, [isCollaborating, params.userId])
 
-  // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    scrollToBottom()
-  }, [messages])
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
@@ -61,6 +58,7 @@ export default function ChatPage() {
       if (response.ok) {
         setProfile(data.profile)
         setIsCollaborating(data.isCollaborating || false)
+        setCollabId(data.collabStatus?.collabId || null)
       }
     } catch (err) {
       console.error('Error fetching profile:', err)
@@ -132,6 +130,34 @@ export default function ChatPage() {
     }
   }
 
+  const handleRemoveConnection = async () => {
+    if (!collabId) return
+
+    if (!confirm(`Are you sure you want to remove your connection with ${profile?.full_name}? This will delete all your messages and you'll need to send a new request to collaborate again.`)) {
+      return
+    }
+
+    setRemoving(true)
+
+    try {
+      const response = await fetch(`/api/collabs/${collabId}`, {
+        method: 'DELETE'
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to remove connection')
+      }
+
+      // Redirect to collaborators page after removal
+      router.push('/collaborators')
+    } catch (err) {
+      alert('Error removing connection: ' + err.message)
+      setRemoving(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -153,20 +179,43 @@ export default function ChatPage() {
           </svg>
           Back
         </button>
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
-            <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl font-bold text-gray-900 truncate">{profile?.full_name}</h1>
+              {profile?.job_title && profile?.company && (
+                <p className="text-sm text-gray-600 truncate">
+                  {profile.job_title} at {profile.company}
+                </p>
+              )}
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{profile?.full_name}</h1>
-            {profile?.job_title && profile?.company && (
-              <p className="text-sm text-gray-600">
-                {profile.job_title} at {profile.company}
-              </p>
-            )}
-          </div>
+          {isCollaborating && (
+            <button
+              onClick={handleRemoveConnection}
+              disabled={removing}
+              className="w-full sm:w-auto px-3 py-2 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 flex-shrink-0"
+            >
+              {removing ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                  <span>Removing...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  <span>Remove Connection</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
 

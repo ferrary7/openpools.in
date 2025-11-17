@@ -4,14 +4,14 @@ import Logo from '@/components/ui/Logo'
 
 export default function SignupPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#1E1E1E] px-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-6">
             <Logo width={180} height={48} />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h1>
-          <p className="text-gray-600">Join us today</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
+          <p className="text-gray-300">Join us today</p>
         </div>
 
         <div className="bg-white rounded-xl shadow-md p-8">
@@ -28,7 +28,7 @@ export default function SignupPage() {
         </div>
 
         <div className="mt-6 text-center">
-          <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">
+          <Link href="/" className="text-sm text-gray-400 hover:text-gray-300">
             ← Back to home
           </Link>
         </div>
