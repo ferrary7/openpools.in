@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import NotificationBell from '@/components/notifications/NotificationBell'
 
 export default function Navbar({ user }) {
   const router = useRouter()
@@ -17,6 +18,7 @@ export default function Navbar({ user }) {
   const navItems = [
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/matches', label: 'Matches' },
+    { href: '/collaborators', label: 'Collaborators' },
     { href: '/journal', label: 'Journal' },
     { href: '/profile', label: 'Profile' },
   ]
@@ -48,6 +50,7 @@ export default function Navbar({ user }) {
           </div>
 
           <div className="flex items-center space-x-4">
+            <NotificationBell />
             <span className="text-sm text-gray-600 hidden sm:block">
               {user?.email}
             </span>
