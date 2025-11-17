@@ -19,7 +19,7 @@ export default function KeywordDisplay({ keywords, loading }) {
   return (
     <div className="bg-gray-50 p-6 rounded-lg">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">
-        Your Professional Keywords ({keywords.length})
+        Your Professional Signals ({keywords.length})
       </h3>
       <div className="flex flex-wrap gap-2">
         {keywords.map((kw, index) => {
@@ -39,7 +39,7 @@ export default function KeywordDisplay({ keywords, loading }) {
         })}
       </div>
       <p className="text-xs text-gray-500 mt-4">
-        Keywords are weighted based on their source and importance
+        Signals are weighted based on their source and importance
       </p>
     </div>
   )

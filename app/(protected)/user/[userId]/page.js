@@ -63,7 +63,7 @@ export default function UserProfilePage() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to remove connection')
+        throw new Error(data.error || 'Failed to remove collaboration')
       }
 
       // Refresh profile to show updated state
@@ -152,7 +152,7 @@ export default function UserProfilePage() {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
-                  Remove Connection
+                  Remove Collaboration
                 </>
               )}
             </button>
@@ -171,9 +171,6 @@ export default function UserProfilePage() {
       {/* Keywords/Interests */}
       <div className={`card mb-6 ${!canViewContactInfo ? 'border-2 border-amber-200 bg-amber-50' : ''}`}>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xl font-semibold text-gray-900">
-            Professional Keywords ({userData.total_keywords})
-          </h2>
           {!canViewContactInfo && userData.keywords && userData.keywords.length > 4 && (
             <span className="text-xs text-amber-700 font-medium flex items-center gap-1">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

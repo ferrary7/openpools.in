@@ -52,7 +52,7 @@ export default function Home() {
             className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6"
             style={{ transform: `translateY(${scrollY * 0.2}px)` }}
           >
-            Find Your Professional Match
+            Find your People. Build what Matters.
           </h1>
 
           <p

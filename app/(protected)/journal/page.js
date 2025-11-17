@@ -22,7 +22,7 @@ export default function JournalPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Journal</h1>
         <p className="text-gray-600 mt-2">
-          Document your professional journey and expand your keyword profile
+          Your space to record progress and evolve your signals
         </p>
       </div>
 

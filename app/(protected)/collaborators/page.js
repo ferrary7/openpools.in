@@ -71,7 +71,7 @@ export default function CollaboratorsPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to remove connection')
+        throw new Error(data.error || 'Failed to remove collaboration')
       }
 
       // Remove from local state

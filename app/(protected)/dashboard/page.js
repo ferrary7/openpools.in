@@ -42,14 +42,14 @@ export default async function DashboardPage() {
           Welcome back, {profile?.full_name || 'there'}!
         </h1>
         <p className="text-gray-600 mt-2">
-          Here's your professional matchmaking dashboard
+          Your Skills, Your Vibe, Your Network - all in one place.
         </p>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="card">
-          <div className="text-sm text-gray-600 mb-1">Total Keywords</div>
+          <div className="text-sm text-gray-600 mb-1">Total Signals</div>
           <div className="text-3xl font-bold text-primary-600">
             {keywordProfile?.total_keywords || 0}
           </div>
@@ -74,7 +74,7 @@ export default async function DashboardPage() {
       <div className="mb-8">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-gray-900">
-            Your Keyword Profile
+            Your Signal Profile
           </h2>
           <Link href="/profile" className="text-primary-600 hover:text-primary-700 text-sm font-medium">
             Edit Profile →
@@ -101,7 +101,7 @@ export default async function DashboardPage() {
             Find Matches
           </h3>
           <p className="text-gray-600 mb-4">
-            Discover professionals with similar skill patterns
+            Meet people who vibe with your skills and work style
           </p>
           <Link href="/matches" className="btn-primary">
             View Matches
@@ -113,7 +113,7 @@ export default async function DashboardPage() {
             Write Journal
           </h3>
           <p className="text-gray-600 mb-4">
-            Document your professional journey and expand your profile
+            Drop your thoughts, wins, or ideas - let your profile evolve
           </p>
           <Link href="/journal" className="btn-primary">
             Create Entry

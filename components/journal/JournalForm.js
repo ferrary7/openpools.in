@@ -45,7 +45,7 @@ export default function JournalForm({ onSuccess }) {
         Quick Journal Entry
       </h2>
       <p className="text-sm text-gray-600 mb-4">
-        Add a one-liner about your skills, projects, or professional experience
+        Share a quick update on what you're learning or building...
       </p>
 
       <div className="space-y-4">
@@ -60,7 +60,7 @@ export default function JournalForm({ onSuccess }) {
             maxLength={200}
           />
           <p className="text-xs text-gray-500 mt-2 flex items-center justify-between">
-            <span>✨ AI will extract keywords to enhance your profile</span>
+            <span>✨ AI will extract signals to enhance your profile</span>
             <span className={entry.length > 180 ? 'text-amber-600 font-medium' : ''}>
               {entry.length}/200
             </span>
