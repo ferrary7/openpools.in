@@ -78,14 +78,13 @@ export function findTopMatches(userKeywords, candidateProfiles, limit = 10) {
       ...candidate,
       compatibility: compatibility.score,
       commonKeywords: compatibility.commonKeywords,
-      totalCommon: compatibility.totalCommon,
-      allKeywords: candidate.keywords // Include all keywords for search
+      totalCommon: compatibility.totalCommon
     }
   })
 
-  // Sort by compatibility score (descending) and return all matches (not just >0)
-  // This allows searching across all users, not just those with common keywords
+  // Sort by compatibility score (descending) and return top matches
   return matches
+    .filter(match => match.compatibility > 0)
     .sort((a, b) => b.compatibility - a.compatibility)
     .slice(0, limit)
 }

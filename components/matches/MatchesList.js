@@ -47,10 +47,17 @@ export default function MatchesList() {
 
     const keyword = searchKeyword.toLowerCase().trim()
     const filtered = allMatches.filter(match => {
-      // Check if any common keyword matches the search
-      return match.commonKeywords?.some(k =>
+      // Check both common keywords AND all keywords of the matched user
+      const hasCommonKeyword = match.commonKeywords?.some(k =>
         k.keyword?.toLowerCase().includes(keyword)
       )
+      
+      const hasAnyKeyword = match.allKeywords?.some(k => {
+        const kw = typeof k === 'string' ? k : k.keyword
+        return kw?.toLowerCase().includes(keyword)
+      })
+
+      return hasCommonKeyword || hasAnyKeyword
     })
 
     setMatches(filtered)
