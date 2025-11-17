@@ -1,4 +1,4 @@
-# OpenPools.io
+# OpenPools.in
 
 A professional matchmaking platform that connects people based on their skills, interests, and expertise using AI-powered keyword matching.
 
@@ -34,8 +34,8 @@ A professional matchmaking platform that connects people based on their skills, 
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/ferrary7/openpools.io.git
-cd openpools.io
+git clone https://github.com/ferrary7/openpools.in.git
+cd openpools.in
 ```
 
 2. Install dependencies:

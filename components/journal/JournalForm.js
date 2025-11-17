@@ -3,8 +3,7 @@
 import { useState } from 'react'
 
 export default function JournalForm({ onSuccess }) {
-  const [title, setTitle] = useState('')
-  const [content, setContent] = useState('')
+  const [entry, setEntry] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
 
@@ -17,7 +16,10 @@ export default function JournalForm({ onSuccess }) {
       const response = await fetch('/api/journal', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, content }),
+        body: JSON.stringify({
+          title: entry.substring(0, 50), // Use first 50 chars as title
+          content: entry
+        }),
       })
 
       const data = await response.json()
@@ -26,8 +28,7 @@ export default function JournalForm({ onSuccess }) {
         throw new Error(data.error || 'Failed to save journal')
       }
 
-      setTitle('')
-      setContent('')
+      setEntry('')
       if (onSuccess) {
         onSuccess(data)
       }
@@ -40,41 +41,29 @@ export default function JournalForm({ onSuccess }) {
 
   return (
     <form onSubmit={handleSubmit} className="card">
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">
-        Create Journal Entry
+      <h2 className="text-xl font-semibold text-gray-900 mb-2">
+        Quick Journal Entry
       </h2>
+      <p className="text-sm text-gray-600 mb-4">
+        Add a one-liner about your skills, projects, or professional experience
+      </p>
 
       <div className="space-y-4">
         <div>
-          <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-            Title
-          </label>
           <input
-            id="title"
             type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="input-field"
-            placeholder="What's on your mind?"
+            value={entry}
+            onChange={(e) => setEntry(e.target.value)}
+            className="input-field text-lg"
+            placeholder="e.g., Built a React dashboard with TypeScript and API integration"
             required
+            maxLength={200}
           />
-        </div>
-
-        <div>
-          <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
-            Content
-          </label>
-          <textarea
-            id="content"
-            rows={8}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="input-field resize-none"
-            placeholder="Write about your professional experiences, learnings, projects, or goals..."
-            required
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            AI will extract keywords from your entry to enhance your profile
+          <p className="text-xs text-gray-500 mt-2 flex items-center justify-between">
+            <span>✨ AI will extract keywords to enhance your profile</span>
+            <span className={entry.length > 180 ? 'text-amber-600 font-medium' : ''}>
+              {entry.length}/200
+            </span>
           </p>
         </div>
 
@@ -86,10 +75,10 @@ export default function JournalForm({ onSuccess }) {
 
         <button
           type="submit"
-          disabled={saving}
+          disabled={saving || !entry.trim()}
           className="btn-primary w-full disabled:opacity-50"
         >
-          {saving ? 'Saving & Extracting Keywords...' : 'Save Entry'}
+          {saving ? 'Extracting Keywords...' : 'Add Entry'}
         </button>
       </div>
     </form>

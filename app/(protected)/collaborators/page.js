@@ -2,16 +2,32 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
 
 export default function CollaboratorsPage() {
   const [collaborators, setCollaborators] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [currentUserId, setCurrentUserId] = useState(null)
+  const supabase = createClient()
 
   useEffect(() => {
-    fetchCollaborators()
+    getCurrentUser()
   }, [])
+
+  useEffect(() => {
+    if (currentUserId) {
+      fetchCollaborators()
+    }
+  }, [currentUserId])
+
+  const getCurrentUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      setCurrentUserId(user.id)
+    }
+  }
 
   const fetchCollaborators = async () => {
     try {
@@ -34,7 +50,7 @@ export default function CollaboratorsPage() {
 
   const getCollaboratorInfo = (collab) => {
     // Determine if current user is sender or receiver
-    const isSender = collab.sender?.id
+    const isSender = collab.sender_id === currentUserId
     const collaborator = isSender ? collab.receiver : collab.sender
     return collaborator || {}
   }

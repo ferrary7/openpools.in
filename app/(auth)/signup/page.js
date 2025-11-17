@@ -7,7 +7,7 @@ export default function SignupPage() {
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h1>
-          <p className="text-gray-600">Join OpenPools.ai today</p>
+          <p className="text-gray-600">Join OpenPools.in today</p>
         </div>
 
         <div className="bg-white rounded-xl shadow-md p-8">
