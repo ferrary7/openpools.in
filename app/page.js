@@ -1,14 +1,15 @@
 import Link from 'next/link'
+import Logo from '@/components/ui/Logo'
 
 export default function Home() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-gray-900 shadow-sm border-b border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-primary-600">OpenPools.in</h1>
+          <Logo width={160} height={42} />
           <div className="space-x-4">
-            <Link href="/login" className="text-gray-600 hover:text-gray-900">
+            <Link href="/login" className="text-white hover:text-gray-300">
               Login
             </Link>
             <Link href="/signup" className="btn-primary">

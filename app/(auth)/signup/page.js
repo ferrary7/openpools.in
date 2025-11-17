@@ -1,13 +1,17 @@
 import Link from 'next/link'
 import AuthForm from '@/components/auth/AuthForm'
+import Logo from '@/components/ui/Logo'
 
 export default function SignupPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
+          <div className="flex justify-center mb-6">
+            <Logo width={180} height={48} />
+          </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h1>
-          <p className="text-gray-600">Join OpenPools.in today</p>
+          <p className="text-gray-600">Join us today</p>
         </div>
 
         <div className="bg-white rounded-xl shadow-md p-8">
