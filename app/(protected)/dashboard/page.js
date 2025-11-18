@@ -127,7 +127,7 @@ export default async function DashboardPage() {
             Your Collaborators
           </h3>
           <p className="text-gray-600 mb-4">
-            Connect and chat with your active collaboration partners
+            Connect and chat with your active collaborators - keep the momentum going
           </p>
           <Link href="/collaborators" className="btn-primary">
             View Collaborators

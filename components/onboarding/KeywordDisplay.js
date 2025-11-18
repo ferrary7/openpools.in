@@ -1,6 +1,11 @@
 'use client'
 
+import { useState } from 'react'
+
 export default function KeywordDisplay({ keywords, loading, editMode = false, onDelete = null, onToggleEdit = null }) {
+  const [showAllMobile, setShowAllMobile] = useState(false)
+  const MOBILE_LIMIT = 8 // Show only 8 keywords on mobile initially
+
   if (loading) {
     return (
       <div className="bg-gray-50 p-6 rounded-lg">
@@ -15,6 +20,10 @@ export default function KeywordDisplay({ keywords, loading, editMode = false, on
   if (!keywords || keywords.length === 0) {
     return null
   }
+
+  // Determine which keywords to show on mobile
+  const displayedKeywords = showAllMobile ? keywords : keywords.slice(0, MOBILE_LIMIT)
+  const hasMoreKeywords = keywords.length > MOBILE_LIMIT
 
   return (
     <div className="bg-gray-50 p-6 rounded-lg">
@@ -42,47 +51,111 @@ export default function KeywordDisplay({ keywords, loading, editMode = false, on
         )}
       </div>
       <div className="flex flex-wrap gap-2">
-        {keywords.map((kw, index) => {
-          const keyword = typeof kw === 'string' ? kw : kw.keyword
-          const weight = typeof kw === 'object' ? kw.weight : 1.0
-          const opacity = Math.max(0.5, weight)
+        {/* Show limited keywords on mobile, all on desktop */}
+        <div className="flex flex-wrap gap-2 md:hidden">
+          {displayedKeywords.map((kw, index) => {
+            const keyword = typeof kw === 'string' ? kw : kw.keyword
+            const weight = typeof kw === 'object' ? kw.weight : 1.0
+            const opacity = Math.max(0.5, weight)
 
-          return (
-            <div
-              key={index}
-              className={`relative ${editMode ? 'keyword-shake' : ''}`}
-            >
-              <span
-                className="px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm font-medium inline-block"
-                style={{ opacity }}
+            return (
+              <div
+                key={index}
+                className={`relative ${editMode ? 'keyword-shake' : ''}`}
               >
-                {keyword}
-              </span>
-              {editMode && onDelete && (
-                <button
-                  onClick={() => onDelete(index)}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 transition-colors shadow-sm"
-                  aria-label={`Delete ${keyword}`}
+                <span
+                  className="px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm font-medium inline-block"
+                  style={{ opacity }}
                 >
-                  <svg
-                    className="w-3 h-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                  {keyword}
+                </span>
+                {editMode && onDelete && (
+                  <button
+                    onClick={() => onDelete(index)}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 transition-colors shadow-sm"
+                    aria-label={`Delete ${keyword}`}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              )}
-            </div>
-          )
-        })}
+                    <svg
+                      className="w-3 h-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Show all keywords on desktop */}
+        <div className="hidden md:flex md:flex-wrap md:gap-2">
+          {keywords.map((kw, index) => {
+            const keyword = typeof kw === 'string' ? kw : kw.keyword
+            const weight = typeof kw === 'object' ? kw.weight : 1.0
+            const opacity = Math.max(0.5, weight)
+
+            return (
+              <div
+                key={index}
+                className={`relative ${editMode ? 'keyword-shake' : ''}`}
+              >
+                <span
+                  className="px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm font-medium inline-block"
+                  style={{ opacity }}
+                >
+                  {keyword}
+                </span>
+                {editMode && onDelete && (
+                  <button
+                    onClick={() => onDelete(index)}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 transition-colors shadow-sm"
+                    aria-label={`Delete ${keyword}`}
+                  >
+                    <svg
+                      className="w-3 h-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            )
+          })}
+        </div>
       </div>
+
+      {/* Show more/less button - only on mobile */}
+      {hasMoreKeywords && (
+        <div className="md:hidden mt-3">
+          <button
+            onClick={() => setShowAllMobile(!showAllMobile)}
+            className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+          >
+            {showAllMobile ? (
+              <>Show less</>
+            ) : (
+              <>Show {keywords.length - MOBILE_LIMIT} more</>
+            )}
+          </button>
+        </div>
+      )}
+
       <p className="text-xs text-gray-500 mt-4">
         Signals are weighted based on their source and importance
       </p>

@@ -387,6 +387,24 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+
+        {/* Save/Cancel buttons at bottom when editing */}
+        {editing && (
+          <div className="mt-6 pt-6 border-t border-gray-200 flex justify-end gap-2">
+            <button
+              onClick={() => {
+                setEditing(false)
+                loadProfile()
+              }}
+              className="btn-secondary"
+            >
+              Cancel
+            </button>
+            <button onClick={handleSaveProfile} disabled={saving} className="btn-primary">
+              {saving ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* PDF Upload */}
