@@ -10,6 +10,7 @@ export default function MatchesList() {
   const [error, setError] = useState(null)
   const [searchKeyword, setSearchKeyword] = useState('')
   const [searchKeywords, setSearchKeywords] = useState([])
+  const [displayCount, setDisplayCount] = useState(10)
 
   useEffect(() => {
     fetchMatches()
@@ -75,6 +76,11 @@ export default function MatchesList() {
     })
 
     setMatches(filtered)
+    setDisplayCount(10) // Reset to 10 when filtering
+  }
+
+  const handleShowMore = () => {
+    setDisplayCount(prev => prev + 10)
   }
 
   if (loading) {
@@ -163,7 +169,7 @@ export default function MatchesList() {
 
       <div className="mb-4 flex justify-between items-center">
         <p className="text-gray-600">
-          Found {matches.length} {matches.length === 1 ? 'match' : 'matches'}
+          <span className="font-semibold text-gray-900">{matches.length}</span> {matches.length === 1 ? 'match' : 'matches'} found
           {searchKeywords.length > 0 && ` for ${searchKeywords.length} keyword${searchKeywords.length > 1 ? 's' : ''}`}
         </p>
         <button
@@ -199,11 +205,34 @@ export default function MatchesList() {
 
       {/* Matches Grid */}
       {matches.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {matches.map((match, index) => (
-            <MatchCard key={match.userId || index} match={match} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {matches.slice(0, displayCount).map((match, index) => (
+              <MatchCard key={match.userId || index} match={match} />
+            ))}
+          </div>
+
+          {/* Show More Button */}
+          {displayCount < matches.length && (
+            <div className="mt-8 text-center">
+              <button
+                onClick={handleShowMore}
+                className="px-6 py-3 bg-white border-2 border-primary-500 text-primary-600 rounded-lg hover:bg-primary-50 transition-colors font-semibold shadow-sm hover:shadow-md"
+              >
+                Show more matches ({matches.length - displayCount} remaining)
+              </button>
+            </div>
+          )}
+
+          {/* All Loaded Message */}
+          {displayCount >= matches.length && matches.length > 10 && (
+            <div className="mt-8 text-center">
+              <p className="text-gray-500 text-sm">
+                You've reached the end! All {matches.length} matches shown.
+              </p>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

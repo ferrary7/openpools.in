@@ -62,8 +62,8 @@ export async function GET(request) {
       keywords: profile.keywords,
     }))
 
-    // Find top matches
-    const matches = findTopMatches(userProfile.keywords, candidates, 20)
+    // Find top matches (show all matches, not just top 20)
+    const matches = findTopMatches(userProfile.keywords, candidates, 100)
 
     // Save matches to database
     const matchRecords = matches.map((match) => ({
