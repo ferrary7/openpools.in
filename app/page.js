@@ -3,10 +3,31 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Logo from '@/components/ui/Logo'
+import { createClient } from '@/lib/supabase/client'
 
 export default function Home() {
   const [scrollY, setScrollY] = useState(0)
   const [stepsScroll, setStepsScroll] = useState(0)
+  const [user, setUser] = useState(null)
+  const [authLoading, setAuthLoading] = useState(true)
+  const supabase = createClient()
+
+  // Check auth state on mount
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+      setAuthLoading(false)
+    }
+    checkUser()
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -37,12 +58,22 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <Logo width={140} height={36} />
           <div className="flex items-center gap-4">
-            <Link href="/login" className="text-white hover:text-gray-300 transition-colors">
-              Login
-            </Link>
-            <Link href="/signup" className="btn-primary">
-              Sign Up
-            </Link>
+            {authLoading ? (
+              <div className="w-20 h-8 bg-gray-700 rounded animate-pulse" />
+            ) : user ? (
+              <Link href="/dashboard" className="btn-primary">
+                Go to Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link href="/login" className="text-white hover:text-gray-300 transition-colors">
+                  Login
+                </Link>
+                <Link href="/signup" className="btn-primary">
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -72,9 +103,15 @@ export default function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-              <Link href="/signup" className="btn-primary text-lg px-8 py-4 shadow-lg hover:shadow-xl transition-shadow">
-                Get Started Free
-              </Link>
+              {user ? (
+                <Link href="/dashboard" className="btn-primary text-lg px-8 py-4 shadow-lg hover:shadow-xl transition-shadow">
+                  Go to Dashboard
+                </Link>
+              ) : (
+                <Link href="/signup" className="btn-primary text-lg px-8 py-4 shadow-lg hover:shadow-xl transition-shadow">
+                  Get Started Free
+                </Link>
+              )}
               <a href="#steps-section" className="bg-white text-gray-900 px-8 py-4 rounded-lg text-lg font-medium hover:bg-gray-100 transition-colors">
                 Learn More
               </a>
@@ -509,13 +546,19 @@ export default function Home() {
       <section className="py-20 bg-gradient-to-br from-primary-500 to-primary-600">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Ready to Find Your Tribe?
+            {user ? 'Welcome Back!' : 'Ready to Find Your Tribe?'}
           </h2>
           <p className="text-xl text-primary-50 mb-8">
-            Join OpenPools today and connect with professionals who share your skills and vision.
+            {user
+              ? 'Continue connecting with professionals who share your skills and vision.'
+              : 'Join OpenPools today and connect with professionals who share your skills and vision.'
+            }
           </p>
-          <Link href="/signup" className="inline-block bg-white text-primary-600 px-10 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors shadow-xl">
-            Get Started Now
+          <Link
+            href={user ? '/dashboard' : '/signup'}
+            className="inline-block bg-white text-primary-600 px-10 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors shadow-xl"
+          >
+            {user ? 'Go to Dashboard' : 'Get Started Now'}
           </Link>
         </div>
       </section>
@@ -523,7 +566,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="bg-[#1E1E1E] border-t border-gray-800 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-3 gap-8 mb-8">
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <Logo width={140} height={36} className="mb-4" />
               <p className="text-gray-400 text-sm">
@@ -541,6 +584,39 @@ export default function Home() {
               <h3 className="text-white font-semibold mb-4">Technology</h3>
               <p className="text-gray-400 text-sm">
                 Built with Next.js, Supabase & Google Gemini AI
+              </p>
+            </div>
+            <div>
+              <h3 className="text-white font-semibold mb-4">Contact Us</h3>
+              <form
+                action={`mailto:contact@openpools.in`}
+                method="GET"
+                className="space-y-3"
+              >
+                <input
+                  type="text"
+                  name="subject"
+                  placeholder="Subject"
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 text-sm focus:outline-none focus:border-primary-500"
+                />
+                <textarea
+                  name="body"
+                  placeholder="Your message..."
+                  rows={3}
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 text-sm focus:outline-none focus:border-primary-500 resize-none"
+                />
+                <button
+                  type="submit"
+                  className="w-full px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-lg transition-colors text-sm"
+                >
+                  Send Message
+                </button>
+              </form>
+              <p className="text-gray-500 text-xs mt-3">
+                Or email us directly at{' '}
+                <a href="mailto:contact@openpools.in" className="text-primary-400 hover:text-primary-300">
+                  contact@openpools.in
+                </a>
               </p>
             </div>
           </div>

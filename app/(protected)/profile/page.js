@@ -110,6 +110,20 @@ export default function ProfilePage() {
   }
 
   const handleSaveProfile = async () => {
+    // Validate required fields
+    if (!formData.company?.trim()) {
+      alert('Company is required')
+      return
+    }
+    if (!formData.job_title?.trim()) {
+      alert('Job Title is required')
+      return
+    }
+    if (!formData.location?.trim()) {
+      alert('Location is required')
+      return
+    }
+
     setSaving(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -167,7 +181,7 @@ export default function ProfilePage() {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Your Profile</h1>
         {!editing ? (
-          <button onClick={() => setEditing(true)} className="btn-secondary">
+          <button onClick={() => setEditing(true)} className="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white font-medium rounded-lg transition-colors">
             Edit Profile
           </button>
         ) : (
@@ -229,13 +243,16 @@ export default function ProfilePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Company <span className="text-red-500">*</span>
+              </label>
               {editing ? (
                 <input
                   type="text"
                   value={formData.company}
                   onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                   className="input-field w-full"
+                  required
                 />
               ) : (
                 <div className="text-gray-900">{profile?.company || 'Not set'}</div>
@@ -243,13 +260,16 @@ export default function ProfilePage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Job Title <span className="text-red-500">*</span>
+              </label>
               {editing ? (
                 <input
                   type="text"
                   value={formData.job_title}
                   onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
                   className="input-field w-full"
+                  required
                 />
               ) : (
                 <div className="text-gray-900">{profile?.job_title || 'Not set'}</div>
@@ -258,7 +278,9 @@ export default function ProfilePage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Location <span className="text-red-500">*</span>
+            </label>
             {editing ? (
               <input
                 type="text"
@@ -266,6 +288,7 @@ export default function ProfilePage() {
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 className="input-field w-full"
                 placeholder="City, Country"
+                required
               />
             ) : (
               <div className="text-gray-900">{profile?.location || 'Not set'}</div>
