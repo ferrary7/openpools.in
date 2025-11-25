@@ -304,8 +304,16 @@ export default function PremiumChatPage() {
             </button>
 
             <div className="relative flex-shrink-0">
-              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-primary-400 via-primary-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-lg ring-2 ring-white">
-                {getInitials(profile?.full_name)}
+              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-primary-400 via-primary-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-lg ring-2 ring-white overflow-hidden">
+                {profile?.profile_picture_url ? (
+                  <img
+                    src={profile.profile_picture_url}
+                    alt={profile.full_name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  getInitials(profile?.full_name)
+                )}
               </div>
               {isOnline && (
                 <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full shadow-sm">
@@ -334,20 +342,6 @@ export default function PremiumChatPage() {
               </div>
             </div>
           </div>
-
-          {isCollaborating && (
-            <div className="flex items-center gap-2">
-              <Link
-                href={`/user/${params.userId}`}
-                className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-white/50 transition-all duration-200"
-                title="View Profile"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </Link>
-            </div>
-          )}
         </div>
       </div>
 
@@ -398,8 +392,16 @@ export default function PremiumChatPage() {
 
                         <div className={`flex gap-3 ${isSent ? 'flex-row-reverse' : 'flex-row'} ${isGrouped ? 'mt-1' : 'mt-4'}`}>
                           {!isSent && !isGrouped && (
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center text-white font-semibold text-xs flex-shrink-0 shadow-md">
-                              {getInitials(profile?.full_name)}
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center text-white font-semibold text-xs flex-shrink-0 shadow-md overflow-hidden">
+                              {profile?.profile_picture_url ? (
+                                <img
+                                  src={profile.profile_picture_url}
+                                  alt={profile.full_name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                getInitials(profile?.full_name)
+                              )}
                             </div>
                           )}
                           {!isSent && isGrouped && <div className="w-8 flex-shrink-0"></div>}
@@ -447,8 +449,16 @@ export default function PremiumChatPage() {
                   {/* Typing Indicator */}
                   {isTyping && (
                     <div className="flex gap-3 mt-4">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center text-white font-semibold text-xs shadow-md">
-                        {getInitials(profile?.full_name)}
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center text-white font-semibold text-xs shadow-md overflow-hidden">
+                        {profile?.profile_picture_url ? (
+                          <img
+                            src={profile.profile_picture_url}
+                            alt={profile.full_name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          getInitials(profile?.full_name)
+                        )}
                       </div>
                       <div className="bg-white rounded-2xl rounded-tl-md px-5 py-3 shadow-md border border-gray-100">
                         <div className="flex gap-1.5">

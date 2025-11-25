@@ -58,6 +58,12 @@ export async function GET(request, { params }) {
       total_keywords: keywordProfile?.total_keywords || 0
     }
 
+    // Handle profile picture visibility
+    // Only show to accepted collaborators if not hidden by the user
+    if (isCollaborating && profile.profile_picture_url && !profile.hide_profile_picture_from_collaborators) {
+      publicProfile.profile_picture_url = profile.profile_picture_url
+    }
+
     // Only include contact info if collaborating
     if (isCollaborating) {
       publicProfile.email = profile.email

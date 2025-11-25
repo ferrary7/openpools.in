@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import KeywordDisplay from '@/components/onboarding/KeywordDisplay'
 import PdfUploader from '@/components/profile/PdfUploader'
 import { mergeKeywords } from '@/lib/keywords'
+import { uploadProfilePicture, deleteProfilePicture } from '@/components/profile/ProfilePictureUploader'
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState(null)
@@ -15,6 +16,7 @@ export default function ProfilePage() {
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editingKeywords, setEditingKeywords] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
   const [formData, setFormData] = useState({
     full_name: '',
     bio: '',
@@ -23,6 +25,7 @@ export default function ProfilePage() {
     location: '',
     phone_number: '',
     show_phone_to_collaborators: true,
+    hide_profile_picture_from_collaborators: false,
     linkedin_url: '',
     website: '',
     twitter_url: '',
@@ -33,7 +36,6 @@ export default function ProfilePage() {
   useEffect(() => {
     loadProfile()
   }, [])
-
 
   const loadProfile = async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -64,6 +66,7 @@ export default function ProfilePage() {
         location: profileData.location || '',
         phone_number: profileData.phone_number || '',
         show_phone_to_collaborators: profileData.show_phone_to_collaborators !== false,
+        hide_profile_picture_from_collaborators: profileData.hide_profile_picture_from_collaborators || false,
         linkedin_url: profileData.linkedin_url || '',
         website: profileData.website || '',
         twitter_url: profileData.twitter_url || '',
@@ -72,6 +75,55 @@ export default function ProfilePage() {
     }
 
     setLoading(false)
+  }
+
+  const handleProfilePictureUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file')
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image must be less than 5MB')
+      return
+    }
+
+    setUploadingImage(true)
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('No user found')
+
+      // Delete old image if exists
+      if (profile?.profile_picture_url) {
+        try {
+          await deleteProfilePicture(profile.profile_picture_url)
+        } catch (error) {
+          console.warn('Error deleting old profile picture:', error)
+        }
+      }
+
+      // Upload new image
+      const imageUrl = await uploadProfilePicture(file, user.id)
+
+      // Update profile with new image URL
+      const { error } = await supabase
+        .from('profiles')
+        .update({ profile_picture_url: imageUrl })
+        .eq('id', user.id)
+
+      if (error) throw error
+
+      // Refresh the page to show updated profile picture
+      window.location.reload()
+    } catch (error) {
+      alert('Error uploading profile picture: ' + error.message)
+      setUploadingImage(false)
+    }
   }
 
   const handleKeywordsExtracted = async (newKeywords) => {
@@ -198,6 +250,69 @@ export default function ProfilePage() {
             >
               Cancel
             </button>
+          </div>
+        )}
+      </div>
+
+      {/* Profile Picture Section */}
+      <div className="card mb-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Profile Picture</h2>
+        <div className="flex items-center gap-6">
+          {/* Profile Picture Display */}
+          <div className="relative">
+            <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-200 bg-gradient-to-br from-primary-400 to-purple-400">
+              {profile?.profile_picture_url ? (
+                <img
+                  src={profile.profile_picture_url}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-white text-4xl font-bold">
+                  {profile?.full_name?.charAt(0) || profile?.email?.charAt(0) || '?'}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Upload Button */}
+          <div className="flex-1">
+            <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleProfilePictureUpload}
+                disabled={uploadingImage}
+                className="hidden"
+              />
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              {uploadingImage ? 'Uploading...' : 'Change Picture'}
+            </label>
+            <p className="text-xs text-gray-500 mt-2">
+              JPG, PNG or GIF. Max size 5MB.
+            </p>
+          </div>
+        </div>
+
+        {/* Privacy Settings for Profile Picture */}
+        {editing && profile?.profile_picture_url && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.hide_profile_picture_from_collaborators}
+                onChange={(e) => setFormData({ ...formData, hide_profile_picture_from_collaborators: e.target.checked })}
+                className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+              />
+              <span className="text-sm text-gray-700">
+                Hide profile picture from collaborators
+                <span className="block text-xs text-gray-500 mt-0.5">
+                  When enabled, collaborators will only see the first letter of your name
+                </span>
+              </span>
+            </label>
           </div>
         )}
       </div>

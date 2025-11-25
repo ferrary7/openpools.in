@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -12,6 +12,39 @@ export default function Navbar({ user }) {
   const pathname = usePathname()
   const supabase = createClient()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [profilePicture, setProfilePicture] = useState(null)
+  const dropdownRef = useRef(null)
+
+  useEffect(() => {
+    const fetchProfilePicture = async () => {
+      if (user?.id) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('profile_picture_url, full_name, email')
+          .eq('id', user.id)
+          .single()
+
+        if (data) {
+          setProfilePicture(data.profile_picture_url)
+        }
+      }
+    }
+
+    fetchProfilePicture()
+  }, [user, supabase])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setProfileMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -24,7 +57,6 @@ export default function Navbar({ user }) {
     { href: '/collaborators', label: 'Collaborators', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
     { href: '/journal', label: 'Journal', icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' },
     { href: '/ask-antenna', label: 'Antenna', icon: 'M9.348 14.651a3.75 3.75 0 010-5.303m5.304 0a3.75 3.75 0 010 5.303m-7.425 2.122a6.75 6.75 0 010-9.546m9.546 0a6.75 6.75 0 010 9.546M5.106 18.894c-3.808-3.808-3.808-9.98 0-13.789m13.788 0c3.808 3.808 3.808 9.981 0 13.79M12 12h.008v.007H12V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z' },
-    { href: '/profile', label: 'Profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
   ]
 
   return (
@@ -58,15 +90,54 @@ export default function Navbar({ user }) {
           {/* Right Side */}
           <div className="flex items-center space-x-2 sm:space-x-4">
             <NotificationBell />
-            <span className="text-sm text-white hidden lg:block">
-              {user?.email}
-            </span>
-            <button
-              onClick={handleSignOut}
-              className="text-sm text-white border border-red-400 hover:border-red-300 px-3 py-1.5 rounded-md transition-colors hidden sm:block"
-            >
-              Sign Out
-            </button>
+
+            {/* Profile Circle Button - Desktop */}
+            <div className="hidden sm:block relative" ref={dropdownRef}>
+              <button
+                onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-600 hover:border-primary-500 transition-colors bg-gradient-to-br from-primary-400 to-purple-400 flex items-center justify-center"
+              >
+                {profilePicture ? (
+                  <img
+                    src={profilePicture}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-white font-semibold text-sm">
+                    {user?.email?.charAt(0).toUpperCase() || '?'}
+                  </span>
+                )}
+              </button>
+
+              {/* Dropdown Menu */}
+              {profileMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 border border-gray-200 z-50">
+                  <Link
+                    href="/profile"
+                    onClick={() => setProfileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    View Profile
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setProfileMenuOpen(false)
+                      handleSignOut()
+                    }}
+                    className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Mobile Menu Button */}
             <button
@@ -109,16 +180,49 @@ export default function Navbar({ user }) {
 
             {/* Mobile User Info */}
             <div className="border-t border-gray-700 pt-3 mt-3">
-              <div className="px-3 py-2 text-sm text-white">
-                {user?.email}
+              {/* Profile Picture & Email */}
+              <div className="flex items-center gap-3 px-3 py-2">
+                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-600 bg-gradient-to-br from-primary-400 to-purple-400 flex items-center justify-center">
+                  {profilePicture ? (
+                    <img
+                      src={profilePicture}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-white font-semibold text-sm">
+                      {user?.email?.charAt(0).toUpperCase() || '?'}
+                    </span>
+                  )}
+                </div>
+                <span className="text-sm text-white truncate">
+                  {user?.email}
+                </span>
               </div>
+
+              {/* Profile Link */}
+              <Link
+                href="/profile"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-3 py-2 mt-2 rounded-md text-base font-medium text-white hover:bg-gray-800 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                View Profile
+              </Link>
+
+              {/* Sign Out Button */}
               <button
                 onClick={() => {
                   handleSignOut()
                   setMobileMenuOpen(false)
                 }}
-                className="w-full text-left px-3 py-2 rounded-md text-base font-medium text-white border border-red-400 hover:border-red-300 transition-colors"
+                className="w-full flex items-center gap-3 px-3 py-2 mt-2 rounded-md text-base font-medium text-white border border-red-400 hover:border-red-300 transition-colors"
               >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
                 Sign Out
               </button>
             </div>
