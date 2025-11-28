@@ -1,8 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { createRoot } from 'react-dom/client'
+import DNACertificate from './DNACertificate'
 
-export default function DNAShare({ profile, isOwnDNA = true }) {
+export default function DNAShare({ profile, keywordProfile, isOwnDNA = true }) {
   const [copied, setCopied] = useState(false)
   const [downloading, setDownloading] = useState(false)
   const [selectedMessage, setSelectedMessage] = useState(0)
@@ -85,11 +87,13 @@ export default function DNAShare({ profile, isOwnDNA = true }) {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const totalKeywords = profile?.keyword_profiles?.total_keywords || '50+'
+
   const shareMessages = [
-    `🧬 Just sequenced my Professional DNA on OpenPools - an AI-powered map of my unique skills and expertise. Check it out! ${shareUrl}`,
-    `OpenPools analyzed my professional identity and created this stunning DNA visualization. See what makes me unique! 🔬 ${shareUrl}`,
-    `My professional signals are now live on OpenPools! 53+ unique markers that define my expertise. Take a look 👀 ${shareUrl}`,
-    `Discovered something cool - OpenPools turned my skills into a visual DNA helix. Here's my professional blueprint! ✨ ${shareUrl}`
+    `My professional DNA analyzed and verified by OpenPools AI - ${totalKeywords} unique skills across my expertise areas. View my credential: ${shareUrl}`,
+    `Just received my Professional DNA Certificate from OpenPools. AI-verified visualization of my skills and expertise. Check it out: ${shareUrl}`,
+    `Proud to share my OpenPools Professional DNA - a credible, AI-analyzed map of my verified skills and competencies: ${shareUrl}`,
+    `My professional expertise visualized through OpenPools DNA analysis. ${totalKeywords} verified skills in an interactive certificate: ${shareUrl}`
   ]
 
   const handleLinkedInShare = () => {
@@ -115,48 +119,51 @@ export default function DNAShare({ profile, isOwnDNA = true }) {
       // Dynamically import html2canvas
       const html2canvas = (await import('html2canvas')).default
 
-      // Find the DNA Hero section
-      const heroSection = document.querySelector('section')
+      // Create a temporary container for the certificate
+      const tempContainer = document.createElement('div')
+      tempContainer.style.position = 'fixed'
+      tempContainer.style.left = '-9999px'
+      tempContainer.style.top = '0'
+      document.body.appendChild(tempContainer)
 
-      if (!heroSection) {
-        throw new Error('Could not find DNA section')
-      }
+      // Render the certificate component
+      const root = createRoot(tempContainer)
 
-      // Add class to fix gradient text rendering for download
-      heroSection.classList.add('downloading-dna-card')
+      // Wrap the render in a promise to wait for completion
+      await new Promise((resolve) => {
+        root.render(<DNACertificate profile={profile} keywordProfile={keywordProfile} />)
+        // Give it more time to render and load images
+        setTimeout(resolve, 1000)
+      })
 
-      // Small delay to ensure CSS is applied
-      await new Promise(resolve => setTimeout(resolve, 100))
-
-      // Capture the section
-      const canvas = await html2canvas(heroSection, {
+      // Capture the certificate
+      const canvas = await html2canvas(tempContainer.firstChild, {
         backgroundColor: '#1E1E1E',
         scale: 2, // Higher quality
         logging: false,
-        useCORS: true
+        useCORS: true,
+        allowTaint: true,
+        width: 1200,
+        height: 1700
       })
 
-      // Remove the class after capture
-      heroSection.classList.remove('downloading-dna-card')
+      // Clean up
+      root.unmount()
+      document.body.removeChild(tempContainer)
 
       // Convert to blob and download
       canvas.toBlob((blob) => {
         const url = URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.href = url
-        link.download = `${profile?.full_name?.replace(/\s+/g, '-').toLowerCase() || 'my'}-dna-card.png`
+        link.download = `${profile?.full_name?.replace(/\s+/g, '-').toLowerCase() || 'my'}-professional-dna-certificate.png`
         link.click()
         URL.revokeObjectURL(url)
         setDownloading(false)
-        showNotification('✓ DNA Card downloaded!')
+        showNotification('✓ Professional DNA Certificate downloaded!')
       })
     } catch (error) {
       console.error('Download failed:', error)
-      // Make sure to remove the class even if there's an error
-      const heroSection = document.querySelector('section')
-      if (heroSection) {
-        heroSection.classList.remove('downloading-dna-card')
-      }
       setDownloading(false)
       showNotification('Failed to download. Please try again.', 'error')
     }
@@ -175,11 +182,11 @@ export default function DNAShare({ profile, isOwnDNA = true }) {
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold mb-3">
             <span className="bg-gradient-to-r from-primary-500 to-purple-500 bg-clip-text text-transparent">
-              Share Your Professional DNA
+              Share Your DNA Certificate
             </span>
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto">
-            Showcase your unique professional identity to the world
+            Download and share your verified professional credential across platforms
           </p>
         </div>
 
@@ -233,7 +240,7 @@ export default function DNAShare({ profile, isOwnDNA = true }) {
                     <svg className="w-8 h-8 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
-                    <span className="text-sm font-medium">Download Card</span>
+                    <span className="text-sm font-medium">Download Certificate</span>
                   </>
                 )}
               </div>
@@ -297,7 +304,7 @@ export default function DNAShare({ profile, isOwnDNA = true }) {
           {/* Info Note */}
           <div className="text-center">
             <p className="text-xs text-gray-500">
-              💡 Tip: The message will be copied to your clipboard when sharing to LinkedIn
+              💡 Your DNA Certificate includes verified skills, timestamp, and a unique verification code when downloaded
             </p>
           </div>
         </div>

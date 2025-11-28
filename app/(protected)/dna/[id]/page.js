@@ -120,7 +120,7 @@ export default function UserDNAPage() {
       />
 
       {/* Share Section */}
-      <DNAShare profile={profile} isOwnDNA={isOwnDNA} />
+      <DNAShare profile={profile} keywordProfile={keywordProfile} isOwnDNA={isOwnDNA} />
     </div>
   )
 }

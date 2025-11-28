@@ -97,7 +97,7 @@ export default function DNAStats({ profile, keywordProfile, collaborations, isOw
         <div className={`text-center mb-16 transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <h2 className="text-4xl md:text-5xl font-bold mb-3">
             <span className="bg-gradient-to-r from-primary-500 to-purple-500 bg-clip-text text-transparent">
-              Genetic Sequence Analysis
+              Professional DNA Analysis
             </span>
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto">
@@ -112,9 +112,9 @@ export default function DNAStats({ profile, keywordProfile, collaborations, isOw
             <div className="relative bg-gradient-to-br from-primary-500/10 to-transparent backdrop-blur-sm rounded-xl p-6 border border-primary-500/20 hover:border-primary-500/40 transition-all duration-300 group">
               <div className="flex items-baseline gap-2 mb-1">
                 <div className="text-4xl font-bold text-white">{animatedValues.keywords}</div>
-                <div className="text-primary-400 text-sm font-medium">signals</div>
+                <div className="text-primary-400 text-sm font-medium">skills</div>
               </div>
-              <div className="text-xs text-gray-400 uppercase tracking-wide">DNA Sequences</div>
+              <div className="text-xs text-gray-400 uppercase tracking-wide">Verified Skills</div>
 
               <div className="absolute top-2 right-2 w-2 h-2 bg-primary-500 rounded-full animate-pulse"></div>
             </div>
@@ -127,7 +127,7 @@ export default function DNAStats({ profile, keywordProfile, collaborations, isOw
                 <div className="text-4xl font-bold text-white">{animatedValues.collaborations}</div>
                 <div className="text-purple-400 text-sm font-medium">active</div>
               </div>
-              <div className="text-xs text-gray-400 uppercase tracking-wide">Network Bonds</div>
+              <div className="text-xs text-gray-400 uppercase tracking-wide">Collaborations</div>
 
               <div className="absolute top-2 right-2 w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
             </div>
@@ -141,7 +141,7 @@ export default function DNAStats({ profile, keywordProfile, collaborations, isOw
                   {animatedValues.uniqueness}%
                 </div>
               </div>
-              <div className="text-xs text-gray-400 uppercase tracking-wide">Rarity Index</div>
+              <div className="text-xs text-gray-400 uppercase tracking-wide">Uniqueness Score</div>
 
               <div className="absolute top-2 right-2 w-2 h-2 bg-gradient-to-r from-primary-500 to-purple-500 rounded-full animate-pulse"></div>
             </div>
@@ -208,7 +208,7 @@ export default function DNAStats({ profile, keywordProfile, collaborations, isOw
                     <svg className="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                     </svg>
-                    Rare Marker Combinations
+                    Unique Skill Combinations
                   </h4>
                   <div className="space-y-3">
                     {rareSkills.map((combo, index) => (

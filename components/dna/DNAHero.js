@@ -174,6 +174,13 @@ export default function DNAHero({ profile, keywordProfile, isOwnDNA = true }) {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#1E1E1E]">
+      {/* Certificate Title - Only visible in download */}
+      <div className="absolute top-8 left-0 right-0 opacity-0 dna-card-title">
+        <div className="text-center">
+          <h2 className="text-lg font-bold text-gray-400 uppercase tracking-widest">Professional DNA Certificate</h2>
+        </div>
+      </div>
+
       {/* Subtle glow effects */}
       <div className="absolute inset-0">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-500/5 rounded-full blur-3xl"></div>
@@ -260,12 +267,33 @@ export default function DNAHero({ profile, keywordProfile, isOwnDNA = true }) {
               </div>
             </div>
 
-            {/* Top Skills */}
+            {/* Top Skills - Always visible */}
             {keywordProfile?.keywords && keywordProfile.keywords.length > 0 && (
               <div className="mb-4 md:mb-6">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 md:mb-3">Top DNA Signals</h3>
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 md:mb-3">Verified Skills & Expertise</h3>
                 <div className="flex flex-wrap gap-1.5 md:gap-2">
-                  {keywordProfile.keywords.slice(0, 6).map((keyword, index) => {
+                  {keywordProfile.keywords.slice(0, 8).map((keyword, index) => {
+                    const keywordText = typeof keyword === 'string'
+                      ? keyword
+                      : keyword.keyword || keyword.name || ''
+                    return keywordText ? (
+                      <span
+                        key={index}
+                        className="px-3 py-1.5 md:px-4 md:py-2 bg-gradient-to-r from-primary-500/20 to-purple-500/20 border border-primary-500/40 rounded-full text-xs md:text-sm font-medium text-primary-300"
+                      >
+                        {keywordText}
+                      </span>
+                    ) : null
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Extended Skills - Only visible in certificate download */}
+            {keywordProfile?.keywords && keywordProfile.keywords.length > 8 && (
+              <div className="mb-4 md:mb-6 opacity-0 dna-card-extended-skills">
+                <div className="flex flex-wrap gap-1.5 md:gap-2">
+                  {keywordProfile.keywords.slice(8, 18).map((keyword, index) => {
                     const keywordText = typeof keyword === 'string'
                       ? keyword
                       : keyword.keyword || keyword.name || ''
@@ -339,13 +367,23 @@ export default function DNAHero({ profile, keywordProfile, isOwnDNA = true }) {
           </div>
         </div>
 
-        {/* OpenPools Branding - visible in download */}
-        <div className="absolute bottom-8 left-8 opacity-0 dna-card-branding">
-          <img
-            src="/logo.svg"
-            alt="OpenPools"
-            className="h-8"
-          />
+        {/* Verification Footer - visible in download */}
+        <div className="absolute bottom-6 left-0 right-0 opacity-0 dna-card-verification">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-xs text-gray-400">
+                    Verified by OpenPools AI • {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <span>openpools.in/dna/{profile?.id?.slice(0, 8)}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -406,8 +444,18 @@ export default function DNAHero({ profile, keywordProfile, isOwnDNA = true }) {
           display: none !important;
         }
 
-        /* Show OpenPools branding only in downloaded card */
-        section.downloading-dna-card .dna-card-branding {
+        /* Show verification footer only in downloaded card */
+        section.downloading-dna-card .dna-card-verification {
+          opacity: 1 !important;
+        }
+
+        /* Show extended skills only in downloaded card */
+        section.downloading-dna-card .dna-card-extended-skills {
+          opacity: 1 !important;
+        }
+
+        /* Show certificate title only in downloaded card */
+        section.downloading-dna-card .dna-card-title {
           opacity: 1 !important;
         }
       `}</style>
