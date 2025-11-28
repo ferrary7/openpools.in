@@ -36,7 +36,8 @@ export async function GET(request) {
         keywords,
         profiles:user_id (
           full_name,
-          email
+          email,
+          username
         )
       `
       )
@@ -57,6 +58,7 @@ export async function GET(request) {
     // Format candidate profiles
     const candidates = allProfiles.map((profile) => ({
       userId: profile.user_id,
+      username: profile.profiles?.username,
       fullName: profile.profiles?.full_name || 'Anonymous',
       email: profile.profiles?.email,
       keywords: profile.keywords,

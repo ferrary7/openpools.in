@@ -10,7 +10,7 @@ export default function DNAShare({ profile, keywordProfile, isOwnDNA = true }) {
   const [selectedMessage, setSelectedMessage] = useState(0)
 
   const shareUrl = typeof window !== 'undefined' && profile?.id
-    ? `${window.location.origin}/dna/${profile.id}`
+    ? `${window.location.origin}/dna/${profile.username || profile.id}`
     : ''
   const userName = profile?.full_name || 'My'
   const firstName = profile?.full_name?.split(' ')[0] || 'their'

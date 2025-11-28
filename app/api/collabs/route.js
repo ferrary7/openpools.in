@@ -16,8 +16,8 @@ export async function GET(request) {
       .from('collaborations')
       .select(`
         *,
-        sender:sender_id(id, full_name, email, company, job_title, location),
-        receiver:receiver_id(id, full_name, email, company, job_title, location)
+        sender:sender_id(id, username, full_name, email, company, job_title, location),
+        receiver:receiver_id(id, username, full_name, email, company, job_title, location)
       `)
       .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
       .order('created_at', { ascending: false })
@@ -90,8 +90,8 @@ export async function POST(request) {
       })
       .select(`
         *,
-        sender:sender_id(id, full_name, email),
-        receiver:receiver_id(id, full_name, email)
+        sender:sender_id(id, username, full_name, email),
+        receiver:receiver_id(id, username, full_name, email)
       `)
       .single()
 

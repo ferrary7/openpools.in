@@ -14,7 +14,7 @@ export default function MatchCard({ match }) {
   const quality = getMatchQuality(match.compatibility)
 
   return (
-    <Link href={`/user/${match.userId}`}>
+    <Link href={`/user/${match.username || match.userId}`}>
       <div className="card hover:shadow-lg transition-all cursor-pointer hover:scale-[1.02] duration-200">
         <div className="flex justify-between items-start mb-4">
           <div>

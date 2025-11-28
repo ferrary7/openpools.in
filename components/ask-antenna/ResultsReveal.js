@@ -185,7 +185,7 @@ function MatchCard({ match, rank, delay }) {
   const rankStyle = getRankStyle(rank)
 
   return (
-    <Link href={`/user/${match.id}`}>
+    <Link href={`/user/${match.username || match.id}`}>
       <div
         className={`group relative bg-white rounded-2xl border-2 border-gray-100 hover:border-primary-200 transition-all cursor-pointer overflow-hidden ${
           visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'

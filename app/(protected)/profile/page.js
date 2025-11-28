@@ -6,6 +6,7 @@ import KeywordDisplay from '@/components/onboarding/KeywordDisplay'
 import PdfUploader from '@/components/profile/PdfUploader'
 import { mergeKeywords } from '@/lib/keywords'
 import { uploadProfilePicture, deleteProfilePicture } from '@/components/profile/ProfilePictureUploader'
+import { validateUsernameFormat, sanitizeUsername, generateUsernameSuggestions } from '@/lib/username'
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState(null)
@@ -17,6 +18,9 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false)
   const [editingKeywords, setEditingKeywords] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
+  const [usernameInput, setUsernameInput] = useState('')
+  const [usernameStatus, setUsernameStatus] = useState({ checking: false, available: null, error: null })
+  const [usernameCheckTimeout, setUsernameCheckTimeout] = useState(null)
   const [formData, setFormData] = useState({
     full_name: '',
     bio: '',
@@ -56,6 +60,7 @@ export default function ProfilePage() {
 
     setProfile(profileData)
     setKeywordProfile(keywordData)
+    setUsernameInput(profileData?.username || '')
 
     if (profileData) {
       setFormData({
@@ -75,6 +80,89 @@ export default function ProfilePage() {
     }
 
     setLoading(false)
+  }
+
+  const checkUsernameAvailability = async (username) => {
+    try {
+      const response = await fetch(`/api/username/check?username=${encodeURIComponent(username)}`)
+      const data = await response.json()
+      return data
+    } catch (error) {
+      console.error('Error checking username:', error)
+      return { available: false, error: 'Failed to check availability' }
+    }
+  }
+
+  const handleUsernameChange = (value) => {
+    const sanitized = sanitizeUsername(value)
+    setUsernameInput(sanitized)
+
+    // Clear previous timeout
+    if (usernameCheckTimeout) {
+      clearTimeout(usernameCheckTimeout)
+    }
+
+    // Reset status
+    setUsernameStatus({ checking: false, available: null, error: null })
+
+    // If empty or same as current, don't check
+    if (!sanitized || sanitized === profile?.username) {
+      return
+    }
+
+    // Validate format first
+    const validation = validateUsernameFormat(sanitized)
+    if (!validation.valid) {
+      setUsernameStatus({ checking: false, available: false, error: validation.error })
+      return
+    }
+
+    // Debounce the API call
+    const timeout = setTimeout(async () => {
+      setUsernameStatus({ checking: true, available: null, error: null })
+      const result = await checkUsernameAvailability(sanitized)
+      setUsernameStatus({
+        checking: false,
+        available: result.available,
+        error: result.error || null
+      })
+    }, 500)
+
+    setUsernameCheckTimeout(timeout)
+  }
+
+  const handleSaveUsername = async () => {
+    if (!usernameInput || usernameInput === profile?.username) {
+      return
+    }
+
+    if (usernameStatus.error || usernameStatus.available === false) {
+      alert('Please choose a valid and available username')
+      return
+    }
+
+    try {
+      setSaving(true)
+
+      const response = await fetch('/api/username/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: usernameInput })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to update username')
+      }
+
+      await loadProfile()
+      alert('Username updated successfully!')
+    } catch (error) {
+      alert('Error updating username: ' + error.message)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleProfilePictureUpload = async (e) => {
@@ -339,6 +427,79 @@ export default function ProfilePage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <div className="text-gray-900">{profile?.email}</div>
             <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+            {editing ? (
+              <div className="space-y-2">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500">@</span>
+                  </div>
+                  <input
+                    type="text"
+                    value={usernameInput}
+                    onChange={(e) => handleUsernameChange(e.target.value)}
+                    className={`input-field w-full pl-8 ${
+                      usernameStatus.error
+                        ? 'border-red-500 focus:ring-red-500'
+                        : usernameStatus.available
+                        ? 'border-green-500 focus:ring-green-500'
+                        : ''
+                    }`}
+                    placeholder="your_username"
+                    maxLength={30}
+                  />
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    {usernameStatus.checking && (
+                      <div className="animate-spin h-4 w-4 border-2 border-primary-600 border-t-transparent rounded-full"></div>
+                    )}
+                    {!usernameStatus.checking && usernameStatus.available && (
+                      <svg className="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                    {!usernameStatus.checking && usernameStatus.error && (
+                      <svg className="h-5 w-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+                {usernameStatus.error && (
+                  <p className="text-xs text-red-600">{usernameStatus.error}</p>
+                )}
+                {usernameStatus.available && (
+                  <p className="text-xs text-green-600">Username is available!</p>
+                )}
+                {!profile?.username && !usernameInput && (
+                  <p className="text-xs text-gray-500">
+                    Choose a unique username for your profile URL (3-30 characters, letters, numbers, underscores, hyphens)
+                  </p>
+                )}
+                {usernameInput && usernameInput !== profile?.username && usernameStatus.available && (
+                  <button
+                    onClick={handleSaveUsername}
+                    disabled={saving}
+                    className="text-sm px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors"
+                  >
+                    {saving ? 'Saving...' : 'Save Username'}
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div>
+                <div className="text-gray-900">
+                  {profile?.username ? `@${profile.username}` : 'Not set'}
+                </div>
+                {profile?.username && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Your profile URL: openpools.in/dna/{profile.username}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           <div>

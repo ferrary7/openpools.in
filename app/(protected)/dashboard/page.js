@@ -98,7 +98,7 @@ export default async function DashboardPage() {
         </Link>
 
         {/* DNA Feature Banner */}
-        <Link href={`/dna/${user.id}`} className="block group">
+        <Link href={`/dna/${profile?.username || user.id}`} className="block group">
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1E1E1E] via-[#2A1A2E] to-[#1E1E1E] p-6 sm:p-8 hover:shadow-2xl hover:shadow-primary-500/20 transition-all duration-300 border border-primary-500/20 h-full">
             {/* Animated DNA strand decoration */}
             <div className="absolute inset-0 opacity-10">

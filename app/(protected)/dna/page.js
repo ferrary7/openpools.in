@@ -20,8 +20,15 @@ export default function DNAPage() {
         return
       }
 
-      // Redirect to user's specific DNA page
-      router.push(`/dna/${user.id}`)
+      // Get user's profile to access username
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', user.id)
+        .single()
+
+      // Redirect to user's specific DNA page (use username if available)
+      router.push(`/dna/${profile?.username || user.id}`)
     } catch (error) {
       console.error('Error redirecting to DNA:', error)
       router.push('/login')

@@ -380,7 +380,7 @@ export default function DNAHero({ profile, keywordProfile, isOwnDNA = true }) {
                 </div>
               </div>
               <div className="flex items-center gap-2 text-xs text-gray-500">
-                <span>openpools.in/dna/{profile?.id?.slice(0, 8)}</span>
+                <span>openpools.in/dna/{profile?.username || profile?.id?.slice(0, 8)}</span>
               </div>
             </div>
           </div>

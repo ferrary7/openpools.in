@@ -579,7 +579,7 @@ export default function PremiumChatPage() {
               Send a collaboration request to unlock messaging with {profile?.full_name}
             </p>
             <Link
-              href={`/user/${params.userId}`}
+              href={`/user/${profile?.username || params.userId}`}
               className="inline-flex items-center gap-2 px-6 py-3.5 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-semibold rounded-full transition-all duration-200 shadow-lg shadow-primary-500/40 hover:shadow-xl hover:shadow-primary-500/50 transform hover:scale-105 active:scale-95"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -272,13 +272,13 @@ export default function CollaboratorsPage() {
                   <div className="space-y-2">
                     <div className="flex gap-2">
                       <Link
-                        href={`/user/${collaborator.id}`}
+                        href={`/user/${collaborator.username || collaborator.id}`}
                         className="flex-1 text-center px-3 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 transition-colors text-sm font-medium"
                       >
                         View Profile
                       </Link>
                       <Link
-                        href={`/chat/${collaborator.id}`}
+                        href={`/chat/${collaborator.username || collaborator.id}`}
                         className="flex-1 text-center px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm font-medium flex items-center justify-center gap-1"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

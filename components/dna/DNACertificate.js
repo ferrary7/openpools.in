@@ -281,7 +281,7 @@ export default function DNACertificate({ profile, keywordProfile }) {
               </span>
             </div>
             <div className="text-sm text-gray-500 font-mono">
-              openpools.in/dna/{profile?.id?.slice(0, 8)}
+              openpools.in/dna/{profile?.username || profile?.id?.slice(0, 8)}
             </div>
           </div>
         </div>

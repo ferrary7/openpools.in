@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { isUUID } from '@/lib/username'
 import DNAHero from '@/components/dna/DNAHero'
 import DNAStats from '@/components/dna/DNAStats'
 import DNAShare from '@/components/dna/DNAShare'
@@ -24,18 +25,26 @@ export default function UserDNAPage() {
 
   const loadUserDNAData = async () => {
     try {
-      const userId = params.id
+      const identifier = params.id
 
       // Check if viewing own DNA
       const { data: { user } } = await supabase.auth.getUser()
-      setIsOwnDNA(user?.id === userId)
 
-      // Load profile
-      const { data: profileData, error: profileError } = await supabase
+      // Determine if identifier is UUID or username
+      const isId = isUUID(identifier)
+
+      // Load profile - query by ID or username
+      let profileQuery = supabase
         .from('profiles')
         .select('*')
-        .eq('id', userId)
-        .single()
+
+      if (isId) {
+        profileQuery = profileQuery.eq('id', identifier)
+      } else {
+        profileQuery = profileQuery.eq('username', identifier)
+      }
+
+      const { data: profileData, error: profileError } = await profileQuery.single()
 
       if (profileError || !profileData) {
         setNotFound(true)
@@ -43,18 +52,21 @@ export default function UserDNAPage() {
         return
       }
 
-      // Load keywords
+      // Set if viewing own DNA (compare with actual user ID)
+      setIsOwnDNA(user?.id === profileData.id)
+
+      // Load keywords using the actual user ID from profile
       const { data: keywordData } = await supabase
         .from('keyword_profiles')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', profileData.id)
         .single()
 
-      // Load collaborations
+      // Load collaborations using the actual user ID from profile
       const { data: collabData } = await supabase
         .from('collaborations')
         .select('*')
-        .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+        .or(`sender_id.eq.${profileData.id},receiver_id.eq.${profileData.id}`)
         .eq('status', 'accepted')
 
       setProfile(profileData)

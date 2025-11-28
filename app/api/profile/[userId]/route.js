@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { isUUID } from '@/lib/username'
 
 // GET - Fetch user profile with privacy rules
 export async function GET(request, { params }) {
@@ -13,29 +14,38 @@ export async function GET(request, { params }) {
 
     const { userId } = await params
 
-    // Get the profile
-    const { data: profile, error: profileError } = await supabase
+    // Determine if userId is UUID or username
+    const isId = isUUID(userId)
+
+    // Get the profile - query by ID or username
+    let profileQuery = supabase
       .from('profiles')
       .select('*')
-      .eq('id', userId)
-      .single()
+
+    if (isId) {
+      profileQuery = profileQuery.eq('id', userId)
+    } else {
+      profileQuery = profileQuery.eq('username', userId)
+    }
+
+    const { data: profile, error: profileError } = await profileQuery.single()
 
     if (profileError || !profile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
 
-    // Get keyword profile
+    // Get keyword profile using actual profile ID
     const { data: keywordProfile } = await supabase
       .from('keyword_profiles')
       .select('keywords, total_keywords')
-      .eq('user_id', userId)
+      .eq('user_id', profile.id)
       .single()
 
-    // Check if users are collaborating (accepted collab)
+    // Check if users are collaborating (accepted collab) using actual profile ID
     const { data: collab } = await supabase
       .from('collaborations')
       .select('*')
-      .or(`and(sender_id.eq.${user.id},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${user.id})`)
+      .or(`and(sender_id.eq.${user.id},receiver_id.eq.${profile.id}),and(sender_id.eq.${profile.id},receiver_id.eq.${user.id})`)
       .maybeSingle()
 
     const isCollaborating = collab?.status === 'accepted'
@@ -48,6 +58,7 @@ export async function GET(request, { params }) {
     // Build response with privacy rules
     const publicProfile = {
       id: profile.id,
+      username: profile.username,
       full_name: profile.full_name,
       bio: profile.bio,
       company: profile.company,

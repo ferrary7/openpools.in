@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { isUUID } from '@/lib/username'
 
 // GET - Fetch messages between current user and another user
 export async function GET(request) {
@@ -13,10 +14,29 @@ export async function GET(request) {
 
     // Get userId from query params
     const { searchParams } = new URL(request.url)
-    const otherUserId = searchParams.get('userId')
+    const identifier = searchParams.get('userId')
 
-    if (!otherUserId) {
+    if (!identifier) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 })
+    }
+
+    // Determine if identifier is UUID or username
+    let otherUserId = identifier
+    const isId = isUUID(identifier)
+
+    // If it's a username, look up the user ID
+    if (!isId) {
+      const { data: otherUser, error: lookupError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', identifier)
+        .single()
+
+      if (lookupError || !otherUser) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      }
+
+      otherUserId = otherUser.id
     }
 
     // Fetch messages between the two users
@@ -62,12 +82,31 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Message cannot be empty' }, { status: 400 })
     }
 
+    // Determine if receiver_id is UUID or username
+    let actualReceiverId = receiver_id
+    const isId = isUUID(receiver_id)
+
+    // If it's a username, look up the user ID
+    if (!isId) {
+      const { data: receiver, error: lookupError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', receiver_id)
+        .single()
+
+      if (lookupError || !receiver) {
+        return NextResponse.json({ error: 'Receiver not found' }, { status: 404 })
+      }
+
+      actualReceiverId = receiver.id
+    }
+
     // Insert the message
     const { data: message, error } = await supabase
       .from('messages')
       .insert({
         sender_id: user.id,
-        receiver_id,
+        receiver_id: actualReceiverId,
         content: content.trim(),
         read: false
       })
