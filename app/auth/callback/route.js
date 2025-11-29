@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { sendWelcomeEmail } from '@/lib/email/welcome'
 
 export async function GET(request) {
   const requestUrl = new URL(request.url)
@@ -34,6 +35,12 @@ export async function GET(request) {
               full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
               onboarding_completed: false,
             })
+
+          // Send welcome email (non-blocking)
+          sendWelcomeEmail(
+            user.email,
+            user.user_metadata?.full_name || user.user_metadata?.name
+          ).catch(err => console.error('Welcome email failed:', err))
 
           // Redirect to onboarding for new users
           return NextResponse.redirect(`${origin}/onboarding`)

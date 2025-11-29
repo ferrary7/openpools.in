@@ -19,7 +19,8 @@
     "next": "^16.0.3",
     "pdf-parse-fork": "^1.2.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "resend": "^6.5.2"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.22",
