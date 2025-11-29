@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { sendCollabRequestEmail } from '@/lib/email/welcome'
 
 // GET - Fetch user's collaborations
 export async function GET(request) {
@@ -90,12 +91,22 @@ export async function POST(request) {
       })
       .select(`
         *,
-        sender:sender_id(id, username, full_name, email),
-        receiver:receiver_id(id, username, full_name, email)
+        sender:sender_id(id, username, full_name, email, job_title, company),
+        receiver:receiver_id(id, username, full_name, email, job_title, company)
       `)
       .single()
 
     if (error) throw error
+
+    // Send email notification to receiver (non-blocking)
+    sendCollabRequestEmail(
+      collab.receiver.email,
+      collab.receiver.full_name,
+      collab.sender.full_name,
+      collab.sender.job_title,
+      collab.sender.company,
+      collab.sender.username || collab.sender.id
+    ).catch(err => console.error('Collab request email failed:', err))
 
     return NextResponse.json({
       collab,
