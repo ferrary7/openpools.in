@@ -146,10 +146,6 @@ export default function DNACertificate({ profile, keywordProfile }) {
         <div className="grid grid-cols-[1.1fr_0.9fr] gap-16 mb-12">
           {/* LEFT */}
           <div>
-            <h3 className="text-3xl font-semibold text-gray-800 text-center mb-8">
-              This is to certify that
-            </h3>
-
             {/* Profile photo */}
             <div className="w-40 h-40 mx-auto rounded-full p-[3px] bg-gradient-to-tr from-primary-300 to-purple-400 shadow-md flex items-center justify-center">
               <div className="w-full h-full rounded-full overflow-hidden bg-white flex items-center justify-center">
@@ -165,10 +161,19 @@ export default function DNACertificate({ profile, keywordProfile }) {
                 )}
               </div>
             </div>
+            {/* DNA Badge */}
+            <div className="text-center mt-8">
+              <span className="inline-flex items-center justify-center px-6 py-2 bg-primary-500/10 border border-primary-500/30 rounded-full text-primary-600 font-mono font-semibold tracking-wide">
+                {dnaCode}
+              </span>
+            </div>
 
             {/* Name */}
             <div className="mt-6 text-center">
-              <h2 className="text-[38px] font-semibold tracking-tight leading-tight">
+              <h3 className="text-3xl font-semibold text-gray-800 text-center mb-2">
+                This is to certify that
+              </h3>
+              <h2 className="text-[38px] font-semibold tracking-tight leading-tight text-primary-500">
                 {profile?.full_name || "Your Name"}
               </h2>
               {profile?.job_title && (
@@ -177,12 +182,6 @@ export default function DNACertificate({ profile, keywordProfile }) {
                   {profile.company && `at ${profile.company}`}
                 </p>
               )}
-            {/* DNA Badge */}
-            <div className="text-center mt-8">
-              <span className="inline-flex px-6 py-2.5 bg-primary-500/10 border border-primary-500/30 rounded-full text-primary-600 font-mono font-semibold tracking-wide">
-                {dnaCode}
-              </span>
-            </div>
             </div>
 
             {/* Certificate statement */}
@@ -194,7 +193,6 @@ export default function DNACertificate({ profile, keywordProfile }) {
               Network, reflecting both technical excellence and a commitment to
               continuous growth.
             </p>
-
           </div>
 
           {/* RIGHT: HELIX */}
