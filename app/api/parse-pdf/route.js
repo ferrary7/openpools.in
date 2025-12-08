@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { extractKeywords } from '@/lib/gemini'
+import { extractCompleteProfile } from '@/lib/gemini'
 
 // Use dynamic import for pdf-parse to avoid build issues
 async function parsePDF(buffer) {
@@ -57,13 +57,14 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Could not extract text from PDF' }, { status: 400 })
     }
 
-    // Extract keywords from the text
-    const keywords = await extractKeywords(text, 'pdf')
+    // Extract complete profile data and keywords from the text
+    const result = await extractCompleteProfile(text, 'pdf')
 
     return NextResponse.json({
       success: true,
       text: text,
-      keywords: keywords,
+      profile: result.profile,
+      keywords: result.keywords,
       wordCount: text.split(/\s+/).length,
     })
   } catch (error) {

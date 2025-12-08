@@ -48,9 +48,13 @@ export default function PdfUploader({ onKeywordsExtracted }) {
 
       setResult(data)
 
-      // Call parent callback with extracted keywords
+      // Call parent callback with extracted data (keywords + profile)
       if (onKeywordsExtracted) {
-        onKeywordsExtracted(data.keywords)
+        onKeywordsExtracted({
+          keywords: data.keywords || [],
+          profile: data.profile || {},
+          text: data.text || ''
+        })
       }
     } catch (err) {
       setError(err.message)

@@ -6,6 +6,27 @@ export default function KeywordDisplay({ keywords, loading, editMode = false, on
   const [showAllMobile, setShowAllMobile] = useState(false)
   const MOBILE_LIMIT = 8 // Show only 8 keywords on mobile initially
 
+  // Helper function to check if a keyword is a URL
+  const isURL = (text) => {
+    if (!text) return false
+    const urlPattern = /^(https?:\/\/|www\.)/i
+    return urlPattern.test(text) || text.includes('.com') || text.includes('.io') || text.includes('.org') || text.includes('.dev')
+  }
+
+  // Helper function to handle keyword click
+  const handleKeywordClick = (keyword) => {
+    if (editMode) return // Don't open links in edit mode
+
+    if (isURL(keyword)) {
+      // Ensure URL has protocol
+      let url = keyword
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url
+      }
+      window.open(url, '_blank', 'noopener,noreferrer')
+    }
+  }
+
   if (loading) {
     return (
       <div className="bg-gray-50 p-6 rounded-lg">
@@ -57,6 +78,7 @@ export default function KeywordDisplay({ keywords, loading, editMode = false, on
             const keyword = typeof kw === 'string' ? kw : kw.keyword
             const weight = typeof kw === 'object' ? kw.weight : 1.0
             const opacity = Math.max(0.5, weight)
+            const isLink = isURL(keyword)
 
             return (
               <div
@@ -64,10 +86,19 @@ export default function KeywordDisplay({ keywords, loading, editMode = false, on
                 className={`relative ${editMode ? 'keyword-shake' : ''}`}
               >
                 <span
-                  className="px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm font-medium inline-block"
+                  onClick={() => handleKeywordClick(keyword)}
+                  className={`px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm font-medium inline-block ${
+                    isLink && !editMode ? 'cursor-pointer hover:bg-primary-200 hover:underline transition-colors' : ''
+                  }`}
                   style={{ opacity }}
+                  title={isLink && !editMode ? `Open ${keyword}` : ''}
                 >
                   {keyword}
+                  {isLink && !editMode && (
+                    <svg className="w-3 h-3 inline-block ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  )}
                 </span>
                 {editMode && onDelete && (
                   <button
@@ -101,6 +132,7 @@ export default function KeywordDisplay({ keywords, loading, editMode = false, on
             const keyword = typeof kw === 'string' ? kw : kw.keyword
             const weight = typeof kw === 'object' ? kw.weight : 1.0
             const opacity = Math.max(0.5, weight)
+            const isLink = isURL(keyword)
 
             return (
               <div
@@ -108,10 +140,19 @@ export default function KeywordDisplay({ keywords, loading, editMode = false, on
                 className={`relative ${editMode ? 'keyword-shake' : ''}`}
               >
                 <span
-                  className="px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm font-medium inline-block"
+                  onClick={() => handleKeywordClick(keyword)}
+                  className={`px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm font-medium inline-block ${
+                    isLink && !editMode ? 'cursor-pointer hover:bg-primary-200 hover:underline transition-colors' : ''
+                  }`}
                   style={{ opacity }}
+                  title={isLink && !editMode ? `Open ${keyword}` : ''}
                 >
                   {keyword}
+                  {isLink && !editMode && (
+                    <svg className="w-3 h-3 inline-block ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  )}
                 </span>
                 {editMode && onDelete && (
                   <button

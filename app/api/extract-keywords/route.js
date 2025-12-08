@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { extractKeywordsFromMultipleSources } from '@/lib/gemini'
+import { extractKeywordsFromMultipleSources, extractCompleteProfile } from '@/lib/gemini'
 import { mergeKeywords } from '@/lib/keywords'
 
 export async function POST(request) {
@@ -48,8 +48,21 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Invalid sources data' }, { status: 400 })
     }
 
-    // Extract keywords from all sources
-    const extractedKeywords = await extractKeywordsFromMultipleSources(sources)
+    // Extract complete profile from the first/primary source (usually resume)
+    let profileData = {}
+    let allKeywords = []
+
+    if (sources.length > 0 && sources[0].text) {
+      const result = await extractCompleteProfile(sources[0].text, sources[0].source || 'resume')
+      profileData = result.profile
+      allKeywords = result.keywords
+    }
+
+    // If there are additional sources, extract keywords from them and merge
+    if (sources.length > 1) {
+      const additionalKeywords = await extractKeywordsFromMultipleSources(sources.slice(1))
+      allKeywords = mergeKeywords(allKeywords, additionalKeywords)
+    }
 
     // Get existing keyword profile if it exists
     const { data: existingProfile } = await supabase
@@ -58,11 +71,11 @@ export async function POST(request) {
       .eq('user_id', user.id)
       .single()
 
-    let finalKeywords = extractedKeywords
+    let finalKeywords = allKeywords
 
     // Merge with existing keywords if profile exists
     if (existingProfile && existingProfile.keywords) {
-      finalKeywords = mergeKeywords(existingProfile.keywords, extractedKeywords)
+      finalKeywords = mergeKeywords(existingProfile.keywords, allKeywords)
     }
 
     // Upsert keyword profile
@@ -87,6 +100,7 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
+      profile: profileData,
       keywords: finalKeywords,
       totalKeywords: finalKeywords.length,
     })
