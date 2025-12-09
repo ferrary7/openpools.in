@@ -3,6 +3,30 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
 
+// Exponential backoff with jitter for rate limit handling
+async function retryWithBackoff(fn, maxRetries = 3) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn()
+    } catch (error) {
+      const isRateLimitError = error.message?.includes('429') ||
+                               error.message?.includes('quota') ||
+                               error.message?.includes('rate limit')
+
+      if (!isRateLimitError || attempt === maxRetries - 1) {
+        throw error
+      }
+
+      const baseDelay = Math.pow(2, attempt) * 1000
+      const jitter = Math.random() * 1000
+      const delay = baseDelay + jitter
+
+      console.log(`Rate limit hit (attempt ${attempt + 1}/${maxRetries}), retrying in ${Math.round(delay)}ms...`)
+      await new Promise(resolve => setTimeout(resolve, delay))
+    }
+  }
+}
+
 export async function POST(request) {
   try {
     const { input, intent, searchableData } = await request.json()
@@ -23,43 +47,25 @@ AVAILABLE DATA IN DATABASE:
 - Job Titles: ${searchableData.jobTitles?.join(', ')}
 ` : ''
 
-    const prompt = `You are a search query analyzer for a networking platform. Your job is to extract search terms from the user's query and match them against the available database.
+    const prompt = `Extract search keywords from query, matching against database.
 
-User's intent: ${intent || 'general'}
-User's query: "${input}"
+Query: "${input}"
+Intent: ${intent || 'general'}
 
 ${dbContext}
 
-INSTRUCTIONS:
-1. Look at the user's query and identify what they're searching for
-2. Match their search terms against the AVAILABLE DATA above
-3. Return keywords that EXIST in the database OR are clearly mentioned in the query
-4. Include partial matches (e.g., if user says "theater" and database has "theater", include it)
-5. Include name matches if user is looking for a specific person
-6. Include location, company, job title matches
+Extract keywords that match database data or are specific search terms.
+- Match skills, locations, companies, job titles, names
+- Include partial/synonym matches (ML → machine learning)
+- Case-insensitive
+- Exclude common verbs, filler words
 
-MATCHING RULES:
-- If user mentions a skill/keyword, check if it exists in the Keywords list
-- If user mentions a location, check the Locations list
-- If user mentions a company, check the Companies list
-- If user mentions a job role, check Job Titles list
-- If user mentions a person's name, check People Names list
-- Be case-insensitive when matching
-- Include synonyms and variations (e.g., "ML" matches "machine learning")
+Return JSON array of lowercase keywords: ["theater", "bangalore", "python"]
+Empty [] if none found.
 
-DO NOT include:
-- Common verbs (has, know, works, looking for)
-- Filler words (someone, anyone, who, should)
-- Words that don't exist anywhere in the database AND aren't specific search terms
+JSON only, no markdown.`
 
-Return ONLY a JSON array of lowercase keywords that should be used for searching.
-Example: ["theater", "bangalore", "python"]
-
-If no valid keywords found or query is too vague, return: []
-
-Return ONLY the JSON array. No markdown, no explanation.`
-
-    const result = await model.generateContent(prompt)
+    const result = await retryWithBackoff(() => model.generateContent(prompt))
     const response = result.response.text()
 
     // Clean up the response

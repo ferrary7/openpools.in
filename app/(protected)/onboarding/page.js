@@ -475,6 +475,11 @@ export default function OnboardingPage() {
         throw new Error('Failed to save profile: ' + profileError.message)
       }
 
+      // Send welcome email (non-blocking)
+      fetch('/api/send-welcome-email', {
+        method: 'POST',
+      }).catch(err => console.error('Welcome email failed:', err))
+
       // 3. Save keywords (already saved during extraction, but upsert again for consistency)
       if (keywords.length > 0) {
         const { error: keywordError } = await supabase
