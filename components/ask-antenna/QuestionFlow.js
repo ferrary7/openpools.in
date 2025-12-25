@@ -98,7 +98,7 @@ export default function QuestionFlow({ userInput, onComplete }) {
 
     profiles.forEach(profile => {
       // From keyword_profiles
-      if (profile.keyword_profiles?.keywords) {
+      if (profile.keyword_profiles?.keywords && Array.isArray(profile.keyword_profiles.keywords)) {
         profile.keyword_profiles.keywords.forEach(kw => {
           if (kw.keyword) masterKeywords.add(kw.keyword.toLowerCase().trim())
         })
@@ -213,7 +213,7 @@ export default function QuestionFlow({ userInput, onComplete }) {
       const searchableContent = new Set()
 
       // Keywords
-      if (profile.keyword_profiles?.keywords) {
+      if (profile.keyword_profiles?.keywords && Array.isArray(profile.keyword_profiles.keywords)) {
         profile.keyword_profiles.keywords.forEach(kw => {
           if (kw.keyword) {
             searchableContent.add(kw.keyword.toLowerCase().trim())
