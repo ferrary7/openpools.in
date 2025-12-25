@@ -551,12 +551,12 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
                 <p className="text-gray-400 text-sm md:text-base">Building roadmap...</p>
               </div>
             ) : aiInsights?.skillGap?.targetRoles ? (
-              <div className="max-w-4xl mx-auto relative px-3 sm:px-4">
+              <div className="max-w-4xl mx-auto relative px-2 sm:px-4">
                 {/* Roadmap Path Line */}
-                <div className="absolute left-4 sm:left-5 md:left-10 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary-500 via-purple-500 to-pink-500 opacity-30"></div>
+                <div className="absolute left-3 sm:left-5 md:left-10 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary-500 via-purple-500 to-pink-500 opacity-30"></div>
 
                 {/* Role Cards */}
-                <div className="space-y-2.5 sm:space-y-3 md:space-y-4">
+                <div className="space-y-2 sm:space-y-3 md:space-y-4">
                   {aiInsights.skillGap.targetRoles.slice(0, 3).map((role, i) => (
                     <div
                       key={i}
@@ -564,7 +564,7 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
                       style={{ animationDelay: `${i * 200}ms`, animationFillMode: 'forwards' }}
                     >
                       {/* Roadmap Node */}
-                      <div className="absolute left-1 sm:left-5 md:left-6 top-3 sm:top-4 md:top-6 -translate-x-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded-full bg-gradient-to-br from-primary-500 via-purple-500 to-pink-500 border-2 md:border-3 border-[#0A0A0A] z-10">
+                      <div className="absolute left-1 sm:left-5 md:left-6 top-2 sm:top-4 md:top-6 -translate-x-1/2 w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded-full bg-gradient-to-br from-primary-500 via-purple-500 to-pink-500 border-2 md:border-3 border-[#0A0A0A] z-10">
                         <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary-500 via-purple-500 to-pink-500 blur-md opacity-50 animate-pulse"></div>
                       </div>
 
@@ -574,35 +574,35 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
                           {/* Gradient overlay */}
                           <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
-                          <div className="relative p-2.5 sm:p-4 md:p-5">
+                          <div className="relative p-2 sm:p-3 md:p-5">
                             {/* Header */}
-                            <div className="flex items-center justify-between mb-1.5 sm:mb-3 md:mb-4">
-                              <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 flex-1 min-w-0">
-                                <div className="w-7 h-7 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-md sm:rounded-lg bg-gradient-to-br from-primary-500/25 to-purple-500/25 border border-primary-500/40 flex items-center justify-center text-sm sm:text-lg md:text-xl flex-shrink-0">
+                            <div className="flex items-center justify-between mb-1 sm:mb-2 md:mb-4">
+                              <div className="flex items-center gap-1 sm:gap-2 md:gap-3 flex-1 min-w-0">
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-md sm:rounded-lg bg-gradient-to-br from-primary-500/25 to-purple-500/25 border border-primary-500/40 flex items-center justify-center text-xs sm:text-lg md:text-xl flex-shrink-0">
                                   {i === 0 ? '🎯' : i === 1 ? '🚀' : '⭐'}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <h3 className="text-sm sm:text-lg md:text-xl font-bold text-white truncate">{role.role}</h3>
-                                  <p className="text-[8px] sm:text-[10px] md:text-xs text-gray-400 uppercase tracking-wide font-medium hidden sm:block">Career Target</p>
+                                  <h3 className="text-xs sm:text-lg md:text-xl font-bold text-white truncate">{role.role}</h3>
+                                  <p className="text-[7px] sm:text-[10px] md:text-xs text-gray-400 uppercase tracking-wide font-medium hidden sm:block">Career Target</p>
                                 </div>
                               </div>
 
                               {/* Match Score */}
                               <div className="text-right ml-2 sm:ml-2 md:ml-4 flex-shrink-0">
-                                <div className="text-xl sm:text-3xl md:text-4xl font-black bg-gradient-to-br from-primary-400 to-purple-500 bg-clip-text text-transparent leading-none">
+                                <div className="text-lg sm:text-3xl md:text-4xl font-black bg-gradient-to-br from-primary-400 to-purple-500 bg-clip-text text-transparent leading-none">
                                   {role.currentMatch}%
                                 </div>
-                                <p className="text-[8px] sm:text-[10px] md:text-xs text-gray-400 uppercase tracking-wide mt-0.5 sm:mt-1 font-medium hidden sm:block">Ready</p>
+                                <p className="text-[7px] sm:text-[10px] md:text-xs text-gray-400 uppercase tracking-wide mt-0 sm:mt-1 font-medium hidden sm:block">Ready</p>
                               </div>
                             </div>
 
                             {/* Progress Bar */}
-                            <div className="mb-2 sm:mb-3 md:mb-4">
-                              <div className="flex items-center justify-between mb-1 sm:mb-1.5 md:mb-2">
-                                <span className="text-[9px] sm:text-[10px] md:text-xs text-gray-300 font-semibold">Skill Match</span>
-                                <span className="text-[9px] sm:text-[10px] md:text-xs text-gray-400 font-medium">{100 - role.currentMatch}% to go</span>
+                            <div className="mb-1 sm:mb-3 md:mb-4">
+                              <div className="flex items-center justify-between mb-0.5 sm:mb-1.5 md:mb-2">
+                                <span className="text-[8px] sm:text-[10px] md:text-xs text-gray-300 font-semibold">Skill Match</span>
+                                <span className="text-[8px] sm:text-[10px] md:text-xs text-gray-400 font-medium">{100 - role.currentMatch}% to go</span>
                               </div>
-                              <div className="relative h-1.5 sm:h-2 md:h-2.5 bg-white/10 rounded-full overflow-hidden">
+                              <div className="relative h-1 sm:h-2 md:h-2.5 bg-white/10 rounded-full overflow-hidden">
                                 <div
                                   className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary-500 via-purple-500 to-pink-500 rounded-full transition-all duration-2000 ease-out"
                                   style={{
@@ -616,7 +616,7 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
                                 {/* Milestone markers */}
                                 <div className="absolute inset-0 flex items-center justify-around px-1">
                                   {[25, 50, 75].map((mark) => (
-                                    <div key={mark} className="w-px h-1 sm:h-1.5 md:h-2 bg-white/30"></div>
+                                    <div key={mark} className="w-px h-0.5 sm:h-1.5 md:h-2 bg-white/30"></div>
                                   ))}
                                 </div>
                               </div>
@@ -624,15 +624,15 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
 
                             {/* Skills to Learn */}
                             <div>
-                              <div className="flex items-center gap-1.5 sm:gap-2 md:gap-2.5 mb-1.5 sm:mb-2 md:mb-2.5">
-                                <span className="text-[9px] sm:text-[10px] md:text-xs font-bold text-gray-300 uppercase tracking-wider">Skills to Learn</span>
+                              <div className="flex items-center gap-1 sm:gap-2 md:gap-2.5 mb-1 sm:mb-2 md:mb-2.5">
+                                <span className="text-[7px] sm:text-[10px] md:text-xs font-bold text-gray-300 uppercase tracking-wider">Skills</span>
                                 <div className="flex-1 h-px bg-white/15"></div>
                               </div>
-                              <div className="flex flex-wrap gap-1 sm:gap-1.5 md:gap-2">
-                                {role.missingSkills.slice(0, 5).map((skill, idx) => (
+                              <div className="flex flex-wrap gap-0.5 sm:gap-1.5 md:gap-2">
+                                {role.missingSkills.slice(0, 4).map((skill, idx) => (
                                   <div
                                     key={idx}
-                                    className="group/skill px-2 sm:px-2.5 md:px-3 py-0.5 sm:py-1 md:py-1.5 bg-white/8 border border-white/15 hover:border-primary-500/50 rounded-md sm:rounded-lg text-[11px] sm:text-xs md:text-sm text-gray-200 hover:text-white transition-all duration-300 cursor-default font-medium"
+                                    className="group/skill px-1.5 sm:px-2.5 md:px-3 py-0.5 sm:py-1 md:py-1.5 bg-white/8 border border-white/15 hover:border-primary-500/50 rounded-sm sm:rounded-lg text-[9px] sm:text-xs md:text-sm text-gray-200 hover:text-white transition-all duration-300 cursor-default font-medium"
                                   >
                                     <span className="flex items-center gap-0.5 sm:gap-1 md:gap-1.5">
                                       <span className="w-0.5 h-0.5 sm:w-1 sm:h-1 md:w-1.5 md:h-1.5 rounded-full bg-primary-400 opacity-70 group-hover/skill:opacity-100"></span>
@@ -640,9 +640,9 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
                                     </span>
                                   </div>
                                 ))}
-                                {role.missingSkills.length > 5 && (
-                                  <div className="px-2 sm:px-2.5 md:px-3 py-0.5 sm:py-1 md:py-1.5 bg-white/8 border border-white/15 rounded-md sm:rounded-lg text-[11px] sm:text-xs md:text-sm text-gray-400 font-medium">
-                                    +{role.missingSkills.length - 5} more
+                                {role.missingSkills.length > 4 && (
+                                  <div className="px-1.5 sm:px-2.5 md:px-3 py-0.5 sm:py-1 md:py-1.5 bg-white/8 border border-white/15 rounded-sm sm:rounded-lg text-[9px] sm:text-xs md:text-sm text-gray-400 font-medium">
+                                    +{role.missingSkills.length - 4}
                                   </div>
                                 )}
                               </div>
