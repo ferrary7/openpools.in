@@ -4,10 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { isUUID } from '@/lib/username'
-import DNAHero from '@/components/dna/DNAHero'
-import DNAStats from '@/components/dna/DNAStats'
-import DNAShowcase from '@/components/dna/DNAShowcase'
-import DNAShare from '@/components/dna/DNAShare'
+import DNAWrap from '@/components/dna/DNAWrap'
 
 export default function UserDNAPage() {
   const params = useParams()
@@ -15,6 +12,7 @@ export default function UserDNAPage() {
   const [profile, setProfile] = useState(null)
   const [keywordProfile, setKeywordProfile] = useState(null)
   const [collaborations, setCollaborations] = useState([])
+  const [showcaseItems, setShowcaseItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [isOwnDNA, setIsOwnDNA] = useState(false)
@@ -70,9 +68,14 @@ export default function UserDNAPage() {
         .or(`sender_id.eq.${profileData.id},receiver_id.eq.${profileData.id}`)
         .eq('status', 'accepted')
 
+      // Load showcase items
+      const showcaseResponse = await fetch(`/api/showcase?user_id=${profileData.id}`)
+      const showcaseData = await showcaseResponse.json()
+
       setProfile(profileData)
       setKeywordProfile(keywordData)
       setCollaborations(collabData || [])
+      setShowcaseItems(showcaseData.items || [])
     } catch (error) {
       console.error('Error loading DNA data:', error)
       setNotFound(true)
@@ -121,22 +124,13 @@ export default function UserDNAPage() {
 
   return (
     <div className="min-h-screen bg-[#1E1E1E]">
-      {/* Hero Section with DNA Helix */}
-      <DNAHero profile={profile} keywordProfile={keywordProfile} isOwnDNA={isOwnDNA} />
-
-      {/* Showcase Section */}
-      <DNAShowcase profile={profile} isOwnDNA={isOwnDNA} />
-
-      {/* Stats Section */}
-      <DNAStats
+      {/* Scroll-Based DNA Wrap - Spotify Style */}
+      <DNAWrap
         profile={profile}
         keywordProfile={keywordProfile}
-        collaborations={collaborations}
+        showcaseItems={showcaseItems}
         isOwnDNA={isOwnDNA}
       />
-
-      {/* Share Section */}
-      <DNAShare profile={profile} keywordProfile={keywordProfile} isOwnDNA={isOwnDNA} />
     </div>
   )
 }

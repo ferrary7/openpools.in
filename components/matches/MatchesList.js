@@ -66,7 +66,7 @@ export default function MatchesList() {
           k.keyword?.toLowerCase().includes(lowerKeyword)
         )
 
-        const hasAnyKeyword = match.allKeywords?.some(k => {
+        const hasAnyKeyword = Array.isArray(match.allKeywords) && match.allKeywords.some(k => {
           const kw = typeof k === 'string' ? k : k.keyword
           return kw?.toLowerCase().includes(lowerKeyword)
         })

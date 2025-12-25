@@ -92,12 +92,14 @@ export async function PATCH(request, { params }) {
       }
     }
 
-    // Validate dates
-    if (body.end_date && body.start_date && new Date(body.end_date) < new Date(body.start_date)) {
-      return NextResponse.json(
-        { error: 'End date cannot be before start date' },
-        { status: 400 }
-      )
+    // Validate dates (only if both are provided and not empty)
+    if (body.end_date && body.start_date && body.end_date.trim && body.end_date.trim() && body.start_date.trim && body.start_date.trim()) {
+      if (new Date(body.end_date) < new Date(body.start_date)) {
+        return NextResponse.json(
+          { error: 'End date cannot be before start date' },
+          { status: 400 }
+        )
+      }
     }
 
     // Build update object (only include fields that were provided)
@@ -106,7 +108,12 @@ export async function PATCH(request, { params }) {
 
     allowedFields.forEach(field => {
       if (field in body) {
-        updateData[field] = body[field]
+        let value = body[field]
+        // Convert empty strings to null for date fields
+        if ((field === 'start_date' || field === 'end_date' || field === 'image_url' || field === 'description') && value === '') {
+          value = null
+        }
+        updateData[field] = value
       }
     })
 

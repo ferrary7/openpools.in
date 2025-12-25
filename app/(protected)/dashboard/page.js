@@ -227,13 +227,25 @@ export default async function DashboardPage() {
 
         <div className="card hover:shadow-lg transition-shadow">
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            Write Journal
+            Growth Journal
           </h3>
           <p className="text-gray-600 mb-4">
-            Drop your thoughts, wins, or ideas - let your profile evolve
+            Document your progress, lessons learned, and professional milestones
           </p>
-          <Link href="/journal" className="btn-primary">
-            Create Entry
+          <Link href="/journal?tab=journal" className="btn-primary">
+            Write Entry
+          </Link>
+        </div>
+
+        <div className="card hover:shadow-lg transition-shadow">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Professional Showcase
+          </h3>
+          <p className="text-gray-600 mb-4">
+            Feature your best work, projects, and achievements in one place
+          </p>
+          <Link href="/journal?tab=showcase" className="btn-primary">
+            View Showcase
           </Link>
         </div>
       </div>
