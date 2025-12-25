@@ -551,13 +551,15 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
                 <p className="text-gray-400 text-sm md:text-base">Building roadmap...</p>
               </div>
             ) : aiInsights?.skillGap?.targetRoles ? (
-              <div className="max-w-4xl mx-auto relative px-2 sm:px-4">
-                {/* Roadmap Path Line */}
-                <div className="absolute left-3 sm:left-5 md:left-10 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary-500 via-purple-500 to-pink-500 opacity-30"></div>
+              <div className="w-full flex items-center justify-center px-2 sm:px-4 py-4">
+                <div className="w-full max-w-2xl relative">
+                  <div className="p-3 sm:p-5 md:p-6 relative">
+                    {/* Roadmap Path Line */}
+                    <div className="absolute left-4 sm:left-6 md:left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary-500 via-purple-500 to-pink-500 opacity-30"></div>
 
-                {/* Role Cards */}
-                <div className="space-y-2 sm:space-y-3 md:space-y-4">
-                  {aiInsights.skillGap.targetRoles.slice(0, 3).map((role, i) => (
+                    {/* Role Cards */}
+                    <div className="space-y-2 sm:space-y-3 md:space-y-4">
+                      {aiInsights.skillGap.targetRoles.slice(0, 3).map((role, i) => (
                     <div
                       key={i}
                       className="relative opacity-0 animate-slideIn"
@@ -666,6 +668,8 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
                   <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2">
                     <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 md:w-2 md:h-2 rounded-full bg-white/20"></div>
                     <span>Skills Needed</span>
+                  </div>
+                </div>
                   </div>
                 </div>
               </div>
