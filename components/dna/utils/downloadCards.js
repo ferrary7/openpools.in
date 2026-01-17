@@ -39,7 +39,9 @@ export async function downloadSlides(slideIds) {
         const dataUrl = await domToImage.toPng(element, {
           pixelRatio: 2,
           backgroundColor: '#0A0A0A',
-          cacheBust: true
+          cacheBust: true,
+          width: element.offsetWidth,
+          height: element.offsetHeight
         })
 
         // Download
@@ -67,6 +69,16 @@ export async function downloadSlides(slideIds) {
 
 function prepareSlideForCapture(element) {
   const backups = []
+
+  // Override background to solid dark color (remove gradients/transparency)
+  backups.push({
+    el: element,
+    type: 'background',
+    oldValue: element.style.background,
+    oldBgColor: element.style.backgroundColor
+  })
+  element.style.background = '#0A0A0A'
+  element.style.backgroundColor = '#0A0A0A'
 
   // Hide navigation arrows
   const navButtons = element.querySelectorAll('button[class*="absolute"][class*="top-1/2"]')
@@ -152,6 +164,9 @@ function restoreSlideAfterCapture(element, backups) {
   backups.forEach(backup => {
     if (backup.type === 'display') {
       backup.el.style.display = backup.oldValue
+    } else if (backup.type === 'background') {
+      backup.el.style.background = backup.oldValue
+      backup.el.style.backgroundColor = backup.oldBgColor
     } else if (backup.type === 'styles') {
       backup.el.style.border = backup.border
       backup.el.style.outline = backup.outline

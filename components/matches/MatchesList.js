@@ -61,6 +61,12 @@ export default function MatchesList() {
       return searchKeywords.every(keyword => {
         const lowerKeyword = keyword.toLowerCase()
 
+        // Check username
+        const hasUsername = match.username?.toLowerCase().includes(lowerKeyword)
+
+        // Check full name
+        const hasFullName = match.fullName?.toLowerCase().includes(lowerKeyword)
+
         // Check both common keywords AND all keywords of the matched user
         const hasCommonKeyword = match.commonKeywords?.some(k =>
           k.keyword?.toLowerCase().includes(lowerKeyword)
@@ -71,7 +77,7 @@ export default function MatchesList() {
           return kw?.toLowerCase().includes(lowerKeyword)
         })
 
-        return hasCommonKeyword || hasAnyKeyword
+        return hasUsername || hasFullName || hasCommonKeyword || hasAnyKeyword
       })
     })
 
@@ -115,7 +121,7 @@ export default function MatchesList() {
             type="text"
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
-            placeholder="Search by keywords (comma-separated: react, python, design)..."
+            placeholder="Search by name, username, or keywords (comma-separated)..."
             className="input-field w-full pl-10"
           />
           <svg

@@ -44,11 +44,10 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
   const [localShowcaseItems, setLocalShowcaseItems] = useState(showcaseItems)
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false)
   const sectionsRef = useRef([])
-  const refreshIntervalRef = useRef(null)
 
-  // Auto-refresh showcase items every 5 seconds
+  // Fetch showcase items once on mount
   useEffect(() => {
-    const refreshShowcaseItems = async () => {
+    const fetchShowcaseItems = async () => {
       if (!profile?.id) return
       try {
         const response = await fetch(`/api/showcase?user_id=${profile.id}`)
@@ -57,22 +56,12 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
           setLocalShowcaseItems(data.items)
         }
       } catch (error) {
-        console.error('Error refreshing showcase items:', error)
+        console.error('Error fetching showcase items:', error)
       }
     }
 
     if (profile?.id) {
-      // Refresh immediately on mount
-      refreshShowcaseItems()
-      
-      // Then refresh every 5 seconds
-      refreshIntervalRef.current = setInterval(refreshShowcaseItems, 5000)
-    }
-
-    return () => {
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current)
-      }
+      fetchShowcaseItems()
     }
   }, [profile?.id])
 
