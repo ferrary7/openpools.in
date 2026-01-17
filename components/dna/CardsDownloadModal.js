@@ -129,19 +129,13 @@ export default function CardsDownloadModal({
             const showcaseContainer = document.getElementById('slide-showcase')
             if (!showcaseContainer) return []
             
-            // Find the indicator dots container (flex gap-2 with buttons)
-            // and count how many project slides exist
-            const allButtons = showcaseContainer.querySelectorAll('div[class*="flex"][class*="gap-2"] button')
-            
-            // Filter buttons that look like indicators (small rounded pills at bottom)
+            // Count existing slide elements with slide-showcase-* IDs
             let slideCount = 0
-            allButtons.forEach(btn => {
-              const classList = btn.className
-              // Indicators are small pills with rounded-full
-              if (classList.includes('rounded-full') && classList.includes('w-2')) {
-                slideCount++
-              }
-            })
+            let slideIndex = 0
+            while (document.getElementById(`slide-showcase-${slideIndex}`)) {
+              slideCount++
+              slideIndex++
+            }
             
             // Generate slide IDs for all showcase slides
             return slideCount > 0 ? Array.from({ length: slideCount }, (_, i) => `slide-showcase-${i}`) : []
