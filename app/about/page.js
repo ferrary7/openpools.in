@@ -46,27 +46,27 @@ export default function AboutPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Fixed Header */}
       <header className="bg-[#1E1E1E] shadow-sm border-b border-gray-700 fixed top-0 left-0 right-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex justify-between items-center gap-3 sm:gap-4">
           <Link href="/">
-            <Logo width={140} height={36} />
+            <Logo width={120} height={32} className="sm:w-[140px]" />
           </Link>
-          <div className="flex items-center gap-6">
-            <Link href="/" className="text-white hover:text-gray-300 transition-colors">
+          <div className="flex items-center gap-3 sm:gap-6">
+            <Link href="/" className="text-white hover:text-gray-300 transition-colors text-xs sm:text-sm">
               Home
             </Link>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               {authLoading ? (
-                <div className="w-20 h-8 bg-gray-700 rounded animate-pulse" />
+                <div className="w-16 sm:w-20 h-7 sm:h-8 bg-gray-700 rounded animate-pulse" />
               ) : user ? (
-                <Link href="/dashboard" className="btn-primary">
-                  Go to Dashboard
+                <Link href="/dashboard" className="btn-primary text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2">
+                  Dashboard
                 </Link>
               ) : (
                 <>
-                  <Link href="/login" className="text-white hover:text-gray-300 transition-colors">
+                  <Link href="/login" className="text-white hover:text-gray-300 transition-colors text-xs sm:text-sm">
                     Login
                   </Link>
-                  <Link href="/signup" className="btn-primary">
+                  <Link href="/signup" className="btn-primary text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2">
                     Sign Up
                   </Link>
                 </>
@@ -86,7 +86,7 @@ export default function AboutPage() {
         <div className="absolute bottom-1/4 -left-10 md:-left-20 w-48 md:w-80 h-48 md:h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
 
         {/* Diagonal line decoration */}
-        <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden hidden sm:block">
           <div className="absolute top-0 left-1/2 w-1 h-full bg-gradient-to-b from-primary-500/20 via-primary-500/5 to-transparent transform -translate-x-1/2" />
         </div>
 
