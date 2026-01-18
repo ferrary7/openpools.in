@@ -2,7 +2,39 @@ import './globals.css'
 
 export const metadata = {
   title: 'OpenPools.in - Professional Matchmaking Platform',
-  description: 'Find peers, collaborators, and mentors with similar skill patterns',
+  description: 'Find your People. Build what Matters. Connect with peers, collaborators, and mentors who share your exact skill patterns. Powered by AI-driven keyword matching.',
+  keywords: 'professional networking, matchmaking, mentorship, collaboration, skills, career',
+  authors: [{ name: 'OpenPools' }],
+  creator: 'OpenPools',
+  metadataBase: new URL('https://www.openpools.in'),
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://www.openpools.in',
+    siteName: 'OpenPools.in',
+    title: 'OpenPools.in - Professional Matchmaking Platform',
+    description: 'Find your People. Build what Matters. Connect with peers, collaborators, and mentors who share your exact skill patterns.',
+    images: [
+      {
+        url: '/icon.svg',
+        width: 1200,
+        height: 630,
+        alt: 'OpenPools - Professional Matchmaking Platform',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'OpenPools.in - Professional Matchmaking Platform',
+    description: 'Find your People. Build what Matters.',
+    images: ['/icon.svg'],
+  },
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/apple-icon.png',
+  },
+  robots: 'index, follow',
 }
 
 export default function RootLayout({ children }) {
