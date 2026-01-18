@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import KeywordDisplay from '@/components/onboarding/KeywordDisplay'
 import PdfUploader from '@/components/profile/PdfUploader'
@@ -29,6 +29,8 @@ export default function OnboardingPage() {
   const [workHistory, setWorkHistory] = useState([])
   const [showWorkHistoryPaste, setShowWorkHistoryPaste] = useState(false)
   const [workHistoryText, setWorkHistoryText] = useState('')
+  const [usernameSuggestions, setUsernameSuggestions] = useState([])
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false)
 
   // Profile data state
   const [profileData, setProfileData] = useState({
@@ -45,7 +47,7 @@ export default function OnboardingPage() {
     website: '',
     twitter_url: '',
     github_url: '',
-    show_phone_to_collaborators: true,
+    show_phone_to_collaborators: false,
     hide_profile_picture_from_collaborators: false,
   })
 
@@ -54,6 +56,13 @@ export default function OnboardingPage() {
 
   const router = useRouter()
   const supabase = createClient()
+
+  // Auto-generate username when landing on step 2 with a full_name
+  useEffect(() => {
+    if (step === 2 && profileData.full_name && !profileData.username) {
+      generateUsernameSuggestions(profileData.full_name)
+    }
+  }, [step])
 
   const handlePdfKeywordsExtracted = async (extractedData) => {
     // extractedData now contains: { keywords, profile, text }
@@ -192,6 +201,83 @@ export default function OnboardingPage() {
     }, 500)
 
     setUsernameCheckTimeout(timeout)
+  }
+
+  const generateUsernameSuggestions = async (fullName) => {
+    if (!fullName || fullName.trim().length < 2) {
+      setUsernameSuggestions([])
+      return
+    }
+
+    setLoadingSuggestions(true)
+    try {
+      // Parse the full name
+      const nameParts = fullName.trim().toLowerCase().split(/\s+/)
+      const firstName = nameParts[0]
+      const lastName = nameParts[nameParts.length - 1]
+
+      // Generate base suggestions
+      const baseSuggestions = [
+        `${firstName}${lastName}`,
+        `${firstName}.${lastName}`,
+        `${firstName}_${lastName}`,
+        `${lastName}${firstName}`,
+      ]
+
+      // Remove duplicates and sanitize
+      const uniqueSuggestions = [...new Set(baseSuggestions)].map(s =>
+        s.toLowerCase().replace(/[^a-z0-9_.-]/g, '')
+      )
+
+      // Check availability and generate numbered variants
+      const suggestions = []
+      
+      for (const baseSugg of uniqueSuggestions) {
+        // Check if base suggestion is available
+        const response = await fetch(`/api/username/check?username=${encodeURIComponent(baseSugg)}`)
+        const data = await response.json()
+
+        if (data.available) {
+          suggestions.push({ username: baseSugg, available: true })
+        } else {
+          // If not available, generate numbered variants (baseSugg1, baseSugg2, etc.)
+          for (let i = 1; i <= 3; i++) {
+            const variantUsername = `${baseSugg}${i}`
+            const variantResponse = await fetch(`/api/username/check?username=${encodeURIComponent(variantUsername)}`)
+            const variantData = await variantResponse.json()
+            
+            if (variantData.available) {
+              suggestions.push({ username: variantUsername, available: true })
+              break // Stop once we find an available numbered variant
+            }
+          }
+        }
+      }
+
+      const topSuggestions = suggestions.slice(0, 4)
+      setUsernameSuggestions(topSuggestions)
+      
+      // Auto-fill username with the first suggestion
+      if (topSuggestions.length > 0) {
+        setProfileData(prev => ({ ...prev, username: topSuggestions[0].username }))
+      }
+    } catch (error) {
+      console.error('Error generating username suggestions:', error)
+      setUsernameSuggestions([])
+    } finally {
+      setLoadingSuggestions(false)
+    }
+  }
+
+  const handleFullNameChange = (value) => {
+    setProfileData({ ...profileData, full_name: value })
+    generateUsernameSuggestions(value)
+  }
+
+  const applySuggestion = (suggestedUsername) => {
+    setProfileData({ ...profileData, username: suggestedUsername })
+    handleUsernameChange(suggestedUsername)
+    setUsernameSuggestions([])
   }
 
   const handleProfilePictureChange = (file, previewUrl) => {
@@ -627,10 +713,39 @@ export default function OnboardingPage() {
                   <NotionInput
                     label="Full Name"
                     value={profileData.full_name}
-                    onChange={(e) => setProfileData({ ...profileData, full_name: e.target.value })}
+                    onChange={(e) => handleFullNameChange(e.target.value)}
                     placeholder="Your full name"
                     autoFilled={autoFilledFields.full_name}
                   />
+
+                  {/* Username Suggestions */}
+                  {usernameSuggestions.length > 0 && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        <p className="text-sm font-medium text-blue-900">Suggested usernames</p>
+                        {loadingSuggestions && (
+                          <div className="flex items-center gap-1 ml-auto">
+                            <div className="animate-spin h-3 w-3 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                            <span className="text-xs text-blue-600">Checking...</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {usernameSuggestions.map((suggestion) => (
+                          <button
+                            key={suggestion.username}
+                            onClick={() => applySuggestion(suggestion.username)}
+                            className="px-3 py-2 bg-white text-left border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium text-gray-900"
+                          >
+                            <span className="text-blue-600">@</span>{suggestion.username}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <NotionInput
                     label="Username"
@@ -994,14 +1109,14 @@ export default function OnboardingPage() {
                       <label className="flex items-center gap-3 cursor-pointer text-sm text-gray-700">
                         <input
                           type="checkbox"
-                          checked={!profileData.show_phone_to_collaborators}
-                          onChange={(e) => setProfileData({ ...profileData, show_phone_to_collaborators: !e.target.checked })}
+                          checked={profileData.show_phone_to_collaborators}
+                          onChange={(e) => setProfileData({ ...profileData, show_phone_to_collaborators: e.target.checked })}
                           className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
                         <span>
-                          Hide phone number from collaborators
+                          Show full phone number to collaborators
                           <span className="block text-xs text-gray-500 mt-0.5">
-                            Only first 3 digits will be visible
+                            By default, only last 3 digits are visible for privacy
                           </span>
                         </span>
                       </label>

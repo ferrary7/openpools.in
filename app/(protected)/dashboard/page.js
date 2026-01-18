@@ -186,7 +186,17 @@ export default async function DashboardPage() {
           </Link>
         </div>
         {keywordProfile?.keywords ? (
-          <KeywordDisplay keywords={keywordProfile.keywords} />
+          <>
+            <KeywordDisplay keywords={keywordProfile.keywords} />
+            <div className="flex justify-end mt-4">
+              <a 
+                href="/profile#add-pdf-signals"
+                className="text-primary-600 hover:text-primary-700 text-sm font-medium"
+              >
+                Update Signals →
+              </a>
+            </div>
+          </>
         ) : (
           <div className="card text-center py-8">
             <p className="text-gray-600 mb-4">

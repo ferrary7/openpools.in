@@ -57,23 +57,28 @@ export default function Home() {
       <header className="bg-[#1E1E1E] shadow-sm border-b border-gray-700 fixed top-0 left-0 right-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <Logo width={140} height={36} />
-          <div className="flex items-center gap-4">
-            {authLoading ? (
-              <div className="w-20 h-8 bg-gray-700 rounded animate-pulse" />
-            ) : user ? (
-              <Link href="/dashboard" className="btn-primary">
-                Go to Dashboard
-              </Link>
-            ) : (
-              <>
-                <Link href="/login" className="text-white hover:text-gray-300 transition-colors">
-                  Login
+          <div className="flex items-center gap-6">
+            <Link href="/about" className="text-white hover:text-gray-300 transition-colors">
+              About Us
+            </Link>
+            <div className="flex items-center gap-4">
+              {authLoading ? (
+                <div className="w-20 h-8 bg-gray-700 rounded animate-pulse" />
+              ) : user ? (
+                <Link href="/dashboard" className="btn-primary">
+                  Go to Dashboard
                 </Link>
-                <Link href="/signup" className="btn-primary">
-                  Sign Up
-                </Link>
-              </>
-            )}
+              ) : (
+                <>
+                  <Link href="/login" className="text-white hover:text-gray-300 transition-colors">
+                    Login
+                  </Link>
+                  <Link href="/signup" className="btn-primary">
+                    Sign Up
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -578,13 +583,8 @@ export default function Home() {
               <ul className="space-y-2">
                 <li><Link href="/signup" className="text-gray-400 hover:text-white transition-colors">Sign Up</Link></li>
                 <li><Link href="/login" className="text-gray-400 hover:text-white transition-colors">Login</Link></li>
+                <li><Link href="/about" className="text-gray-400 hover:text-white transition-colors">About Us</Link></li>
               </ul>
-            </div>
-            <div>
-              <h3 className="text-white font-semibold mb-4">Technology</h3>
-              <p className="text-gray-400 text-sm">
-                Built with Next.js, Supabase & Google Gemini AI
-              </p>
             </div>
             <div>
               <h3 className="text-white font-semibold mb-4">Contact Us</h3>

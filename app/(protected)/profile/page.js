@@ -41,6 +41,26 @@ export default function ProfilePage() {
     loadProfile()
   }, [])
 
+  useEffect(() => {
+    // Handle auto-scroll to hash on page load
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash
+      if (hash) {
+        setTimeout(() => {
+          const element = document.querySelector(hash)
+          if (element) {
+            const elementPosition = element.getBoundingClientRect().top + window.scrollY
+            const offsetPosition = elementPosition - 120 // Account for navbar height
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: 'smooth'
+            })
+          }
+        }, 100)
+      }
+    }
+  }, [loading])
+
   const loadProfile = async () => {
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -734,7 +754,7 @@ export default function ProfilePage() {
       </div>
 
       {/* PDF Upload */}
-      <div className="card mb-6">
+      <div id="add-pdf-signals" className="card mb-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-gray-900">
             Add Signals from PDF

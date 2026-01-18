@@ -16,14 +16,24 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get user's keyword profile
-    const { data: userProfile, error: userProfileError } = await supabase
+    // Get user's keyword profile and profile data
+    const { data: userProfileData, error: userProfileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single()
+
+    if (userProfileError || !userProfileData) {
+      return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
+    }
+
+    const { data: userKeywordProfile, error: userKeywordError } = await supabase
       .from('keyword_profiles')
       .select('keywords')
       .eq('user_id', user.id)
       .single()
 
-    if (userProfileError || !userProfile) {
+    if (userKeywordError || !userKeywordProfile) {
       return NextResponse.json({ error: 'User keyword profile not found' }, { status: 404 })
     }
 
@@ -35,9 +45,17 @@ export async function GET(request) {
         user_id,
         keywords,
         profiles:user_id (
+          id,
           full_name,
           email,
-          username
+          username,
+          bio,
+          location,
+          job_title,
+          company,
+          linkedin_url,
+          github_url,
+          website
         )
       `
       )
@@ -55,17 +73,41 @@ export async function GET(request) {
       })
     }
 
-    // Format candidate profiles
+    // Format candidate profiles with full data
     const candidates = allProfiles.map((profile) => ({
       userId: profile.user_id,
       username: profile.profiles?.username,
       fullName: profile.profiles?.full_name || 'Anonymous',
       email: profile.profiles?.email,
       keywords: profile.keywords,
+      profile: {
+        full_name: profile.profiles?.full_name,
+        bio: profile.profiles?.bio,
+        location: profile.profiles?.location,
+        job_title: profile.profiles?.job_title,
+        company: profile.profiles?.company,
+        linkedin_url: profile.profiles?.linkedin_url,
+        github_url: profile.profiles?.github_url,
+        website: profile.profiles?.website
+      }
     }))
 
-    // Find top matches (show all matches)
-    const matches = findTopMatches(userProfile.keywords, candidates, candidates.length)
+    // Find top matches using multi-factor scoring
+    const matches = findTopMatches(
+      userKeywordProfile.keywords,
+      candidates,
+      candidates.length,
+      {
+        full_name: userProfileData.full_name,
+        bio: userProfileData.bio,
+        location: userProfileData.location,
+        job_title: userProfileData.job_title,
+        company: userProfileData.company,
+        linkedin_url: userProfileData.linkedin_url,
+        github_url: userProfileData.github_url,
+        website: userProfileData.website
+      }
+    )
 
     // Save matches to database
     const matchRecords = matches.map((match) => ({
