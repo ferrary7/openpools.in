@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { getPossessiveName, getSubjectPronoun } from './utils/pronouns'
+import { recalculateKeywordWeights } from '@/lib/keywords'
 import HeroSlide from './slides/HeroSlide'
 import PercentileSlide from './slides/PercentileSlide'
 import CareerSkillsSlide from './slides/CareerSkillsSlide'
@@ -174,7 +175,9 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
     ? `DNA-${profile.id.slice(0, 3).toUpperCase()}-${totalMarkers}K`
     : 'DNA-XXX-0K'
 
-  const topSkills = keywordProfile?.keywords?.slice(0, 5) || []
+  // Apply weight recalculation for consistent skill differentiation
+  const recalculatedKeywords = keywordProfile?.keywords ? recalculateKeywordWeights(keywordProfile.keywords) : []
+  const topSkills = recalculatedKeywords.slice(0, 5)
 
   // Horizontal slide navigation
   const navigateHorizontal = (sectionId, direction, totalSlides) => {

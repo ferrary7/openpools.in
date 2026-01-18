@@ -396,7 +396,7 @@ export default function AboutPage() {
                     </p>
                     
                     {/* DNA Link */}
-                    <a href="https://www.openpools.in/user/dxrshn" className="inline-flex items-center gap-2 text-gray-900 hover:text-purple-600 font-semibold text-sm group/link transition-colors">
+                    <a href="https://www.openpools.in/dna/dxrshn" className="inline-flex items-center gap-2 text-gray-900 hover:text-purple-600 font-semibold text-sm group/link transition-colors">
                       View DNA 
                       <svg className="w-4 h-4 group-hover/link:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />

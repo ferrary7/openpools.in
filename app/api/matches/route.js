@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { findTopMatches } from '@/lib/matching'
+import { recalculateKeywordWeights } from '@/lib/keywords'
 
 export async function GET(request) {
   try {
@@ -93,9 +94,16 @@ export async function GET(request) {
     }))
 
     // Find top matches using multi-factor scoring
+    // Apply weight recalculation to ensure consistent skill differentiation
+    const recalculatedUserKeywords = recalculateKeywordWeights(userKeywordProfile.keywords || [])
+    const recalculatedCandidates = candidates.map(c => ({
+      ...c,
+      keywords: recalculateKeywordWeights(c.keywords || [])
+    }))
+
     const matches = findTopMatches(
-      userKeywordProfile.keywords,
-      candidates,
+      recalculatedUserKeywords,
+      recalculatedCandidates,
       candidates.length,
       {
         full_name: userProfileData.full_name,

@@ -148,52 +148,57 @@ export default function CareerSkillsSlide({
       title: `${getPossessiveName(isOwnDNA, profile?.full_name)} top 5 skills`,
       content: (
         <div className="w-full space-y-4 md:space-y-6 px-4">
-          {topSkills.map((skill, index) => {
-            const skillName = typeof skill === 'string' ? skill : skill.keyword || skill.name || 'Skill'
-            const weight = typeof skill === 'object' && skill.weight ? skill.weight : 1.0
-            const percentage = Math.min(100, weight * 100)
+          {(() => {
+            // Find max weight to normalize percentages
+            const maxWeight = Math.max(...topSkills.map(skill => typeof skill === 'object' && skill.weight ? skill.weight : 1.0), 1)
+            
+            return topSkills.map((skill, index) => {
+              const skillName = typeof skill === 'string' ? skill : skill.keyword || skill.name || 'Skill'
+              const weight = typeof skill === 'object' && skill.weight ? skill.weight : 1.0
+              const percentage = Math.round((weight / maxWeight) * 100)
 
-            return (
-              <div key={index} className="relative group w-full">
-                {/* Skill name and percentage */}
-                <div className="flex items-center justify-between mb-2 md:mb-3">
-                  <div className="flex items-center gap-2 md:gap-3">
-                    <span className="text-xl md:text-2xl font-bold text-gray-600">#{index + 1}</span>
-                    <span className="text-base md:text-xl font-semibold text-white truncate max-w-[150px] md:max-w-none">{skillName}</span>
+              return (
+                <div key={index} className="relative group w-full">
+                  {/* Skill name and percentage */}
+                  <div className="flex items-center justify-between mb-2 md:mb-3">
+                    <div className="flex items-center gap-2 md:gap-3">
+                      <span className="text-xl md:text-2xl font-bold text-gray-600">#{index + 1}</span>
+                      <span className="text-base md:text-xl font-semibold text-white truncate max-w-[150px] md:max-w-none">{skillName}</span>
+                    </div>
+                    <span className="text-sm md:text-lg font-mono text-primary-400">{percentage}%</span>
                   </div>
-                  <span className="text-sm md:text-lg font-mono text-primary-400">{Math.round(percentage)}%</span>
-                </div>
 
-                {/* Progress bar */}
-                <div className="w-full h-12 md:h-16 bg-white/5 rounded-2xl overflow-hidden relative backdrop-blur-xl border border-white/10">
-                  <div
-                    className={`h-full rounded-2xl transition-all ease-out ${
-                      index === 0
-                        ? 'bg-gradient-to-r from-primary-500 via-purple-500 to-pink-500'
-                        : 'bg-gradient-to-r from-gray-700 to-gray-600'
-                    }`}
-                    style={{
-                      width: isVisible ? `${percentage}%` : '0%',
-                      transitionDuration: '2000ms',
-                      transitionDelay: `${index * 150}ms`
-                    }}
-                  >
-                    {/* Shine effect */}
-                    {index === 0 && (
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
+                  {/* Progress bar */}
+                  <div className="w-full h-12 md:h-16 bg-white/5 rounded-2xl overflow-hidden relative backdrop-blur-xl border border-white/10">
+                    <div
+                      className={`h-full rounded-2xl transition-all ease-out ${
+                        index === 0
+                          ? 'bg-gradient-to-r from-primary-500 via-purple-500 to-pink-500'
+                          : 'bg-gradient-to-r from-gray-700 to-gray-600'
+                      }`}
+                      style={{
+                        width: isVisible ? `${percentage}%` : '0%',
+                        transitionDuration: '2000ms',
+                        transitionDelay: `${index * 150}ms`
+                      }}
+                    >
+                      {/* Shine effect */}
+                      {index === 0 && (
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
+                      )}
+                    </div>
+
+                    {/* Winner crown */}
+                    {index === 0 && isVisible && (
+                      <div className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 text-3xl md:text-4xl animate-bounce">
+                        👑
+                      </div>
                     )}
                   </div>
-
-                  {/* Winner crown */}
-                  {index === 0 && isVisible && (
-                    <div className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 text-3xl md:text-4xl animate-bounce">
-                      👑
-                    </div>
-                  )}
                 </div>
-              </div>
-            )
-          })}
+              )
+            })
+          })()}
         </div>
       ),
       subtitle: "Skill mastery breakdown",
