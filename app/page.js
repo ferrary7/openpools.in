@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Logo from '@/components/ui/Logo'
+import CompaniesSection from '@/components/ui/CompaniesSection'
 import { createClient } from '@/lib/supabase/client'
 
 export default function Home() {
@@ -55,25 +56,25 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50">
       {/* Fixed Header */}
       <header className="bg-[#1E1E1E] shadow-sm border-b border-gray-700 fixed top-0 left-0 right-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <Logo width={140} height={36} />
-          <div className="flex items-center gap-6">
-            <Link href="/about" className="text-white hover:text-gray-300 transition-colors">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex justify-between items-center gap-3 sm:gap-4">
+          <Logo width={120} height={32} className="sm:w-[140px]" />
+          <div className="flex items-center gap-3 sm:gap-6">
+            <Link href="/about" className="text-white hover:text-gray-300 transition-colors text-xs sm:text-sm">
               About Us
             </Link>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               {authLoading ? (
-                <div className="w-20 h-8 bg-gray-700 rounded animate-pulse" />
+                <div className="w-16 sm:w-20 h-7 sm:h-8 bg-gray-700 rounded animate-pulse" />
               ) : user ? (
-                <Link href="/dashboard" className="btn-primary">
-                  Go to Dashboard
+                <Link href="/dashboard" className="btn-primary text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2">
+                  Dashboard
                 </Link>
               ) : (
                 <>
-                  <Link href="/login" className="text-white hover:text-gray-300 transition-colors">
+                  <Link href="/login" className="text-white hover:text-gray-300 transition-colors text-xs sm:text-sm">
                     Login
                   </Link>
-                  <Link href="/signup" className="btn-primary">
+                  <Link href="/signup" className="btn-primary text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2">
                     Sign Up
                   </Link>
                 </>
@@ -84,7 +85,7 @@ export default function Home() {
       </header>
 
       {/* Hero Section with Parallax */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16 sm:pt-24">
         <div
           className="absolute inset-0 bg-gradient-to-br from-gray-900 via-[#1E1E1E] to-gray-800"
           style={{ transform: `translateY(${scrollY * 0.5}px)` }}
@@ -93,31 +94,31 @@ export default function Home() {
         {/* Animated gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 via-transparent to-primary-600/10" />
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           {/* Hero Text */}
-          <div className="text-center mb-12" style={{ transform: `translateY(${scrollY * 0.3}px)` }}>
-            <Logo width={200} height={52} className="mx-auto mb-8" />
+          <div className="text-center mb-8 sm:mb-12" style={{ transform: `translateY(${scrollY * 0.3}px)` }}>
+            <Logo width={140} height={36} className="mx-auto mb-4 sm:mb-8 sm:w-[200px]" />
 
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-3 sm:mb-6 leading-tight">
               Find your People. Build what Matters.
             </h1>
 
-            <p className="text-xl md:text-2xl text-gray-300 mb-10 max-w-3xl mx-auto">
+            <p className="text-sm sm:text-base md:text-xl lg:text-2xl text-gray-300 mb-8 sm:mb-10 max-w-3xl mx-auto px-2 sm:px-0">
               Connect with peers, collaborators, and mentors who share your exact skill patterns.
               Powered by AI-driven keyword matching.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+            <div className="flex flex-col gap-3 sm:gap-4 justify-center mb-12 sm:mb-16 px-2 sm:px-0 sm:flex-row">
               {user ? (
-                <Link href="/dashboard" className="btn-primary text-lg px-8 py-4 shadow-lg hover:shadow-xl transition-shadow">
+                <Link href="/dashboard" className="btn-primary text-sm sm:text-base md:text-lg px-6 sm:px-8 py-2.5 sm:py-4 shadow-lg hover:shadow-xl transition-shadow">
                   Go to Dashboard
                 </Link>
               ) : (
-                <Link href="/signup" className="btn-primary text-lg px-8 py-4 shadow-lg hover:shadow-xl transition-shadow">
+                <Link href="/signup" className="btn-primary text-sm sm:text-base md:text-lg px-6 sm:px-8 py-2.5 sm:py-4 shadow-lg hover:shadow-xl transition-shadow">
                   Get Started Free
                 </Link>
               )}
-              <a href="#steps-section" className="bg-white text-gray-900 px-8 py-4 rounded-lg text-lg font-medium hover:bg-gray-100 transition-colors">
+              <a href="#steps-section" className="bg-white text-gray-900 px-6 sm:px-8 py-2.5 sm:py-4 rounded-lg text-sm sm:text-base md:text-lg font-medium hover:bg-gray-100 transition-colors">
                 Learn More
               </a>
             </div>
@@ -125,7 +126,7 @@ export default function Home() {
 
           {/* Visual Product Preview */}
           <div
-            className="max-w-4xl mx-auto mb-16"
+            className="max-w-4xl mx-auto mb-12 sm:mb-16 px-2 sm:px-0"
             style={{ transform: `translateY(${scrollY * 0.15}px)` }}
           >
             <div className="grid md:grid-cols-2 gap-4">
@@ -183,6 +184,11 @@ export default function Home() {
             <p className="text-center text-gray-400 text-sm mt-6">
               Get matched with professionals who share your skills and expertise
             </p>
+
+            {/* Companies Section */}
+            <div className="mt-12 pt-8 border-t border-gray-700">
+              <CompaniesSection />
+            </div>
           </div>
 
           {/* Scroll Indicator */}

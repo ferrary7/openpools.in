@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import KeywordDisplay from '@/components/onboarding/KeywordDisplay'
+import CompaniesSection from '@/components/ui/CompaniesSection'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -142,6 +143,11 @@ export default async function DashboardPage() {
             </div>
           </div>
         </Link>
+      </div>
+
+      {/* Companies Section */}
+      <div className="mb-8">
+        <CompaniesSection />
       </div>
 
       {/* Stats Grid */}
