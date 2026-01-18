@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { findTopMatches } from '@/lib/matching'
+import { recalculateKeywordWeights } from '@/lib/keywords'
 
 export async function GET(request) {
   try {
@@ -238,43 +240,91 @@ export async function GET(request) {
       }
     })
 
-    // 12. FIND SIMILAR PROFESSIONALS (skill-based matching)
-    // Get profiles with similar skills
+    // 12. FIND SIMILAR PROFESSIONALS (using real matching algorithm)
+    // Get user's profile data
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single()
+
+    // Get all other profiles with keywords
     const { data: allProfiles } = await supabase
       .from('keyword_profiles')
-      .select('user_id, keywords, total_keywords')
+      .select(
+        `
+        user_id,
+        keywords,
+        profiles:user_id (
+          id,
+          full_name,
+          email,
+          username,
+          bio,
+          location,
+          job_title,
+          company,
+          linkedin_url,
+          github_url,
+          website
+        )
+      `
+      )
       .neq('user_id', userId)
       .limit(100)
 
-    const similarProfessionals = []
-    if (allProfiles) {
-      allProfiles.forEach(otherProfile => {
-        const otherKeywordsArray = Array.isArray(otherProfile.keywords) ? otherProfile.keywords : []
-        const otherSkills = otherKeywordsArray.map(k =>
-          (typeof k === 'string' ? k : k.keyword || '').toLowerCase()
-        )
+    // Format candidates for matching algorithm
+    const candidates = (allProfiles || []).map((profile) => ({
+      userId: profile.user_id,
+      username: profile.profiles?.username,
+      fullName: profile.profiles?.full_name || 'Anonymous',
+      email: profile.profiles?.email,
+      keywords: profile.keywords,
+      profile: {
+        full_name: profile.profiles?.full_name,
+        bio: profile.profiles?.bio,
+        location: profile.profiles?.location,
+        job_title: profile.profiles?.job_title,
+        company: profile.profiles?.company,
+        linkedin_url: profile.profiles?.linkedin_url,
+        github_url: profile.profiles?.github_url,
+        website: profile.profiles?.website
+      }
+    }))
 
-        // Calculate skill overlap
-        const overlap = userKeywords.filter(skill =>
-          otherSkills.includes(skill.toLowerCase())
-        ).length
+    // Apply weight recalculation
+    const recalculatedUserKeywords = recalculateKeywordWeights(keywordProfile?.keywords || [])
+    const recalculatedCandidates = candidates.map(c => ({
+      ...c,
+      keywords: recalculateKeywordWeights(c.keywords || [])
+    }))
 
-        const similarity = (overlap / Math.max(userKeywords.length, otherSkills.length)) * 100
+    // Get top 3 matches
+    const similarMatches = findTopMatches(
+      recalculatedUserKeywords,
+      recalculatedCandidates,
+      3,
+      {
+        full_name: userProfile?.full_name,
+        bio: userProfile?.bio,
+        location: userProfile?.location,
+        job_title: userProfile?.job_title,
+        company: userProfile?.company,
+        linkedin_url: userProfile?.linkedin_url,
+        github_url: userProfile?.github_url,
+        website: userProfile?.website
+      }
+    )
 
-        if (similarity >= 30) { // At least 30% similar
-          similarProfessionals.push({
-            userId: otherProfile.user_id,
-            similarity: Math.round(similarity),
-            sharedSkills: overlap
-          })
-        }
-      })
-    }
-
-    // Get top 5 similar professionals
-    const topSimilar = similarProfessionals
-      .sort((a, b) => b.similarity - a.similarity)
-      .slice(0, 5)
+    const similarProfessionals = similarMatches.map(match => ({
+      userId: match.userId,
+      fullName: match.fullName,
+      username: match.username,
+      email: match.email,
+      compatibility: match.compatibility,
+      commonKeywords: match.commonKeywords,
+      totalCommon: match.totalCommon
+    }))
 
     // 13. COMPLEMENTARY SKILLS ANALYSIS
     // Find skills that frequently appear WITH user's skills (but user doesn't have)
@@ -354,7 +404,7 @@ export async function GET(request) {
           recent: recentSignals.slice(0, 10),
           hidden: hiddenSignals.slice(0, 10)
         },
-        similarProfessionals: topSimilar,
+        similarProfessionals: similarProfessionals,
         complementarySkills
       }
     })

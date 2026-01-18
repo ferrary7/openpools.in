@@ -932,37 +932,82 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
           {
             title: "Professionals like " + getSubjectPronoun(isOwnDNA),
             content: (
-              <div className="max-w-2xl mx-auto px-4">
+              <div className="max-w-4xl mx-auto px-4">
                 {metrics.similarProfessionals && metrics.similarProfessionals.length > 0 ? (
-                  <div className="space-y-2 md:space-y-3">
-                    {metrics.similarProfessionals.slice(0, 5).map((prof, i) => (
-                      <div key={i} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-3 md:p-4 flex items-center justify-between hover:border-primary-500/50 transition-all">
-                        <div className="flex items-center gap-3 md:gap-4">
-                          <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-primary-400 to-purple-600 flex items-center justify-center text-white font-bold text-sm md:text-base">
-                            {i + 1}
+                  <div className="space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                      {metrics.similarProfessionals.slice(0, 2).map((prof, i) => (
+                        <a 
+                          key={i} 
+                          href={`/user/${prof.username || prof.userId}`}
+                          className="group"
+                        >
+                          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary-500/10 via-[#0A0A0A] to-[#0A0A0A] border border-primary-500/20 hover:border-primary-500/40 transition-all duration-500 hover:scale-[1.02] p-6 md:p-8">
+                            {/* Hover gradient overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-primary-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                            
+                            {/* Background glow */}
+                            <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary-500/20 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                            
+                            {/* Content */}
+                            <div className="relative z-10 space-y-5">
+                              {/* Avatar */}
+                              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary-500/30 to-purple-500/30 flex items-center justify-center text-white font-semibold text-xl border border-primary-500/30 group-hover:border-primary-500/60 transition-all">
+                                {prof.fullName?.charAt(0) || '?'}
+                              </div>
+                              
+                              {/* Name */}
+                              <div>
+                                <h3 className="text-base md:text-lg font-semibold text-white group-hover:text-primary-300 transition-colors">{prof.fullName || 'Professional'}</h3>
+                                <p className="text-xs md:text-sm text-gray-500 mt-1">@{prof.username || prof.userId}</p>
+                              </div>
+                              
+                              {/* Match Score */}
+                              <div className="flex items-center gap-3 pt-2">
+                                <div className="text-3xl font-bold bg-gradient-to-r from-primary-500 to-purple-500 bg-clip-text text-transparent">{Math.round(prof.compatibility)}%</div>
+                                <div className="text-xs md:text-sm text-gray-400">match</div>
+                              </div>
+                              
+                              {/* Keywords */}
+                              {prof.commonKeywords && prof.commonKeywords.length > 0 && (
+                                <div className="pt-3">
+                                  <p className="text-xs text-gray-500 mb-3 uppercase tracking-wide">Shared interests</p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {prof.commonKeywords?.slice(0, 3).map((kw, kidx) => (
+                                      <span key={kidx} className="px-3 py-1.5 text-xs rounded-full border border-primary-500/30 text-primary-300 bg-primary-500/10 group-hover:border-primary-500/60 group-hover:bg-primary-500/20 transition-all">
+                                        {kw.keyword || kw}
+                                      </span>
+                                    ))}
+                                    {prof.totalCommon > 3 && (
+                                      <span className="text-xs text-gray-600">+{prof.totalCommon - 3}</span>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          <div>
-                            <div className="text-sm md:text-base text-white font-semibold">Similar Professional</div>
-                            <div className="text-xs text-gray-400">{prof.sharedSkills} shared skills</div>
-                          </div>
-                        </div>
-                        <div className="text-right ml-2">
-                          <div className="text-xl md:text-2xl font-bold text-primary-400">{prof.similarity}%</div>
-                          <div className="text-[10px] md:text-xs text-gray-500">match</div>
-                        </div>
-                      </div>
-                    ))}
+                        </a>
+                      ))}
+                    </div>
+                    
+                    {/* Show All Button */}
+                    <div className="flex justify-center pt-6">
+                      <a 
+                        href="/matches"
+                        className="text-sm font-medium text-primary-400 hover:text-primary-300 transition-colors"
+                      >
+                        Show all similar profiles →
+                      </a>
+                    </div>
                   </div>
                 ) : (
-                  <div className="text-center text-gray-400 py-8 md:py-12">
-                    <div className="text-5xl md:text-6xl mb-4">🔍</div>
-                    <p className="text-sm md:text-base">No similar professionals found yet</p>
-                    <p className="text-xs md:text-sm mt-2">More users joining soon!</p>
+                  <div className="text-center py-12">
+                    <p className="text-gray-400">No similar professionals found yet</p>
                   </div>
                 )}
               </div>
             ),
-            insight: `Found ${metrics.similarProfessionals?.length || 0} professionals with similar skills`
+            insight: `Found ${metrics.similarProfessionals?.length || 0} professionals with similar DNA`
           },
           // Slide 3: Collaboration Opportunities
           {
