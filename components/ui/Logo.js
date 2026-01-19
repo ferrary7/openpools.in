@@ -7,7 +7,7 @@ export default function Logo({ className = '', width = 150, height = 40 }) {
       alt="OpenPools.in"
       width={width}
       height={height}
-      className={className}
+      className={`${className} w-auto h-auto`}
       priority
     />
   )
