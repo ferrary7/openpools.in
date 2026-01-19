@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 import KeywordDisplay from '@/components/onboarding/KeywordDisplay'
 import CollabButton from '@/components/collab/CollabButton'
 import CollabAnimation from '@/components/collab/CollabAnimation'
@@ -14,6 +15,17 @@ export default function UserProfilePage() {
   const [error, setError] = useState(null)
   const [showAnimation, setShowAnimation] = useState(false)
   const [removing, setRemoving] = useState(false)
+  const [currentUserId, setCurrentUserId] = useState(null)
+  const supabase = createClient()
+
+  useEffect(() => {
+    // Get current user ID
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setCurrentUserId(user?.id || null)
+    }
+    getCurrentUser()
+  }, [])
 
   useEffect(() => {
     if (params.userId) {
@@ -215,7 +227,10 @@ export default function UserProfilePage() {
         </div>
         {userData.keywords && userData.keywords.length > 0 ? (
           <>
-            <KeywordDisplay keywords={canViewContactInfo ? userData.keywords : userData.keywords.slice(0, 4)} />
+            <KeywordDisplay 
+              keywords={canViewContactInfo ? userData.keywords : userData.keywords.slice(0, 4)} 
+              personName={currentUserId !== params.userId ? userData.full_name : null}
+            />
             {!canViewContactInfo && userData.keywords.length > 4 && (
               <p className="text-sm text-amber-700 mt-3 text-center">
                 🔒 Collaborate to see all {userData.total_keywords} keywords

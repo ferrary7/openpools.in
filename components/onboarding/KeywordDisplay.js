@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-export default function KeywordDisplay({ keywords, loading, editMode = false, onDelete = null, onToggleEdit = null }) {
+export default function KeywordDisplay({ keywords, loading, editMode = false, onDelete = null, onToggleEdit = null, personName = null }) {
   const [showAllMobile, setShowAllMobile] = useState(false)
   const MOBILE_LIMIT = 8 // Show only 8 keywords on mobile initially
 
@@ -45,12 +45,15 @@ export default function KeywordDisplay({ keywords, loading, editMode = false, on
   // Determine which keywords to show on mobile
   const displayedKeywords = showAllMobile ? keywords : keywords.slice(0, MOBILE_LIMIT)
   const hasMoreKeywords = keywords.length > MOBILE_LIMIT
+  
+  // Determine the title based on personName
+  const title = personName ? `${personName}'s Professional Signals` : 'Your Professional Signals'
 
   return (
     <div className="bg-gray-50 p-6 rounded-lg">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900">
-          Your Professional Signals ({keywords.length})
+          {title} ({keywords.length})
         </h3>
         {onToggleEdit && (
           <button

@@ -470,6 +470,10 @@ export default function OnboardingPage() {
 
   const handleContinueToReview = () => {
     // Validate required fields
+    if (!profileData.full_name?.trim()) {
+      alert('Full Name is required')
+      return
+    }
     if (!profileData.company?.trim()) {
       alert('Company is required')
       return
@@ -595,10 +599,10 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-3xl mx-auto">
         {/* Progress Bar */}
-        <div className="mb-8">
+        <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-700">Step {step} of 3</span>
             <span className="text-sm text-gray-500">{Math.round((step / 3) * 100)}%</span>
@@ -611,7 +615,7 @@ export default function OnboardingPage() {
           </div>
         </div>
 
-        <div className="card">
+        <div className="bg-white rounded-lg shadow-sm p-6 md:p-8">
           {/* Step 1: Resume Upload */}
           {step === 1 && (
             <div>
@@ -695,7 +699,7 @@ export default function OnboardingPage() {
                 We've pre-filled this from your resume. Review and edit as needed.
               </p>
 
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {/* Profile Picture Section */}
                 <ProfilePictureUpload
                   currentImage={profileData.profile_picture_url}
@@ -705,7 +709,7 @@ export default function OnboardingPage() {
                 />
 
                 {/* Basic Information */}
-                <div className="card space-y-4">
+                <div className="space-y-4 border-b border-gray-200 pb-4">
                   <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                     <span className="text-2xl">👤</span> Basic Information
                   </h3>
@@ -715,6 +719,7 @@ export default function OnboardingPage() {
                     value={profileData.full_name}
                     onChange={(e) => handleFullNameChange(e.target.value)}
                     placeholder="Your full name"
+                    required
                     autoFilled={autoFilledFields.full_name}
                   />
 
@@ -810,7 +815,7 @@ export default function OnboardingPage() {
                 </div>
 
                 {/* Professional Details - Required */}
-                <div className="card space-y-4 border-2 border-primary-100 bg-gradient-to-br from-white to-primary-50/20">
+                <div className="space-y-4 border-b border-gray-200 pb-4 bg-gradient-to-br from-white to-primary-50/20 rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                     <span className="text-2xl">💼</span> Professional Details
                     <span className="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded-full font-medium">Required</span>
@@ -847,7 +852,7 @@ export default function OnboardingPage() {
                 </div>
 
                 {/* Past Work Experience - Optional */}
-                <div className="card space-y-4 bg-gradient-to-br from-white to-purple-50/30">
+                <div className="space-y-4 bg-gradient-to-br from-white to-purple-50/30 rounded-lg p-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                       <span className="text-2xl">💼</span> Past Work Experience
@@ -1028,7 +1033,7 @@ export default function OnboardingPage() {
                 </div>
 
                 {/* Contact & Social - Optional */}
-                <div className="card space-y-4 bg-gradient-to-br from-white to-gray-50">
+                <div className="space-y-4 bg-gradient-to-br from-white to-gray-50 rounded-lg p-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                       <span className="text-2xl">🔗</span> Contact & Social
@@ -1172,7 +1177,7 @@ export default function OnboardingPage() {
               </div>
 
               {/* Navigation Buttons */}
-              <div className="flex gap-3 mt-8">
+              <div className="flex gap-3 mt-6">
                 <button
                   onClick={() => setStep(1)}
                   className="btn-secondary flex-1"
@@ -1191,12 +1196,12 @@ export default function OnboardingPage() {
 
           {/* Step 3: Review Profile & Signals */}
           {step === 3 && (
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
                   Review Your Profile
                 </h1>
-                <p className="text-gray-600 mb-6">
+                <p className="text-gray-600 mb-4">
                   Everything looks good? Confirm to complete your setup.
                 </p>
               </div>
@@ -1208,8 +1213,8 @@ export default function OnboardingPage() {
               />
 
               {/* Keywords Display */}
-              <div className="card">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <div className="space-y-2 rounded-lg p-4 bg-white border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                   <span className="text-2xl">✨</span> Your Professional Signals
                   <span className="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded-full">
                     {keywords.length} keywords
@@ -1219,23 +1224,21 @@ export default function OnboardingPage() {
               </div>
 
               {/* Confirmation Message */}
-              <div className="card bg-gradient-to-r from-purple-50 via-primary-50 to-purple-50 border-2 border-purple-200">
-                <div className="flex items-start gap-3">
-                  <span className="text-3xl">🚀</span>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 text-lg mb-1">
-                      Ready to unlock collaborations?
-                    </h4>
-                    <p className="text-sm text-gray-700">
-                      Your profile and signals will be used to match you with relevant opportunities
-                      and collaborators. You can always update your profile later.
-                    </p>
-                  </div>
+              <div className="bg-gradient-to-r from-purple-50 via-primary-50 to-purple-50 border border-purple-200 rounded-lg p-4 flex items-start gap-3">
+                <span className="text-3xl flex-shrink-0">🚀</span>
+                <div>
+                  <h4 className="font-semibold text-gray-900 text-lg mb-1">
+                    Ready to unlock collaborations?
+                  </h4>
+                  <p className="text-sm text-gray-700">
+                    Your profile and signals will be used to match you with relevant opportunities
+                    and collaborators. You can always update your profile later.
+                  </p>
                 </div>
               </div>
 
               {/* Navigation Buttons */}
-              <div className="flex gap-3">
+              <div className="flex gap-3 mt-4">
                 <button
                   onClick={() => setStep(2)}
                   className="btn-secondary flex-1"
