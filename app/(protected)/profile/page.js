@@ -234,14 +234,17 @@ export default function ProfilePage() {
     }
   }
 
-  const handleKeywordsExtracted = async (newKeywords) => {
+  const handleKeywordsExtracted = async (extractedData) => {
     setSavingKeywords(true)
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
 
+      // Extract keywords array from the data object
+      const newKeywords = extractedData.keywords || []
+      
       let finalKeywords = newKeywords
-      if (keywordProfile?.keywords) {
+      if (keywordProfile?.keywords && Array.isArray(keywordProfile.keywords)) {
         finalKeywords = mergeKeywords(keywordProfile.keywords, newKeywords)
       }
 
