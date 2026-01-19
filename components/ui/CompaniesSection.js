@@ -51,11 +51,21 @@ export default function CompaniesSection() {
     }
 
     .animate-scroll-companies-right {
-      animation: scroll-right-companies 40s linear infinite;
+      animation: scroll-right-companies 25s linear infinite;
     }
 
     .animate-scroll-companies-left {
-      animation: scroll-left-companies 50s linear infinite;
+      animation: scroll-left-companies 30s linear infinite;
+    }
+
+    @media (min-width: 768px) {
+      .animate-scroll-companies-right {
+        animation: scroll-right-companies 40s linear infinite;
+      }
+
+      .animate-scroll-companies-left {
+        animation: scroll-left-companies 50s linear infinite;
+      }
     }
   `
 
@@ -63,7 +73,7 @@ export default function CompaniesSection() {
     <>
       <style>{style}</style>
       <div className="py-0">
-        <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mb-4 uppercase tracking-wide font-semibold">Companies represented</p>
+        <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mb-4 uppercase tracking-wide font-semibold">Talent from top organizations</p>
         
         {/* Row 1 - Scrolls right */}
         <div className="mb-3 overflow-hidden">

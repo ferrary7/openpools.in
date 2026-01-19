@@ -50,11 +50,12 @@ export async function GET() {
     }
 
     // Remove duplicates and filter empty strings, normalize to title case
+    const invalidValues = ['.', 'na', 'no', 'nan']
     const uniqueCompanies = Array.from(
       new Set(
         (companies || [])
           .map(c => c.company?.trim())
-          .filter(c => c && c.length > 0)
+          .filter(c => c && c.length > 0 && !invalidValues.includes(c.toLowerCase()))
           .map(c => normalizeCompanyName(c))
       )
     ).sort()
