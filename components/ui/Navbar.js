@@ -67,7 +67,7 @@ export default function Navbar({ user }) {
           {/* Logo */}
           <div className="flex items-center space-x-8">
             <Link href="/dashboard">
-              <Logo width={140} height={36} />
+              <Logo width={120} height={32} className="sm:w-[140px]" />
             </Link>
 
             {/* Desktop Navigation */}

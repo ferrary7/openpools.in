@@ -26,7 +26,7 @@ export default function MatchCard({ match }) {
               <h3 className="text-lg font-semibold text-gray-900 hover:text-primary-600 transition-colors">
                 {match.fullName}
               </h3>
-              <p className="text-sm text-gray-500">{match.email}</p>
+              {match.username && <p className="text-sm text-gray-500">@{match.username}</p>}
             </div>
             <div className="text-right">
               <div className="text-3xl font-bold text-primary-600">
