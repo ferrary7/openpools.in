@@ -50,7 +50,7 @@ export async function GET() {
     }
 
     // Remove duplicates and filter empty strings, normalize to title case
-    const invalidValues = ['.', 'na', 'no', 'nan']
+    const invalidValues = ['.', 'na', 'no', 'nan', 'no experience', 'none', 'n/a', 'unemployed', 'student', 'freelancer', 'self-employed']
     const uniqueCompanies = Array.from(
       new Set(
         (companies || [])
