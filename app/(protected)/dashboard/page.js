@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import KeywordDisplay from '@/components/onboarding/KeywordDisplay'
 import CompaniesSection from '@/components/ui/CompaniesSection'
+import InsightsRefresher from '@/components/dashboard/InsightsRefresher'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -45,6 +46,14 @@ export default async function DashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Refresh insights silently on page load */}
+      <InsightsRefresher 
+        userId={user.id} 
+        keywords={keywordProfile?.keywords}
+        signalClassification={keywordProfile?.signal_classification}
+        complementarySkills={keywordProfile?.complementary_skills}
+      />
+      
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">
           Welcome back, {profile?.full_name || 'there'}!
