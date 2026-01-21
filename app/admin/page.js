@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import OnboardedUsersTable from '@/components/admin/OnboardedUsersTable'
+import OnboardingInsights from '@/components/admin/OnboardingInsights'
 
 export default async function AdminDashboard() {
   const supabase = await createClient()
@@ -112,6 +113,9 @@ export default async function AdminDashboard() {
           )}
         </div>
       </div>
+
+      {/* Onboarding Insights */}
+      <OnboardingInsights />
 
       {/* Onboarded Users Table */}
       <OnboardedUsersTable />
