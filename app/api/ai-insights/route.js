@@ -8,7 +8,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
-const CACHE_VERSION = 'v5' // Increment when prompts change
+const CACHE_VERSION = 'v6' // Increment when prompts change
 
 // Disable caching for this endpoint - always fetch fresh data from database
 export const dynamic = 'force-dynamic'

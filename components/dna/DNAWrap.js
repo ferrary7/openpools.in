@@ -89,7 +89,7 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
       if (!profile?.id || !keywordProfile?.keywords) return
       // NOTE: metrics is optional - don't wait for it to load before fetching AI insights
 
-      const CACHE_VERSION = 'v5' // Increment to invalidate old caches when prompts change
+      const CACHE_VERSION = 'v6' // Increment to invalidate old caches when prompts change
       const CACHE_KEY = `ai_insights_${CACHE_VERSION}_${profile.id}`
       const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000 // 7 days
 
