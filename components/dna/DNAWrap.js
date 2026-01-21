@@ -94,6 +94,13 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
       const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000 // 7 days
 
       try {
+        // Clear old cache versions to prevent stale data when version increments
+        const oldVersions = ['v1', 'v2', 'v3', 'v4', 'v5']
+        oldVersions.forEach(version => {
+          const oldKey = `ai_insights_${version}_${profile.id}`
+          localStorage.removeItem(oldKey)
+        })
+
         // Generate hash of current skills to detect changes
         const skills = keywordProfile.keywords.slice(0, 15).map(k =>
           typeof k === 'string' ? k : k.keyword || k.name || ''

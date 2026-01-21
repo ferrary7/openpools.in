@@ -2,6 +2,9 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { isUUID } from '@/lib/username'
 
+// Disable caching - always fetch fresh profile data
+export const dynamic = 'force-dynamic'
+
 // GET - Fetch user profile with privacy rules
 export async function GET(request, { params }) {
   try {

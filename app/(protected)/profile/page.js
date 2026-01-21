@@ -66,37 +66,45 @@ export default function ProfilePage() {
 
     if (!user) return
 
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single()
+    try {
+      // Fetch fresh profile data from API (with force-dynamic)
+      const response = await fetch(`/api/profile/${user.id}`)
+      const data = await response.json()
 
-    const { data: keywordData } = await supabase
-      .from('keyword_profiles')
-      .select('*')
-      .eq('user_id', user.id)
-      .single()
+      if (!response.ok || !data.profile) {
+        setLoading(false)
+        return
+      }
 
-    setProfile(profileData)
-    setKeywordProfile(keywordData)
-    setUsernameInput(profileData?.username || '')
+      // Extract profile and keyword data from API response
+      const profileData = data.profile
+      const keywordData = {
+        keywords: profileData.keywords || [],
+        total_keywords: profileData.total_keywords || 0
+      }
 
-    if (profileData) {
-      setFormData({
-        full_name: profileData.full_name || '',
-        bio: profileData.bio || '',
-        company: profileData.company || '',
-        job_title: profileData.job_title || '',
-        location: profileData.location || '',
-        phone_number: profileData.phone_number || '',
-        show_phone_to_collaborators: profileData.show_phone_to_collaborators !== false,
-        hide_profile_picture_from_collaborators: profileData.hide_profile_picture_from_collaborators || false,
-        linkedin_url: profileData.linkedin_url || '',
-        website: profileData.website || '',
-        twitter_url: profileData.twitter_url || '',
-        github_url: profileData.github_url || ''
-      })
+      setProfile(profileData)
+      setKeywordProfile(keywordData)
+      setUsernameInput(profileData?.username || '')
+
+      if (profileData) {
+        setFormData({
+          full_name: profileData.full_name || '',
+          bio: profileData.bio || '',
+          company: profileData.company || '',
+          job_title: profileData.job_title || '',
+          location: profileData.location || '',
+          phone_number: profileData.phone_number || '',
+          show_phone_to_collaborators: profileData.show_phone_to_collaborators !== false,
+          hide_profile_picture_from_collaborators: profileData.hide_profile_picture_from_collaborators || false,
+          linkedin_url: profileData.linkedin_url || '',
+          website: profileData.website || '',
+          twitter_url: profileData.twitter_url || '',
+          github_url: profileData.github_url || ''
+        })
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error)
     }
 
     setLoading(false)
