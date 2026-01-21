@@ -46,6 +46,10 @@ export async function GET(request) {
       smartCombinations: insights.smart_combinations,
       generatedAt: insights.generated_at,
       cacheVersion: insights.cache_version
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
+      }
     })
 
   } catch (error) {

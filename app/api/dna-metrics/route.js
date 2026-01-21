@@ -410,6 +410,10 @@ export async function GET(request) {
         similarProfessionals: similarProfessionals,
         complementarySkills
       }
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
+      }
     })
 
   } catch (error) {
