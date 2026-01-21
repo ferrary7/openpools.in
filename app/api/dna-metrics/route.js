@@ -3,6 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import { findTopMatches } from '@/lib/matching'
 import { recalculateKeywordWeights } from '@/lib/keywords'
 
+// Disable caching for this endpoint - always fetch fresh data
+export const dynamic = 'force-dynamic'
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url)
