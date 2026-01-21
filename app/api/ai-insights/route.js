@@ -8,7 +8,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
-const CACHE_VERSION = 'v4' // Increment when prompts change
+const CACHE_VERSION = 'v5' // Increment when prompts change
 
 // GET endpoint - fetch stored insights from database
 export async function GET(request) {
