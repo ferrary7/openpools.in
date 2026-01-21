@@ -10,6 +10,9 @@ const supabase = createClient(
 
 const CACHE_VERSION = 'v5' // Increment when prompts change
 
+// Disable caching for this endpoint - always fetch fresh data from database
+export const dynamic = 'force-dynamic'
+
 // GET endpoint - fetch stored insights from database
 export async function GET(request) {
   try {
