@@ -29,17 +29,17 @@ export async function GET(req) {
     const targetDate = new Date(now.getFullYear(), 2, 31) // March 31st
     const targetCount = 2000
 
-    // Get total onboarded users (have full_name - considered completed onboarding)
+    // Get total onboarded users (onboarding_completed = true)
     const { count: totalOnboarded } = await supabase
       .from('profiles')
       .select('*', { count: 'exact', head: true })
-      .not('full_name', 'is', null)
+      .eq('onboarding_completed', true)
 
     // Get today's onboardings
     const { data: todayOnboardings } = await supabase
       .from('profiles')
       .select('id, created_at')
-      .not('full_name', 'is', null)
+      .eq('onboarding_completed', true)
       .gte('created_at', today.toISOString())
       .lt('created_at', new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString())
 
@@ -47,7 +47,7 @@ export async function GET(req) {
     const { data: weekOnboardings } = await supabase
       .from('profiles')
       .select('id, created_at')
-      .not('full_name', 'is', null)
+      .eq('onboarding_completed', true)
       .gte('created_at', weekStart.toISOString())
       .lt('created_at', today.toISOString())
 
@@ -55,7 +55,7 @@ export async function GET(req) {
     const { data: monthOnboardings } = await supabase
       .from('profiles')
       .select('id, created_at')
-      .not('full_name', 'is', null)
+      .eq('onboarding_completed', true)
       .gte('created_at', monthStart.toISOString())
       .lt('created_at', today.toISOString())
 
