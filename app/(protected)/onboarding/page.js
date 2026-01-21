@@ -590,6 +590,40 @@ export default function OnboardingPage() {
         }
       }
 
+      // 4. Generate AI insights before redirect (ensure DNA page has data ready)
+      try {
+        const aiResponse = await fetch('/api/ai-insights', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            skills: keywords.slice(0, 15),
+          })
+        })
+        
+        if (aiResponse.ok) {
+          console.log('AI insights generated during onboarding')
+        } else {
+          console.warn('AI insights generation failed, user can still proceed')
+        }
+      } catch (aiError) {
+        console.error('Error generating AI insights:', aiError)
+        // Don't fail the onboarding process if AI generation fails
+      }
+
+      // 5. Calculate matches so dashboard shows accurate count
+      try {
+        const matchesResponse = await fetch('/api/matches')
+        if (matchesResponse.ok) {
+          console.log('Matches calculated during onboarding')
+        } else {
+          console.warn('Match calculation failed, user can still proceed')
+        }
+      } catch (matchError) {
+        console.error('Error calculating matches:', matchError)
+        // Don't fail the onboarding process if match calculation fails
+      }
+
       router.push('/dashboard')
     } catch (error) {
       alert('Error: ' + error.message)

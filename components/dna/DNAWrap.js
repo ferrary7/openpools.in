@@ -86,7 +86,8 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
   // Fetch AI insights - first from database, then generate if needed
   useEffect(() => {
     const fetchAiInsights = async () => {
-      if (!profile?.id || !keywordProfile?.keywords || !metrics) return
+      if (!profile?.id || !keywordProfile?.keywords) return
+      // NOTE: metrics is optional - don't wait for it to load before fetching AI insights
 
       const CACHE_VERSION = 'v4' // Increment to invalidate old caches when prompts change
       const CACHE_KEY = `ai_insights_${CACHE_VERSION}_${profile.id}`
@@ -98,6 +99,8 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
           typeof k === 'string' ? k : k.keyword || k.name || ''
         )
         const skillsHash = btoa(skills.sort().join(','))
+        
+        setAiLoading(true)
 
         // Check localStorage first (fastest)
         const cached = localStorage.getItem(CACHE_KEY)
@@ -107,7 +110,8 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
 
           // Use cache if fresh, skills unchanged, and version matches
           if (age < CACHE_DURATION && hash === skillsHash && version === CACHE_VERSION) {
-            setAiInsights(data)
+            setAiInsights(data)  // ✓ Correct: set the actual data object, not wrapped
+            setAiLoading(false)
             return
           }
         }
@@ -119,7 +123,6 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
         if (dbResponse.ok) {
           const dbData = await dbResponse.json()
           if (dbData.exists) {
-            console.log('Using database insights for', profile.id)
             setAiInsights(dbData)
 
             // Cache in localStorage for faster future loads
@@ -135,21 +138,32 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
         }
 
         // Database miss - generate new insights (will be stored in DB by API)
-        console.log('Generating fresh insights for', profile.id)
+        console.log('⚡ Generating fresh insights for', profile.id)
         const response = await fetch('/api/ai-insights', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             userId: profile.id,
             skills,
-            signalClassification: metrics.signalClassification,
-            complementarySkills: metrics.complementarySkills
+            signalClassification: metrics?.signalClassification || {},
+            complementarySkills: metrics?.complementarySkills || []
           })
         })
 
-        if (!response.ok) throw new Error('Failed to fetch AI insights')
+        if (!response.ok) {
+          const errorData = await response.json()
+          console.error('❌ API error:', response.status, errorData)
+          throw new Error('Failed to fetch AI insights: ' + response.status)
+        }
 
         const data = await response.json()
+        console.log('📊 Fresh insights generated:', data)
+        console.log('📋 Setting aiInsights from fresh generation:', {
+          johariWindow: data.johariWindow ? '✓' : '✗',
+          skillGap: data.skillGap ? '✓' : '✗',
+          smartCombinations: data.smartCombinations ? '✓' : '✗',
+          careerFit: data.careerFit ? '✓' : '✗'
+        })
         setAiInsights(data)
 
         // Cache the result with version
@@ -160,14 +174,15 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
           version: CACHE_VERSION
         }))
       } catch (error) {
-        console.error('Error fetching AI insights:', error)
+        console.error('❌ Error fetching AI insights:', error)
+        setAiInsights(null) // Explicitly set to null so we know it failed
       } finally {
         setAiLoading(false)
       }
     }
 
     fetchAiInsights()
-  }, [profile?.id, keywordProfile?.keywords, metrics])
+  }, [profile?.id, keywordProfile?.keywords])
 
   // Calculate basic stats
   const totalMarkers = keywordProfile?.total_keywords || 0
@@ -226,35 +241,42 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
     }
   }, [metrics])
 
-  // Track scroll progress and update active section
+  // Track scroll progress and update active section (optimized)
   useEffect(() => {
+    let rafId = null
     const handleScroll = () => {
-      const windowHeight = window.innerHeight
-      const documentHeight = document.documentElement.scrollHeight - windowHeight
-      const scrolled = window.scrollY
-      const progress = (scrolled / documentHeight) * 100
-      setScrollProgress(Math.min(progress, 100))
+      if (rafId) cancelAnimationFrame(rafId)
+      rafId = requestAnimationFrame(() => {
+        const windowHeight = window.innerHeight
+        const documentHeight = document.documentElement.scrollHeight - windowHeight
+        const scrolled = window.scrollY
+        const progress = (scrolled / documentHeight) * 100
+        setScrollProgress(Math.min(progress, 100))
 
-      // Update current section based on scroll position
-      let closestSection = 0
-      let closestDistance = Infinity
+        // Update current section based on scroll position (batched DOM read)
+        let closestSection = 0
+        let closestDistance = Infinity
 
-      sectionsRef.current.forEach((section, index) => {
-        if (!section) return
-        const rect = section.getBoundingClientRect()
-        const distance = Math.abs(rect.top - windowHeight / 2)
-        
-        if (distance < closestDistance) {
-          closestDistance = distance
-          closestSection = index
-        }
+        sectionsRef.current.forEach((section, index) => {
+          if (!section) return
+          const rect = section.getBoundingClientRect()
+          const distance = Math.abs(rect.top - windowHeight / 2)
+          
+          if (distance < closestDistance) {
+            closestDistance = distance
+            closestSection = index
+          }
+        })
+
+        setCurrentSection(closestSection)
       })
-
-      setCurrentSection(closestSection)
     }
 
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      if (rafId) cancelAnimationFrame(rafId)
+    }
   }, [])
 
   if (!metrics) {
@@ -327,7 +349,7 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
       id: 'skill-insights',
       content: (isVisible) => {
         const currentSlide = horizontalSlides['skill-insights'] || 0
-
+        
         const slides = [
           // Slide 1: Johari Window
           {
@@ -526,6 +548,12 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
                   </div>
                 </div>
               </div>
+            ) : aiInsights === null ? (
+              <div className="text-center text-red-400">
+                <div className="text-5xl md:text-6xl mb-4">⚠️</div>
+                <p className="text-sm md:text-base">Failed to generate skill insights</p>
+                <p className="text-xs md:text-sm text-gray-400 mt-2">Try refreshing the page or contact support</p>
+              </div>
             ) : (
               <div className="text-center text-gray-400">
                 <div className="text-5xl md:text-6xl mb-4">🪟</div>
@@ -545,12 +573,12 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
             ) : aiInsights?.skillGap?.targetRoles ? (
               <div className="w-full flex items-center justify-center px-2 sm:px-4 py-4">
                 <div className="w-full max-w-2xl relative">
-                  <div className="p-3 sm:p-5 md:p-6 relative">
+                  <div className="p-2 sm:p-3 md:p-4 relative">
                     {/* Roadmap Path Line */}
                     <div className="absolute left-4 sm:left-6 md:left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary-500 via-purple-500 to-pink-500 opacity-30"></div>
 
                     {/* Role Cards */}
-                    <div className="space-y-2 sm:space-y-3 md:space-y-4">
+                    <div className="space-y-1 sm:space-y-1.5 md:space-y-2">
                       {aiInsights.skillGap.targetRoles.slice(0, 3).map((role, i) => (
                     <div
                       key={i}
@@ -568,33 +596,33 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
                           {/* Gradient overlay */}
                           <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
-                          <div className="relative p-2 sm:p-3 md:p-5">
+                          <div className="relative p-1.5 sm:p-2.5 md:p-3.5">
                             {/* Header */}
-                            <div className="flex items-center justify-between mb-1 sm:mb-2 md:mb-4">
+                            <div className="flex items-center justify-between mb-0.5 sm:mb-1 md:mb-2">
                               <div className="flex items-center gap-1 sm:gap-2 md:gap-3 flex-1 min-w-0">
-                                <div className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-md sm:rounded-lg bg-gradient-to-br from-primary-500/25 to-purple-500/25 border border-primary-500/40 flex items-center justify-center text-xs sm:text-lg md:text-xl flex-shrink-0">
+                                <div className="w-5 h-5 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-md sm:rounded-lg bg-gradient-to-br from-primary-500/25 to-purple-500/25 border border-primary-500/40 flex items-center justify-center text-[10px] sm:text-base md:text-lg flex-shrink-0">
                                   {i === 0 ? '🎯' : i === 1 ? '🚀' : '⭐'}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <h3 className="text-xs sm:text-lg md:text-xl font-bold text-white truncate">{role.role}</h3>
-                                  <p className="text-[7px] sm:text-[10px] md:text-xs text-gray-400 uppercase tracking-wide font-medium hidden sm:block">Career Target</p>
+                                  <h3 className="text-xs sm:text-base md:text-lg font-bold text-white truncate overflow-hidden overflow-ellipsis leading-tight" title={role.role}>{role.role}</h3>
+                                  <p className="text-[6px] sm:text-[9px] md:text-[10px] text-gray-400 uppercase tracking-wide font-medium hidden sm:block">Career Target</p>
                                 </div>
                               </div>
 
                               {/* Match Score */}
-                              <div className="text-right ml-2 sm:ml-2 md:ml-4 flex-shrink-0">
-                                <div className="text-lg sm:text-3xl md:text-4xl font-black bg-gradient-to-br from-primary-400 to-purple-500 bg-clip-text text-transparent leading-none">
+                              <div className="text-right ml-1.5 sm:ml-2 md:ml-3 flex-shrink-0">
+                                <div className="text-base sm:text-2xl md:text-3xl font-black bg-gradient-to-br from-primary-400 to-purple-500 bg-clip-text text-transparent leading-tight">
                                   {role.currentMatch}%
                                 </div>
-                                <p className="text-[7px] sm:text-[10px] md:text-xs text-gray-400 uppercase tracking-wide mt-0 sm:mt-1 font-medium hidden sm:block">Ready</p>
+                                <p className="text-[6px] sm:text-[9px] md:text-[10px] text-gray-400 uppercase tracking-wide mt-0 sm:mt-0.5 font-medium hidden sm:block">Ready</p>
                               </div>
                             </div>
 
                             {/* Progress Bar */}
-                            <div className="mb-1 sm:mb-3 md:mb-4">
-                              <div className="flex items-center justify-between mb-0.5 sm:mb-1.5 md:mb-2">
-                                <span className="text-[8px] sm:text-[10px] md:text-xs text-gray-300 font-semibold">Skill Match</span>
-                                <span className="text-[8px] sm:text-[10px] md:text-xs text-gray-400 font-medium">{100 - role.currentMatch}% to go</span>
+                            <div className="mb-0.5 sm:mb-1.5 md:mb-2">
+                              <div className="flex items-center justify-between mb-0.5 sm:mb-1 md:mb-1.5">
+                                <span className="text-[7px] sm:text-[9px] md:text-xs text-gray-300 font-semibold">Skill Match</span>
+                                <span className="text-[7px] sm:text-[9px] md:text-xs text-gray-400 font-medium">{100 - role.currentMatch}% to go</span>
                               </div>
                               <div className="relative h-1 sm:h-2 md:h-2.5 bg-white/10 rounded-full overflow-hidden">
                                 <div
@@ -618,24 +646,25 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
 
                             {/* Skills to Learn */}
                             <div>
-                              <div className="flex items-center gap-1 sm:gap-2 md:gap-2.5 mb-1 sm:mb-2 md:mb-2.5">
-                                <span className="text-[7px] sm:text-[10px] md:text-xs font-bold text-gray-300 uppercase tracking-wider">Skills</span>
+                              <div className="flex items-center gap-0.5 sm:gap-1 md:gap-2 mb-0.5 sm:mb-1 md:mb-1.5">
+                                <span className="text-[6px] sm:text-[8px] md:text-xs font-bold text-gray-300 uppercase tracking-wider">Skills</span>
                                 <div className="flex-1 h-px bg-white/15"></div>
                               </div>
-                              <div className="flex flex-wrap gap-0.5 sm:gap-1.5 md:gap-2">
+                              <div className="flex flex-wrap gap-0.5 sm:gap-1 md:gap-1.5">
                                 {role.missingSkills.slice(0, 4).map((skill, idx) => (
                                   <div
                                     key={idx}
-                                    className="group/skill px-1.5 sm:px-2.5 md:px-3 py-0.5 sm:py-1 md:py-1.5 bg-white/8 border border-white/15 hover:border-primary-500/50 rounded-sm sm:rounded-lg text-[9px] sm:text-xs md:text-sm text-gray-200 hover:text-white transition-all duration-300 cursor-default font-medium"
+                                    className="group/skill px-1 sm:px-2 md:px-2.5 py-0.5 sm:py-0.5 md:py-1 bg-white/8 border border-white/15 hover:border-primary-500/50 rounded-sm text-[7px] sm:text-[8px] md:text-xs text-gray-200 hover:text-white transition-all duration-300 cursor-default font-medium max-w-[100px] truncate"
+                                    title={skill}
                                   >
-                                    <span className="flex items-center gap-0.5 sm:gap-1 md:gap-1.5">
-                                      <span className="w-0.5 h-0.5 sm:w-1 sm:h-1 md:w-1.5 md:h-1.5 rounded-full bg-primary-400 opacity-70 group-hover/skill:opacity-100"></span>
-                                      {skill}
+                                    <span className="flex items-center gap-0.5 sm:gap-1 md:gap-1.5 truncate">
+                                      <span className="w-0.5 h-0.5 sm:w-1 sm:h-1 md:w-1.5 md:h-1.5 rounded-full bg-primary-400 opacity-70 group-hover/skill:opacity-100 flex-shrink-0"></span>
+                                      <span className="truncate">{skill}</span>
                                     </span>
                                   </div>
                                 ))}
                                 {role.missingSkills.length > 4 && (
-                                  <div className="px-1.5 sm:px-2.5 md:px-3 py-0.5 sm:py-1 md:py-1.5 bg-white/8 border border-white/15 rounded-sm sm:rounded-lg text-[9px] sm:text-xs md:text-sm text-gray-400 font-medium">
+                                  <div className="px-1 sm:px-2 md:px-2.5 py-0.5 sm:py-0.5 md:py-1 bg-white/8 border border-white/15 rounded-sm text-[7px] sm:text-[8px] md:text-xs text-gray-400 font-medium">
                                     +{role.missingSkills.length - 4}
                                   </div>
                                 )}
@@ -652,7 +681,7 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
                 </div>
 
                 {/* Bottom Info */}
-                <div className="mt-3 sm:mt-4 md:mt-5 ml-8 sm:ml-10 md:ml-20 flex flex-wrap items-center gap-3 sm:gap-4 md:gap-5 text-[9px] sm:text-[10px] md:text-xs text-gray-400 font-medium">
+                <div className="mt-1.5 sm:mt-2.5 md:mt-3 ml-8 sm:ml-10 md:ml-20 flex flex-wrap items-center gap-2 sm:gap-3 md:gap-4 text-[7px] sm:text-[8px] md:text-xs text-gray-400 font-medium">
                   <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2">
                     <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 md:w-2 md:h-2 rounded-full bg-gradient-to-r from-primary-500 to-purple-500"></div>
                     <span>Current Progress</span>
@@ -664,6 +693,12 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
                 </div>
                   </div>
                 </div>
+              </div>
+            ) : aiInsights === null ? (
+              <div className="text-center text-red-400">
+                <div className="text-5xl md:text-6xl mb-4">⚠️</div>
+                <p className="text-sm md:text-base">Failed to generate skill roadmap</p>
+                <p className="text-xs md:text-sm text-gray-400 mt-2">Try refreshing the page or contact support</p>
               </div>
             ) : (
               <div className="text-center text-gray-400">
@@ -826,6 +861,12 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
                     </div>
                   </div>
                 </div>
+              </div>
+            ) : aiInsights === null ? (
+              <div className="text-center text-red-400">
+                <div className="text-5xl md:text-6xl mb-4">⚠️</div>
+                <p className="text-sm md:text-base">Failed to generate skill synergies</p>
+                <p className="text-xs md:text-sm text-gray-400 mt-2">Try refreshing the page or contact support</p>
               </div>
             ) : (
               <div className="text-center text-gray-400">

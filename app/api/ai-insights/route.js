@@ -76,7 +76,6 @@ export async function POST(request) {
 
     // If fresh insights exist, return them
     if (existingInsights) {
-      console.log(`Using cached insights for user ${userId}`)
       return NextResponse.json({
         careerFit: existingInsights.career_fit,
         johariWindow: existingInsights.johari_window,
@@ -90,7 +89,18 @@ export async function POST(request) {
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
 
     // Prepare context data
-    const skillsList = skills.slice(0, 15).join(', ')
+    // Extract skill names from objects (keywords might be {keyword: "Python", weight: 0.8} or just strings)
+    const skillsList = skills
+      .slice(0, 15)
+      .map(skill => {
+        if (typeof skill === 'string') return skill
+        if (typeof skill === 'object' && skill) {
+          return skill.keyword || skill.skill || skill.name || String(skill)
+        }
+        return String(skill)
+      })
+      .join(', ')
+    
     const journalContext = recentJournals?.slice(0, 3).map(j => j.content || '').join('\n') || 'No recent journals'
     const coreSkills = signalClassification?.core?.slice(0, 5).join(', ') || 'None'
     const recentSkills = signalClassification?.recent?.slice(0, 5).join(', ') || 'None'
@@ -183,12 +193,17 @@ Return ONLY valid JSON, no markdown.`),
     // Parse responses
     const parseJSON = (response) => {
       try {
+        console.log('🔍 Response type:', typeof response)
+        console.log('🔍 Response keys:', Object.keys(response))
         const text = response.response.text()
+        console.log('✅ Extracted text length:', text.length)
         // Remove markdown code blocks if present
         const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+        console.log('📄 Cleaned text:', cleaned.substring(0, 100) + '...')
         return JSON.parse(cleaned)
       } catch (error) {
-        console.error('JSON parse error:', error)
+        console.error('❌ JSON parse error:', error)
+        console.error('❌ Error details:', error.message)
         return null
       }
     }

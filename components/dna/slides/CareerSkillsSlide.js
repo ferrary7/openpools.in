@@ -149,10 +149,17 @@ export default function CareerSkillsSlide({
       content: (
         <div className="w-full space-y-4 md:space-y-6 px-4">
           {(() => {
-            // Find max weight to normalize percentages
-            const maxWeight = Math.max(...topSkills.map(skill => typeof skill === 'object' && skill.weight ? skill.weight : 1.0), 1)
+            // Sort skills by weight (highest first)
+            const sortedSkills = [...topSkills].sort((a, b) => {
+              const weightA = typeof a === 'object' && a.weight ? a.weight : 1.0
+              const weightB = typeof b === 'object' && b.weight ? b.weight : 1.0
+              return weightB - weightA
+            })
             
-            return topSkills.map((skill, index) => {
+            // Find max weight to normalize percentages
+            const maxWeight = Math.max(...sortedSkills.map(skill => typeof skill === 'object' && skill.weight ? skill.weight : 1.0), 1)
+            
+            return sortedSkills.map((skill, index) => {
               const skillName = typeof skill === 'string' ? skill : skill.keyword || skill.name || 'Skill'
               const weight = typeof skill === 'object' && skill.weight ? skill.weight : 1.0
               const percentage = Math.round((weight / maxWeight) * 100)

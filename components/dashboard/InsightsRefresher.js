@@ -22,11 +22,14 @@ export default function InsightsRefresher({ userId, keywords, signalClassificati
           })
         })
 
+        const responseData = await response.json()
+
         if (response.ok) {
-          console.log('Insights refreshed successfully')
+          // Store in localStorage to signal that insights are ready
+          localStorage.setItem(`ai_insights_ready_${userId}`, 'true')
         }
       } catch (error) {
-        console.error('Error refreshing insights:', error)
+        console.error('❌ Error refreshing insights:', error)
       }
     }
 
