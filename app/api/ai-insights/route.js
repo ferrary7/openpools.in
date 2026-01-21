@@ -105,7 +105,10 @@ export async function POST(request) {
     const coreSkills = signalClassification?.core?.slice(0, 5).join(', ') || 'None'
     const recentSkills = signalClassification?.recent?.slice(0, 5).join(', ') || 'None'
     const hiddenSkills = signalClassification?.hidden?.slice(0, 5).join(', ') || 'None'
-    const topComplementary = complementarySkills?.slice(0, 5).map(s => s.skill).join(', ') || 'None'
+    const topComplementary = complementarySkills?.slice(0, 5).map(s => s.skill).join(', ') || ''
+    
+    // If no complementary skills provided, generate them as potential learning areas
+    const complementaryForPrompt = topComplementary || `Suggest 4-5 skills that would complement these skills: ${skillsList}`
 
     // Run all 4 AI prompts in parallel for efficiency
     const [careerFit, johariWindow, skillGap, smartCombos] = await Promise.all([
@@ -122,7 +125,6 @@ Return ONLY valid JSON, no markdown, no explanation.`),
 
       // 2. Johari Window - Return SKILL LISTS, not sentences
       model.generateContent(`Create Johari Window using user's skills: ${skillsList}
-Complementary skills: ${topComplementary}
 
 IMPORTANT: Distribute these skills into 4 quadrants:
 
@@ -140,7 +142,7 @@ HIDDEN QUADRANT (Underutilized - skills user has but doesn't showcase):
 - Skills that are valuable but perhaps not highlighted enough
 
 UNKNOWN QUADRANT (Potential - skills to explore):
-- Pick 3-4 skills from complementary skills list: ${topComplementary}
+- ${topComplementary ? `Pick 3-4 skills from this list: ${topComplementary}` : `Suggest 3-4 NEW skills that would complement the user's expertise and create powerful synergies. Think about adjacent technologies, related domains, or skills that unlock career growth opportunities.`}
 - These are skills the user doesn't have but should consider learning
 
 Return ONLY valid JSON with ARRAYS of skills:
