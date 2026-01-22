@@ -8,8 +8,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
-const CACHE_VERSION = 'v6' // Increment when prompts change
-
 // Disable caching for this endpoint - always fetch fresh data from database
 export const dynamic = 'force-dynamic'
 
@@ -23,7 +21,7 @@ export async function GET(request) {
       return NextResponse.json({ error: 'userId required' }, { status: 400 })
     }
 
-    // Fetch insights from database
+    // Fetch insights from database (by user_id only)
     const { data: insights, error } = await supabase
       .from('ai_insights')
       .select('*')
@@ -37,15 +35,14 @@ export async function GET(request) {
       }, { status: 404 })
     }
 
-    // Return stored insights
+    // Return stored insights (no cacheVersion)
     return NextResponse.json({
       exists: true,
       careerFit: insights.career_fit,
       johariWindow: insights.johari_window,
       skillGap: insights.skill_gap,
       smartCombinations: insights.smart_combinations,
-      generatedAt: insights.generated_at,
-      cacheVersion: insights.cache_version
+      generatedAt: insights.generated_at
     }, {
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
@@ -69,19 +66,16 @@ export async function POST(request) {
       return NextResponse.json({ error: 'userId and skills required' }, { status: 400 })
     }
 
-    // Generate hash of skills to detect changes
-    const skillsHash = Buffer.from(skills.slice(0, 15).sort().join(',')).toString('base64')
+    // No skillsHash or cache versioning - DB is the only cache
 
-    // Check database for existing insights
+    // Check database for existing insights (by user_id only)
     const { data: existingInsights } = await supabase
       .from('ai_insights')
       .select('*')
       .eq('user_id', userId)
-      .eq('cache_version', CACHE_VERSION)
-      .eq('skills_hash', skillsHash)
       .single()
 
-    // If fresh insights exist, return them
+    // If insights exist, return them
     if (existingInsights) {
       return NextResponse.json({
         careerFit: existingInsights.career_fit,
@@ -235,7 +229,7 @@ Return ONLY valid JSON, no markdown.`),
       generatedAt: new Date().toISOString()
     }
 
-    // Store insights in database (upsert: insert or update)
+    // Store insights in database (upsert: insert or update, no cache fields)
     const { error: dbError } = await supabase
       .from('ai_insights')
       .upsert({
@@ -244,8 +238,6 @@ Return ONLY valid JSON, no markdown.`),
         johari_window: insights.johariWindow,
         skill_gap: insights.skillGap,
         smart_combinations: insights.smartCombinations,
-        skills_hash: skillsHash,
-        cache_version: CACHE_VERSION,
         generated_at: insights.generatedAt
       }, {
         onConflict: 'user_id'

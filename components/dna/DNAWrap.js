@@ -86,66 +86,27 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
   // Fetch AI insights - first from database, then generate if needed
   useEffect(() => {
     const fetchAiInsights = async () => {
-      if (!profile?.id || !keywordProfile?.keywords) return
-      // NOTE: metrics is optional - don't wait for it to load before fetching AI insights
-
-      const CACHE_VERSION = 'v6' // Increment to invalidate old caches when prompts change
-      const CACHE_KEY = `ai_insights_${CACHE_VERSION}_${profile.id}`
-      const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000 // 7 days
-
+      if (!profile?.id || !keywordProfile?.keywords) return;
+      setAiLoading(true);
       try {
-        // Clear old cache versions to prevent stale data when version increments
-        const oldVersions = ['v1', 'v2', 'v3', 'v4', 'v5']
-        oldVersions.forEach(version => {
-          const oldKey = `ai_insights_${version}_${profile.id}`
-          localStorage.removeItem(oldKey)
-        })
-
-        // Generate hash of current skills to detect changes
+        // Generate skills array
         const skills = keywordProfile.keywords.slice(0, 15).map(k =>
           typeof k === 'string' ? k : k.keyword || k.name || ''
-        )
-        const skillsHash = btoa(skills.sort().join(','))
-        
-        setAiLoading(true)
-
-        // Check localStorage first (fastest)
-        const cached = localStorage.getItem(CACHE_KEY)
-        if (cached) {
-          const { data, timestamp, hash, version } = JSON.parse(cached)
-          const age = Date.now() - timestamp
-
-          // Use cache if fresh, skills unchanged, and version matches
-          if (age < CACHE_DURATION && hash === skillsHash && version === CACHE_VERSION) {
-            setAiInsights(data)  // ✓ Correct: set the actual data object, not wrapped
-            setAiLoading(false)
-            return
-          }
-        }
+        );
 
         // Try to fetch from database (shared across users)
-        setAiLoading(true)
-        const dbResponse = await fetch(`/api/ai-insights?userId=${profile.id}`)
-
+        const dbResponse = await fetch(`/api/ai-insights?userId=${profile.id}`);
         if (dbResponse.ok) {
-          const dbData = await dbResponse.json()
+          const dbData = await dbResponse.json();
           if (dbData.exists) {
-            setAiInsights(dbData)
-
-            // Cache in localStorage for faster future loads
-            localStorage.setItem(CACHE_KEY, JSON.stringify({
-              data: dbData,
-              timestamp: Date.now(),
-              hash: skillsHash,
-              version: CACHE_VERSION
-            }))
-            setAiLoading(false)
-            return
+            setAiInsights(dbData);
+            setAiLoading(false);
+            return;
           }
         }
 
         // Database miss - generate new insights (will be stored in DB by API)
-        console.log('⚡ Generating fresh insights for', profile.id)
+        console.log('⚡ Generating fresh insights for', profile.id);
         const response = await fetch('/api/ai-insights', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -155,41 +116,25 @@ export default function DNAWrap({ profile, keywordProfile, showcaseItems = [], i
             signalClassification: metrics?.signalClassification || {},
             complementarySkills: metrics?.complementarySkills || []
           })
-        })
+        });
 
         if (!response.ok) {
-          const errorData = await response.json()
-          console.error('❌ API error:', response.status, errorData)
-          throw new Error('Failed to fetch AI insights: ' + response.status)
+          const errorData = await response.json();
+          console.error('❌ API error:', response.status, errorData);
+          throw new Error('Failed to fetch AI insights: ' + response.status);
         }
 
-        const data = await response.json()
-        console.log('📊 Fresh insights generated:', data)
-        console.log('📋 Setting aiInsights from fresh generation:', {
-          johariWindow: data.johariWindow ? '✓' : '✗',
-          skillGap: data.skillGap ? '✓' : '✗',
-          smartCombinations: data.smartCombinations ? '✓' : '✗',
-          careerFit: data.careerFit ? '✓' : '✗'
-        })
-        setAiInsights(data)
-
-        // Cache the result with version
-        localStorage.setItem(CACHE_KEY, JSON.stringify({
-          data,
-          timestamp: Date.now(),
-          hash: skillsHash,
-          version: CACHE_VERSION
-        }))
+        const data = await response.json();
+        setAiInsights(data);
       } catch (error) {
-        console.error('❌ Error fetching AI insights:', error)
-        setAiInsights(null) // Explicitly set to null so we know it failed
+        console.error('❌ Error fetching AI insights:', error);
+        setAiInsights(null);
       } finally {
-        setAiLoading(false)
+        setAiLoading(false);
       }
-    }
-
-    fetchAiInsights()
-  }, [profile?.id, keywordProfile?.keywords])
+    };
+    fetchAiInsights();
+  }, [profile?.id, keywordProfile?.keywords]);
 
   // Calculate basic stats
   const totalMarkers = keywordProfile?.total_keywords || 0
