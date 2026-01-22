@@ -30,6 +30,18 @@ export async function POST(request) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
+    // Sanitize and validate filename
+    function sanitizeFileName(name) {
+      let base = name.replace(/^.*[\\/]/, '').replace(/[^a-zA-Z0-9.\-_() ]/g, '')
+      base = base.replace(/\s+/g, '_')
+      if (base.length > 100) base = base.slice(0, 100)
+      return base
+    }
+    const safeFileName = sanitizeFileName(file.name)
+    if (!safeFileName || safeFileName.length === 0) {
+      return NextResponse.json({ error: 'Invalid file name' }, { status: 400 })
+    }
+
     // Validate file type
     if (file.type !== 'application/pdf') {
       return NextResponse.json({ error: 'Only PDF files are allowed' }, { status: 400 })

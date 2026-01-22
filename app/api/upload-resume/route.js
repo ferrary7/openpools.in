@@ -32,12 +32,26 @@ export async function POST(request) {
       return NextResponse.json({ error: 'File size must be less than 10MB' }, { status: 400 })
     }
 
+    // Sanitize and validate filename
+    function sanitizeFileName(name) {
+      // Remove path, replace spaces, remove special chars except .-_()
+      let base = name.replace(/^.*[\\/]/, '').replace(/[^a-zA-Z0-9.\-_() ]/g, '')
+      base = base.replace(/\s+/g, '_')
+      // Truncate if too long
+      if (base.length > 100) base = base.slice(0, 100)
+      return base
+    }
+    const safeFileName = sanitizeFileName(file.name)
+    if (!safeFileName || safeFileName.length === 0) {
+      return NextResponse.json({ error: 'Invalid file name' }, { status: 400 })
+    }
+
     // Convert file to buffer
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
 
     // Upload to Supabase Storage
-    const fileName = `${user.id}/${Date.now()}-${file.name}`
+    const fileName = `${user.id}/${Date.now()}-${safeFileName}`
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('resumes')
       .upload(fileName, buffer, {
