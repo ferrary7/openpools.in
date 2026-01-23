@@ -18,20 +18,40 @@ export async function GET(req) {
       return Response.json({ error: 'Admin access required' }, { status: 403 })
     }
 
-    // Fetch onboarded users (those with a profile created and with complete info)
+    // Get pagination params
+    const url = new URL(req.url)
+    const page = parseInt(url.searchParams.get('page') || '1')
+    const limit = parseInt(url.searchParams.get('limit') || '20')
+    const offset = (page - 1) * limit
+
+    // Get total count
+    const { count: totalCount } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true })
+      .eq('onboarding_completed', true)
+
+    // Fetch onboarded users (those who completed onboarding)
     const { data: users, error } = await supabase
       .from('profiles')
-      .select('id, full_name, email, job_title, company, bio, location, created_at')
-      .not('full_name', 'is', null)
+      .select('id, full_name, email, job_title, company, bio, location, created_at, onboarding_completed')
+      .eq('onboarding_completed', true)
       .order('created_at', { ascending: false })
-      .limit(50)
+      .range(offset, offset + limit - 1)
 
     if (error) {
       console.error('Error fetching onboarded users:', error)
       return Response.json({ error: error.message }, { status: 500 })
     }
 
-    return Response.json({ users: users || [] })
+    return Response.json({
+      users: users || [],
+      pagination: {
+        page,
+        limit,
+        total: totalCount || 0,
+        totalPages: Math.ceil((totalCount || 0) / limit)
+      }
+    })
   } catch (error) {
     console.error('Onboarded users error:', error)
     return Response.json({ error: error.message }, { status: 500 })

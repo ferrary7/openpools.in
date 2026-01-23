@@ -17,7 +17,7 @@ export default function AdminLayout({ children }) {
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
-      <div className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-gray-900 text-white transition-all duration-300 overflow-y-auto`}>
+      <div className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-gray-900 text-white transition-all duration-300 flex flex-col relative`}>
         {/* Logo */}
         <div className="flex items-center justify-between p-4 border-b border-gray-700">
           {sidebarOpen && <h1 className="text-xl font-bold">OpenPools</h1>}
@@ -34,7 +34,7 @@ export default function AdminLayout({ children }) {
         </div>
 
         {/* Menu Items */}
-        <nav className="mt-6">
+        <nav className="mt-6 flex-1 overflow-y-auto">
           {menuItems.map((item) => (
             <Link
               key={item.href}
@@ -48,7 +48,7 @@ export default function AdminLayout({ children }) {
         </nav>
 
         {/* Logout */}
-        <div className="absolute bottom-0 left-0 right-0 border-t border-gray-700 p-4">
+        <div className="border-t border-gray-700 p-4">
           <button
             onClick={() => router.push('/api/auth/logout')}
             className="w-full flex items-center gap-3 px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors text-sm"

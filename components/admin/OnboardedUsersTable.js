@@ -10,17 +10,28 @@ export default function OnboardedUsersTable() {
   const [formData, setFormData] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [viewingKeywords, setViewingKeywords] = useState(null)
+  const [keywords, setKeywords] = useState([])
+  const [keywordsLoading, setKeywordsLoading] = useState(false)
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 20,
+    total: 0,
+    totalPages: 0
+  })
 
   useEffect(() => {
-    fetchUsers()
-    const interval = setInterval(fetchUsers, 10000)
-    return () => clearInterval(interval)
-  }, [])
+    fetchUsers(currentPage)
+  }, [currentPage])
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (page = 1) => {
     try {
+      setLoading(true)
       setError(null)
-      const res = await fetch('/api/admin/onboarded-users')
+      const res = await fetch(`/api/admin/onboarded-users?page=${page}&limit=20`)
       if (!res.ok) {
         const data = await res.json()
         setError(data.error)
@@ -28,11 +39,34 @@ export default function OnboardedUsersTable() {
       }
       const data = await res.json()
       setUsers(data.users || [])
+      setPagination(data.pagination)
     } catch (err) {
       setError(err.message)
     } finally {
       setLoading(false)
     }
+  }
+
+  const fetchKeywords = async (userId) => {
+    try {
+      setKeywordsLoading(true)
+      const res = await fetch(`/api/admin/users/${userId}/keywords`)
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error)
+      }
+      const data = await res.json()
+      setKeywords(data.keywords || [])
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setKeywordsLoading(false)
+    }
+  }
+
+  const handleViewKeywords = async (user) => {
+    setViewingKeywords(user)
+    await fetchKeywords(user.id)
   }
 
   const handleEdit = (user) => {
@@ -64,7 +98,7 @@ export default function OnboardedUsersTable() {
 
       setEditingUser(null)
       setFormData({})
-      await fetchUsers()
+      await fetchUsers(currentPage)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -86,12 +120,16 @@ export default function OnboardedUsersTable() {
       }
 
       setDeleteConfirm(null)
-      await fetchUsers()
+      await fetchUsers(currentPage)
     } catch (err) {
       setError(err.message)
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage)
   }
 
   if (error) return <div className="p-4 text-red-500 bg-red-50 rounded-lg">{error}</div>
@@ -100,15 +138,19 @@ export default function OnboardedUsersTable() {
     <div className="bg-white rounded-lg shadow">
       <div className="p-6 border-b border-gray-200">
         <div className="flex justify-between items-center">
-          <h2 className="text-xl font-bold text-gray-900">Recently Onboarded Users</h2>
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">All Onboarded Users</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Showing {users.length} of {pagination.total} users
+            </p>
+          </div>
           <button
-            onClick={fetchUsers}
+            onClick={() => fetchUsers(currentPage)}
             className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
           >
             🔄 Refresh
           </button>
         </div>
-        <p className="text-sm text-gray-600 mt-1">Newest profiles on top</p>
       </div>
 
       <div className="overflow-x-auto">
@@ -117,70 +159,153 @@ export default function OnboardedUsersTable() {
         ) : users.length === 0 ? (
           <div className="p-6 text-center text-gray-500">No onboarded users yet</div>
         ) : (
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Email</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Job Title</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Company</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Location</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Joined</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                    {user.full_name || '—'}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {user.email}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {user.job_title || '—'}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {user.company || '—'}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {user.location || '—'}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {new Date(user.created_at).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </td>
-                  <td className="px-6 py-4 text-sm space-x-2 flex">
-                    <button
-                      onClick={() => handleEdit(user)}
-                      className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-xs font-medium"
-                    >
-                      ✏️ Edit
-                    </button>
-                    <button
-                      onClick={() => setDeleteConfirm(user.id)}
-                      className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors text-xs font-medium"
-                    >
-                      🗑️ Delete
-                    </button>
-                  </td>
+          <>
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Email</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Job Title</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Company</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Location</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Joined</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {users.map((user) => (
+                  <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                      {user.full_name || '—'}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {user.email}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {user.job_title || '—'}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {user.company || '—'}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {user.location || '—'}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {new Date(user.created_at).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </td>
+                    <td className="px-6 py-4 text-sm space-x-2">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleViewKeywords(user)}
+                          className="px-3 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors text-xs font-medium"
+                        >
+                          🔑 Keywords
+                        </button>
+                        <button
+                          onClick={() => handleEdit(user)}
+                          className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-xs font-medium"
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirm(user.id)}
+                          className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors text-xs font-medium"
+                        >
+                          🗑️ Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Pagination */}
+            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                Page {pagination.page} of {pagination.totalPages} ({pagination.total} total users)
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                >
+                  ← Previous
+                </button>
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage >= pagination.totalPages}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                >
+                  Next →
+                </button>
+              </div>
+            </div>
+          </>
         )}
       </div>
+
+      {/* Keywords Modal */}
+      {viewingKeywords && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-gray-200">
+              <h3 className="text-lg font-bold text-gray-900">
+                Keywords for {viewingKeywords.full_name}
+              </h3>
+              <p className="text-sm text-gray-600 mt-1">{viewingKeywords.email}</p>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6">
+              {keywordsLoading ? (
+                <div className="text-center text-gray-500">Loading keywords...</div>
+              ) : keywords.length === 0 ? (
+                <div className="text-center text-gray-500">No keywords found for this user</div>
+              ) : (
+                <div className="space-y-2">
+                  {keywords.map((kw, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">{kw.keyword}</p>
+                        <p className="text-xs text-gray-600">Source: {kw.source || 'Unknown'}</p>
+                      </div>
+                      <div className="ml-4">
+                        <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                          Weight: {kw.weight || 0}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 border-t border-gray-200">
+              <button
+                onClick={() => {
+                  setViewingKeywords(null)
+                  setKeywords([])
+                }}
+                className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit Modal */}
       {editingUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6 max-h-[80vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Edit User</h3>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
@@ -191,7 +316,7 @@ export default function OnboardedUsersTable() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                 <input
@@ -201,7 +326,7 @@ export default function OnboardedUsersTable() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
                 <input
@@ -211,7 +336,7 @@ export default function OnboardedUsersTable() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
                 <input
@@ -221,7 +346,7 @@ export default function OnboardedUsersTable() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
                 <input
@@ -231,7 +356,7 @@ export default function OnboardedUsersTable() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
                 <textarea
@@ -242,7 +367,7 @@ export default function OnboardedUsersTable() {
                 />
               </div>
             </div>
-            
+
             <div className="mt-6 flex gap-3">
               <button
                 onClick={() => {
@@ -273,7 +398,7 @@ export default function OnboardedUsersTable() {
             <p className="text-gray-600 mb-6">
               Are you sure you want to delete this user? This action cannot be undone and will remove them from the entire application.
             </p>
-            
+
             <div className="flex gap-3">
               <button
                 onClick={() => setDeleteConfirm(null)}

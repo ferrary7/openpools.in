@@ -7,6 +7,7 @@ import PdfUploader from '@/components/profile/PdfUploader'
 import NotionInput from '@/components/onboarding/NotionInput'
 import ProfilePictureUpload from '@/components/onboarding/ProfilePictureUpload'
 import ProfilePreviewCard from '@/components/onboarding/ProfilePreviewCard'
+import LoadingMessages from '@/components/onboarding/LoadingMessages'
 import { createClient } from '@/lib/supabase/client'
 import { uploadProfilePicture } from '@/components/profile/ProfilePictureUploader'
 
@@ -634,6 +635,15 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
+      {/* Loading Overlay */}
+      {(extracting || extractingLinkedIn) && (
+        <div className="fixed inset-0 bg-white/95 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="max-w-2xl w-full px-4">
+            <LoadingMessages />
+          </div>
+        </div>
+      )}
+
       <div className="max-w-3xl mx-auto">
         {/* Progress Bar */}
         <div className="mb-6">
@@ -687,7 +697,10 @@ export default function OnboardingPage() {
 
                 {/* PDF Upload */}
                 {uploadMethod === 'pdf' && (
-                  <PdfUploader onKeywordsExtracted={handlePdfKeywordsExtracted} />
+                  <PdfUploader
+                    onKeywordsExtracted={handlePdfKeywordsExtracted}
+                    onUploadingChange={setExtracting}
+                  />
                 )}
 
                 {/* Text Input */}

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-export default function PdfUploader({ onKeywordsExtracted }) {
+export default function PdfUploader({ onKeywordsExtracted, onUploadingChange }) {
   const [file, setFile] = useState(null)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState(null)
@@ -29,6 +29,7 @@ export default function PdfUploader({ onKeywordsExtracted }) {
     if (!file) return
 
     setUploading(true)
+    if (onUploadingChange) onUploadingChange(true)
     setError(null)
 
     try {
@@ -60,6 +61,7 @@ export default function PdfUploader({ onKeywordsExtracted }) {
       setError(err.message)
     } finally {
       setUploading(false)
+      if (onUploadingChange) onUploadingChange(false)
     }
   }
 
