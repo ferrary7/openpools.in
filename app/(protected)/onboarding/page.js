@@ -476,11 +476,11 @@ export default function OnboardingPage() {
       return
     }
     if (!profileData.company?.trim()) {
-      alert('Company is required')
+      alert('Company / Institution is required')
       return
     }
     if (!profileData.job_title?.trim()) {
-      alert('Job Title is required')
+      alert('Role / Field of Study is required')
       return
     }
     if (!profileData.location?.trim()) {
@@ -870,19 +870,19 @@ export default function OnboardingPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <NotionInput
-                      label="Company"
+                      label="Company / Institution"
                       value={profileData.company}
                       onChange={(e) => setProfileData({ ...profileData, company: e.target.value })}
-                      placeholder="Your current company"
+                      placeholder="e.g., Google, Stanford University"
                       required
                       autoFilled={autoFilledFields.company}
                     />
 
                     <NotionInput
-                      label="Job Title"
+                      label="Role / Field of Study"
                       value={profileData.job_title}
                       onChange={(e) => setProfileData({ ...profileData, job_title: e.target.value })}
-                      placeholder="Your current role"
+                      placeholder="e.g., Software Engineer, Computer Science"
                       required
                       autoFilled={autoFilledFields.job_title}
                     />
