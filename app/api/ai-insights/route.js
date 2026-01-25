@@ -90,17 +90,57 @@ export async function POST(request) {
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
 
     // Prepare context data
-    // Extract skill names from objects (keywords might be {keyword: "Python", weight: 0.8} or just strings)
-    const skillsList = skills
-      .slice(0, 15)
-      .map(skill => {
-        if (typeof skill === 'string') return skill
-        if (typeof skill === 'object' && skill) {
-          return skill.keyword || skill.skill || skill.name || String(skill)
+    // Categorize skills to give AI a complete picture of the person's profile
+    const categorizedSkills = {
+      technical: [],      // technologies, tools
+      domain: [],         // domains, expertise, methodologies
+      soft: [],           // skills (soft skills, competencies)
+      experience: [],     // roles, companies
+      education: [],      // institutions, certifications
+      projects: []        // projects
+    }
+
+    skills.forEach(skill => {
+      if (typeof skill === 'object' && skill) {
+        const keyword = skill.keyword || skill.skill || skill.name || String(skill)
+        const category = skill.category || ''
+
+        if (['technologies', 'tools'].includes(category)) {
+          categorizedSkills.technical.push(keyword)
+        } else if (['domains', 'expertise', 'methodologies'].includes(category)) {
+          categorizedSkills.domain.push(keyword)
+        } else if (category === 'skills') {
+          categorizedSkills.soft.push(keyword)
+        } else if (['roles', 'companies'].includes(category)) {
+          categorizedSkills.experience.push(keyword)
+        } else if (['institutions', 'certifications'].includes(category)) {
+          categorizedSkills.education.push(keyword)
+        } else if (category === 'projects') {
+          categorizedSkills.projects.push(keyword)
+        } else {
+          // Default to domain
+          categorizedSkills.domain.push(keyword)
         }
-        return String(skill)
-      })
-      .join(', ')
+      } else if (typeof skill === 'string') {
+        categorizedSkills.domain.push(skill)
+      }
+    })
+
+    // Build a rich context string for the AI
+    const technicalSkills = categorizedSkills.technical.slice(0, 10).join(', ') || 'None listed'
+    const domainExpertise = categorizedSkills.domain.slice(0, 8).join(', ') || 'None listed'
+    const softSkills = categorizedSkills.soft.slice(0, 6).join(', ') || 'None listed'
+    const experienceContext = categorizedSkills.experience.slice(0, 5).join(', ') || 'None listed'
+    const educationContext = categorizedSkills.education.slice(0, 4).join(', ') || 'None listed'
+    const projectsContext = categorizedSkills.projects.slice(0, 6).join(', ') || 'None listed'
+
+    // Combined skills list for backward compatibility
+    const skillsList = [
+      ...categorizedSkills.technical.slice(0, 8),
+      ...categorizedSkills.domain.slice(0, 6),
+      ...categorizedSkills.soft.slice(0, 4),
+      ...categorizedSkills.projects.slice(0, 4)
+    ].join(', ')
     
     const journalContext = recentJournals?.slice(0, 3).map(j => j.content || '').join('\n') || 'No recent journals'
     const coreSkills = signalClassification?.core?.slice(0, 5).join(', ') || 'None'
@@ -114,39 +154,57 @@ export async function POST(request) {
     // Run all 4 AI prompts in parallel for efficiency
     const [careerFit, johariWindow, skillGap, smartCombos] = await Promise.all([
       // 1. Career Fit Analysis
-      model.generateContent(`Based on these skills: ${skillsList}
+      model.generateContent(`Analyze this person's COMPLETE professional profile:
 
-Analyze and return ONLY a JSON array of exactly 5 job roles that best fit these skills. Format:
+TECHNICAL SKILLS: ${technicalSkills}
+DOMAIN EXPERTISE: ${domainExpertise}
+SOFT SKILLS: ${softSkills}
+WORK EXPERIENCE: ${experienceContext}
+EDUCATION: ${educationContext}
+PROJECTS: ${projectsContext}
+
+IMPORTANT: Consider ALL aspects equally:
+- Technical skills show what they can build
+- Projects show what they have actually built
+- Education shows their foundational knowledge and current learning
+- Work experience provides context but should NOT dominate the analysis
+- Domain expertise shows their areas of focus
+
+Return ONLY a JSON array of exactly 5 career paths/roles that best match this COMPLETE profile:
 [
-  {"role": "Job Title", "match": 85, "reason": "One concise sentence why"},
+  {"role": "Job Title", "match": 85, "reason": "One sentence explaining which combination of skills, projects, and expertise make this a fit"},
   ...
 ]
 
 Return ONLY valid JSON, no markdown, no explanation.`),
 
       // 2. Johari Window - Return SKILL LISTS, not sentences
-      model.generateContent(`Create Johari Window using user's skills: ${skillsList}
+      model.generateContent(`Create a Johari Window based on this person's complete profile:
 
-IMPORTANT: Distribute these skills into 4 quadrants:
+TECHNICAL SKILLS: ${technicalSkills}
+DOMAIN EXPERTISE: ${domainExpertise}
+SOFT SKILLS: ${softSkills}
+PROJECTS: ${projectsContext}
+EDUCATION: ${educationContext}
 
-OPEN QUADRANT (Known strengths - visible to self and others):
-- Pick the top 4-5 CORE/FUNDAMENTAL technical skills from the user's skill list
-- These should be the most important/foundational skills
+Consider skills from ALL sources - technical abilities, project work, academic focus, and domain knowledge.
 
-BLIND QUADRANT (Hidden strengths - what others see but user may not realize):
-- Infer 2-3 HIGH-LEVEL META-SKILLS based on the technical skills above
-- Examples: "Problem Solving", "System Design", "Technical Architecture", "Analytical Thinking", "Learning Agility"
-- DO NOT repeat technical skills, only meta-skills
+OPEN QUADRANT (Core strengths - evident across multiple areas):
+- Pick 4-5 skills that appear prominently across their profile
+- Consider both technical skills AND domain expertise
 
-HIDDEN QUADRANT (Underutilized - skills user has but doesn't showcase):
-- Pick 3-4 LESS COMMON or SPECIALIZED skills from the user's list that might be overlooked
-- Skills that are valuable but perhaps not highlighted enough
+BLIND QUADRANT (Implied meta-skills - abilities shown through their work):
+- Infer 2-3 HIGH-LEVEL abilities based on their projects and skills
+- Examples: "Problem Solving", "System Design", "Analytical Thinking", "Self-Learning", "Technical Communication"
 
-UNKNOWN QUADRANT (Potential - skills to explore):
-- ${topComplementary ? `Pick 3-4 skills from this list: ${topComplementary}` : `Suggest 3-4 NEW skills that would complement the user's expertise and create powerful synergies. Think about adjacent technologies, related domains, or skills that unlock career growth opportunities.`}
-- These are skills the user doesn't have but should consider learning
+HIDDEN QUADRANT (Underutilized - valuable but not highlighted):
+- Pick 3-4 specialized skills from projects or education that might be overlooked
+- Skills that are valuable but perhaps buried in their profile
 
-Return ONLY valid JSON with ARRAYS of skills:
+UNKNOWN QUADRANT (Growth opportunities):
+- ${topComplementary ? `Pick 3-4 skills from: ${topComplementary}` : `Suggest 3-4 skills that would complement their technical skills AND domain expertise`}
+
+Return ONLY valid JSON:
 {
   "open": ["skill1", "skill2", "skill3", "skill4"],
   "blind": ["Meta-Skill 1", "Meta-Skill 2", "Meta-Skill 3"],
@@ -157,17 +215,31 @@ Return ONLY valid JSON with ARRAYS of skills:
 NO markdown, NO explanations, ONLY the JSON object.`),
 
       // 3. Skill Gap Roadmap
-      model.generateContent(`User's current skills: ${skillsList}
-Complementary skills to learn: ${topComplementary}
+      model.generateContent(`Create a skill progression roadmap based on this complete profile:
 
-Create a skill progression roadmap. Return ONLY a JSON object with 3 target roles and their gaps. Format:
+TECHNICAL SKILLS: ${technicalSkills}
+DOMAIN EXPERTISE: ${domainExpertise}
+PROJECTS: ${projectsContext}
+EDUCATION: ${educationContext}
+CURRENT EXPERIENCE: ${experienceContext}
+Complementary skills to consider: ${topComplementary}
+
+Based on their COMPLETE profile (technical skills + projects + education + domain expertise + experience), suggest 3 aspirational career paths.
+
+Weight all aspects appropriately:
+- Strong projects can compensate for limited work experience
+- Education/academic focus indicates areas of interest and potential
+- Technical skills show capability
+- Experience provides context
+
+Return ONLY a JSON object:
 {
   "targetRoles": [
     {
-      "role": "Target Job Title",
+      "role": "Target Career Path",
       "currentMatch": 65,
       "missingSkills": ["skill1", "skill2", "skill3"],
-      "priority": "Learn X first because Y"
+      "priority": "Learn X first because it builds on their strength in Y"
     },
     ...
   ]
@@ -176,17 +248,28 @@ Create a skill progression roadmap. Return ONLY a JSON object with 3 target role
 Return ONLY valid JSON, no markdown.`),
 
       // 4. Smart Combinations
-      model.generateContent(`Current skills: ${skillsList}
+      model.generateContent(`Analyze skill combinations from this profile:
 
-Identify powerful skill combinations. Return ONLY a JSON object. Format:
+TECHNICAL SKILLS: ${technicalSkills}
+DOMAIN EXPERTISE: ${domainExpertise}
+PROJECTS: ${projectsContext}
+
+Identify powerful combinations that exist AND opportunities to unlock more potential.
+
+Consider how:
+- Technical skills combine with domain expertise
+- Project experience demonstrates applied skills
+- Certain skill pairs create unique value
+
+Return ONLY a JSON object:
 {
   "powerCombos": [
-    {"combo": "Skill A + Skill B", "impact": "Why this is powerful in one sentence"},
-    {"combo": "Skill C + Skill D", "impact": "Why this is powerful in one sentence"}
+    {"combo": "Skill A + Skill B", "impact": "Why this combination creates unique value"},
+    {"combo": "Skill C + Skill D", "impact": "Why this combination creates unique value"}
   ],
   "missingLinks": [
-    {"skill": "Missing Skill", "unlock": "What it would enable in one sentence"},
-    {"skill": "Missing Skill", "unlock": "What it would enable in one sentence"}
+    {"skill": "Complementary Skill", "unlock": "What this would enable given their existing profile"},
+    {"skill": "Complementary Skill", "unlock": "What this would enable given their existing profile"}
   ]
 }
 
