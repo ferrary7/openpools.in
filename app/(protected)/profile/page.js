@@ -80,7 +80,8 @@ export default function ProfilePage() {
       const profileData = data.profile
       const keywordData = {
         keywords: profileData.keywords || [],
-        total_keywords: profileData.total_keywords || 0
+        total_keywords: profileData.total_keywords || 0,
+        last_updated: profileData.last_updated
       }
 
       setProfile(profileData)
@@ -807,9 +808,11 @@ export default function ProfilePage() {
               onDelete={handleDeleteKeyword}
               onToggleEdit={() => setEditingKeywords(!editingKeywords)}
             />
-            <div className="mt-4 text-sm text-gray-600">
-              Last updated: {new Date(keywordProfile.last_updated).toLocaleDateString()}
-            </div>
+            {keywordProfile.last_updated && (
+              <div className="mt-4 text-sm text-gray-600">
+                Last updated: {new Date(keywordProfile.last_updated).toLocaleDateString()}
+              </div>
+            )}
           </>
         ) : (
           <div className="text-gray-600">No keywords yet. Upload a PDF to get started!</div>

@@ -1,104 +1,48 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { useCollaboratorsStore } from '@/store/collaboratorsStore'
 
 export default function CollaboratorsPage() {
-  const [collaborators, setCollaborators] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [currentUserId, setCurrentUserId] = useState(null)
-  const [removing, setRemoving] = useState(null)
+  const {
+    collaborators,
+    loading,
+    error,
+    searchQuery,
+    currentUserId,
+    removing,
+    setSearchQuery,
+    setCurrentUserId,
+    getCollaboratorInfo,
+    getFilteredCollaborators,
+    fetchCollaborators,
+    removeCollaborator,
+    clearSearch
+  } = useCollaboratorsStore()
+
   const supabase = createClient()
 
   useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user && user.id !== currentUserId) {
+        setCurrentUserId(user.id)
+      }
+    }
     getCurrentUser()
-  }, [])
+  }, [supabase.auth, currentUserId, setCurrentUserId])
 
   useEffect(() => {
     if (currentUserId) {
-      fetchCollaborators()
+      fetchCollaborators(false)
     }
-  }, [currentUserId])
+  }, [currentUserId, fetchCollaborators])
 
-  const getCurrentUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      setCurrentUserId(user.id)
-    }
-  }
+  const filteredCollaborators = getFilteredCollaborators()
 
-  const fetchCollaborators = async () => {
-    try {
-      const response = await fetch('/api/collabs')
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch collaborators')
-      }
-
-      // Filter only accepted collaborations
-      const activeCollabs = data.active || []
-      setCollaborators(activeCollabs)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const getCollaboratorInfo = (collab) => {
-    // Determine if current user is sender or receiver
-    const isSender = collab.sender_id === currentUserId
-    const collaborator = isSender ? collab.receiver : collab.sender
-    return collaborator || {}
-  }
-
-  const handleRemoveConnection = async (collabId, collaboratorName) => {
-    if (!confirm(`Are you sure you want to remove your collaboration with ${collaboratorName}? This will delete all your messages and you'll need to send a new request to collaborate again.`)) {
-      return
-    }
-
-    setRemoving(collabId)
-
-    try {
-      const response = await fetch(`/api/collabs/${collabId}`, {
-        method: 'DELETE'
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to remove collaboration')
-      }
-
-      // Wait a bit for database to commit
-      await new Promise(resolve => setTimeout(resolve, 500))
-
-      // Remove from local state
-      setCollaborators(prev => prev.filter(c => c.id !== collabId))
-      alert('Connection removed successfully')
-    } catch (err) {
-      alert('Error removing connection: ' + err.message)
-    } finally {
-      setRemoving(null)
-    }
-  }
-
-  const filteredCollaborators = collaborators.filter((collab) => {
-    const collaborator = getCollaboratorInfo(collab)
-    const searchLower = searchQuery.toLowerCase()
-    return (
-      collaborator.full_name?.toLowerCase().includes(searchLower) ||
-      collaborator.email?.toLowerCase().includes(searchLower) ||
-      collaborator.company?.toLowerCase().includes(searchLower) ||
-      collaborator.job_title?.toLowerCase().includes(searchLower)
-    )
-  })
-
-  if (loading) {
+  if (loading && collaborators.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-center py-12">
@@ -109,7 +53,7 @@ export default function CollaboratorsPage() {
     )
   }
 
-  if (error) {
+  if (error && collaborators.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-red-50 text-red-600 p-4 rounded-lg">
@@ -122,11 +66,23 @@ export default function CollaboratorsPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">My Collaborators</h1>
-        <p className="text-gray-600 mt-2">
-          Professionals you're actively collaborating with
-        </p>
+      <div className="mb-8 flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">My Collaborators</h1>
+          <p className="text-gray-600 mt-2">
+            Professionals you're actively collaborating with
+          </p>
+        </div>
+        <button
+          onClick={() => fetchCollaborators(true)}
+          disabled={loading}
+          className="text-sm text-primary-600 hover:text-primary-700 font-medium disabled:opacity-50 flex items-center gap-1"
+        >
+          {loading && (
+            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary-600"></div>
+          )}
+          Refresh
+        </button>
       </div>
 
       {/* Search Bar */}
@@ -153,6 +109,16 @@ export default function CollaboratorsPage() {
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
               />
             </svg>
+            {searchQuery && (
+              <button
+                onClick={clearSearch}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -288,7 +254,7 @@ export default function CollaboratorsPage() {
                       </Link>
                     </div>
                     <button
-                      onClick={() => handleRemoveConnection(collab.id, collaborator.full_name)}
+                      onClick={() => removeCollaborator(collab.id, collaborator.full_name)}
                       disabled={removing === collab.id}
                       className="w-full px-3 py-2 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >

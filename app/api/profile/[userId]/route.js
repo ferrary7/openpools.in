@@ -40,7 +40,7 @@ export async function GET(request, { params }) {
     // Get keyword profile using actual profile ID
     const { data: keywordProfile } = await supabase
       .from('keyword_profiles')
-      .select('keywords, total_keywords')
+      .select('keywords, total_keywords, last_updated')
       .eq('user_id', profile.id)
       .single()
 
@@ -69,17 +69,21 @@ export async function GET(request, { params }) {
       location: profile.location,
       created_at: profile.created_at,
       keywords: keywordProfile?.keywords || [],
-      total_keywords: keywordProfile?.total_keywords || 0
+      total_keywords: keywordProfile?.total_keywords || 0,
+      last_updated: keywordProfile?.last_updated || null
     }
 
+    // Check if user is viewing their own profile
+    const isOwnProfile = user.id === profile.id
+
     // Handle profile picture visibility
-    // Only show to accepted collaborators if not hidden by the user
-    if (isCollaborating && profile.profile_picture_url && !profile.hide_profile_picture_from_collaborators) {
+    // Show to owner always, or to accepted collaborators if not hidden
+    if (isOwnProfile || (isCollaborating && profile.profile_picture_url && !profile.hide_profile_picture_from_collaborators)) {
       publicProfile.profile_picture_url = profile.profile_picture_url
     }
 
-    // Only include contact info if collaborating
-    if (isCollaborating) {
+    // Include contact info if collaborating OR viewing own profile
+    if (isCollaborating || isOwnProfile) {
       publicProfile.email = profile.email
 
       // Handle phone number visibility based on user preference
@@ -108,7 +112,7 @@ export async function GET(request, { params }) {
       profile: publicProfile,
       isCollaborating,
       collabStatus,
-      canViewContactInfo: isCollaborating
+      canViewContactInfo: isCollaborating || isOwnProfile
     }, {
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'

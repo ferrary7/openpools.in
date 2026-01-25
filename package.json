@@ -21,7 +21,8 @@
     "pdf-parse-fork": "^1.2.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "resend": "^6.5.2"
+    "resend": "^6.5.2",
+    "zustand": "^5.0.0"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.22",

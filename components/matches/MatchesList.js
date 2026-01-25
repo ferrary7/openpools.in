@@ -1,95 +1,30 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import MatchCard from './MatchCard'
+import { useMatchesStore } from '@/store/matchesStore'
 
 export default function MatchesList() {
-  const [matches, setMatches] = useState([])
-  const [allMatches, setAllMatches] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [searchKeyword, setSearchKeyword] = useState('')
-  const [searchKeywords, setSearchKeywords] = useState([])
-  const [displayCount, setDisplayCount] = useState(10)
+  const {
+    matches,
+    loading,
+    error,
+    searchKeyword,
+    searchKeywords,
+    displayCount,
+    setSearchKeyword,
+    removeKeyword,
+    handleShowMore,
+    fetchMatches,
+    clearSearch
+  } = useMatchesStore()
 
   useEffect(() => {
-    fetchMatches()
-  }, [])
+    // Only fetch if we don't have data or it's stale
+    fetchMatches(false)
+  }, [fetchMatches])
 
-  useEffect(() => {
-    // Parse comma-separated keywords
-    const keywords = searchKeyword
-      .split(',')
-      .map(k => k.trim())
-      .filter(k => k.length > 0)
-    setSearchKeywords(keywords)
-  }, [searchKeyword])
-
-  useEffect(() => {
-    filterMatches()
-  }, [searchKeywords, allMatches])
-
-  const fetchMatches = async () => {
-    setLoading(true)
-    setError(null)
-
-    try {
-      const response = await fetch('/api/matches')
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch matches')
-      }
-
-      setAllMatches(data.matches || [])
-      setMatches(data.matches || [])
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const filterMatches = () => {
-    if (searchKeywords.length === 0) {
-      setMatches(allMatches)
-      return
-    }
-
-    const filtered = allMatches.filter(match => {
-      // Match must have ALL of the search keywords (AND logic)
-      return searchKeywords.every(keyword => {
-        const lowerKeyword = keyword.toLowerCase()
-
-        // Check username
-        const hasUsername = match.username?.toLowerCase().includes(lowerKeyword)
-
-        // Check full name
-        const hasFullName = match.fullName?.toLowerCase().includes(lowerKeyword)
-
-        // Check both common keywords AND all keywords of the matched user
-        const hasCommonKeyword = match.commonKeywords?.some(k =>
-          k.keyword?.toLowerCase().includes(lowerKeyword)
-        )
-
-        const hasAnyKeyword = Array.isArray(match.allKeywords) && match.allKeywords.some(k => {
-          const kw = typeof k === 'string' ? k : k.keyword
-          return kw?.toLowerCase().includes(lowerKeyword)
-        })
-
-        return hasUsername || hasFullName || hasCommonKeyword || hasAnyKeyword
-      })
-    })
-
-    setMatches(filtered)
-    setDisplayCount(10) // Reset to 10 when filtering
-  }
-
-  const handleShowMore = () => {
-    setDisplayCount(prev => prev + 10)
-  }
-
-  if (loading) {
+  if (loading && matches.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
@@ -98,18 +33,12 @@ export default function MatchesList() {
     )
   }
 
-  if (error) {
+  if (error && matches.length === 0) {
     return (
       <div className="bg-red-50 text-red-600 p-4 rounded-lg">
         Error: {error}
       </div>
     )
-  }
-
-  const removeKeyword = (indexToRemove) => {
-    const keywords = searchKeyword.split(',').map(k => k.trim()).filter(k => k.length > 0)
-    keywords.splice(indexToRemove, 1)
-    setSearchKeyword(keywords.join(', '))
   }
 
   return (
@@ -139,7 +68,7 @@ export default function MatchesList() {
           </svg>
           {searchKeyword && (
             <button
-              onClick={() => setSearchKeyword('')}
+              onClick={clearSearch}
               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -179,9 +108,13 @@ export default function MatchesList() {
           {searchKeywords.length > 0 && ` for ${searchKeywords.length} keyword${searchKeywords.length > 1 ? 's' : ''}`}
         </p>
         <button
-          onClick={fetchMatches}
-          className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+          onClick={() => fetchMatches(true)}
+          disabled={loading}
+          className="text-sm text-primary-600 hover:text-primary-700 font-medium disabled:opacity-50 flex items-center gap-1"
         >
+          {loading && (
+            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary-600"></div>
+          )}
           Refresh
         </button>
       </div>
@@ -200,7 +133,7 @@ export default function MatchesList() {
           </p>
           {searchKeywords.length > 0 && (
             <button
-              onClick={() => setSearchKeyword('')}
+              onClick={clearSearch}
               className="mt-4 btn-secondary"
             >
               Clear Search
