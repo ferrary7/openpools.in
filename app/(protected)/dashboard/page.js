@@ -3,6 +3,7 @@ import Link from 'next/link'
 import KeywordDisplay from '@/components/onboarding/KeywordDisplay'
 import CompaniesSection from '@/components/ui/CompaniesSection'
 import InsightsRefresher from '@/components/dashboard/InsightsRefresher'
+import MatchesCount from '@/components/dashboard/MatchesCount'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -171,7 +172,7 @@ export default async function DashboardPage() {
         <div className="card">
           <div className="text-sm text-gray-600 mb-1">Matches Found</div>
           <div className="text-3xl font-bold text-primary-600">
-            {matchesCount || 0}
+            <MatchesCount initialCount={matchesCount || 0} />
           </div>
         </div>
 

@@ -125,13 +125,15 @@ export default function OnboardingPage() {
       setAutoFilledFields(autoFilled)
     }
 
-    try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+    // Move to step 2 immediately - don't block on DB save
+    setStep(2)
 
+    // Save keywords to database in background (non-blocking)
+    // Keywords will be saved again during handleComplete as a safety net
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
-        // Save keywords to database
-        await supabase
+        supabase
           .from('keyword_profiles')
           .upsert(
             {
@@ -142,12 +144,10 @@ export default function OnboardingPage() {
             },
             { onConflict: 'user_id' }
           )
+          .then(() => console.log('Keywords saved in background'))
+          .catch(err => console.error('Error saving keywords:', err))
       }
-    } catch (error) {
-      console.error('Error saving keywords:', error)
-    }
-
-    setStep(2)
+    }).catch(err => console.error('Error getting user:', err))
   }
 
   const handleUsernameChange = (value) => {
@@ -226,38 +226,55 @@ export default function OnboardingPage() {
       ]
 
       // Remove duplicates and sanitize
-      const uniqueSuggestions = [...new Set(baseSuggestions)].map(s =>
-        s.toLowerCase().replace(/[^a-z0-9_.-]/g, '')
+      const uniqueSuggestions = [...new Set(baseSuggestions)]
+        .map(s => s.toLowerCase().replace(/[^a-z0-9_.-]/g, ''))
+        .filter(s => s.length >= 3)
+
+      // Generate all usernames to check (base + numbered variants)
+      const allUsernamesToCheck = []
+      uniqueSuggestions.forEach(baseSugg => {
+        allUsernamesToCheck.push({ username: baseSugg, isBase: true, base: baseSugg })
+        for (let i = 1; i <= 3; i++) {
+          allUsernamesToCheck.push({ username: `${baseSugg}${i}`, isBase: false, base: baseSugg })
+        }
+      })
+
+      // Check all usernames in parallel (much faster than sequential)
+      const results = await Promise.all(
+        allUsernamesToCheck.map(async ({ username, isBase, base }) => {
+          try {
+            const response = await fetch(`/api/username/check?username=${encodeURIComponent(username)}`)
+            const data = await response.json()
+            return { username, available: data.available, isBase, base }
+          } catch {
+            return { username, available: false, isBase, base }
+          }
+        })
       )
 
-      // Check availability and generate numbered variants
+      // Pick the best available username for each base suggestion
       const suggestions = []
-      
-      for (const baseSugg of uniqueSuggestions) {
-        // Check if base suggestion is available
-        const response = await fetch(`/api/username/check?username=${encodeURIComponent(baseSugg)}`)
-        const data = await response.json()
+      const usedBases = new Set()
 
-        if (data.available) {
-          suggestions.push({ username: baseSugg, available: true })
-        } else {
-          // If not available, generate numbered variants (baseSugg1, baseSugg2, etc.)
-          for (let i = 1; i <= 3; i++) {
-            const variantUsername = `${baseSugg}${i}`
-            const variantResponse = await fetch(`/api/username/check?username=${encodeURIComponent(variantUsername)}`)
-            const variantData = await variantResponse.json()
-            
-            if (variantData.available) {
-              suggestions.push({ username: variantUsername, available: true })
-              break // Stop once we find an available numbered variant
-            }
-          }
+      // First pass: prefer base usernames
+      results.filter(r => r.isBase && r.available).forEach(r => {
+        if (!usedBases.has(r.base)) {
+          suggestions.push({ username: r.username, available: true })
+          usedBases.add(r.base)
         }
-      }
+      })
+
+      // Second pass: use numbered variants for bases without available base username
+      results.filter(r => !r.isBase && r.available).forEach(r => {
+        if (!usedBases.has(r.base) && suggestions.length < 4) {
+          suggestions.push({ username: r.username, available: true })
+          usedBases.add(r.base)
+        }
+      })
 
       const topSuggestions = suggestions.slice(0, 4)
       setUsernameSuggestions(topSuggestions)
-      
+
       // Auto-fill username with the first suggestion
       if (topSuggestions.length > 0) {
         setProfileData(prev => ({ ...prev, username: topSuggestions[0].username }))
@@ -591,41 +608,29 @@ export default function OnboardingPage() {
         }
       }
 
-      // 4. Generate AI insights before redirect (ensure DNA page has data ready)
-      try {
-        const aiResponse = await fetch('/api/ai-insights', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: user.id,
-            skills: keywords.slice(0, 15),
-          })
-        })
-        
-        if (aiResponse.ok) {
-          console.log('AI insights generated during onboarding')
-        } else {
-          console.warn('AI insights generation failed, user can still proceed')
-        }
-      } catch (aiError) {
-        console.error('Error generating AI insights:', aiError)
-        // Don't fail the onboarding process if AI generation fails
-      }
-
-      // 5. Calculate matches so dashboard shows accurate count
-      try {
-        const matchesResponse = await fetch('/api/matches')
-        if (matchesResponse.ok) {
-          console.log('Matches calculated during onboarding')
-        } else {
-          console.warn('Match calculation failed, user can still proceed')
-        }
-      } catch (matchError) {
-        console.error('Error calculating matches:', matchError)
-        // Don't fail the onboarding process if match calculation fails
-      }
-
+      // Redirect immediately - essential data is saved
       router.push('/dashboard')
+
+      // 4. Generate AI insights in background (non-blocking)
+      // Dashboard's InsightsRefresher will also trigger this, DNA page handles loading state
+      fetch('/api/ai-insights', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          skills: keywords.slice(0, 15),
+        })
+      }).then(res => {
+        if (res.ok) console.log('AI insights generated in background')
+      }).catch(err => console.error('AI insights background generation failed:', err))
+
+      // 5. Calculate matches in background (non-blocking)
+      // Matches page will calculate fresh if needed, this just pre-warms the cache
+      fetch('/api/matches')
+        .then(res => {
+          if (res.ok) console.log('Matches calculated in background')
+        })
+        .catch(err => console.error('Matches background calculation failed:', err))
     } catch (error) {
       alert('Error: ' + error.message)
     } finally {
