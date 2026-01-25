@@ -14,6 +14,10 @@ export default function OnboardedUsersTable() {
   const [keywords, setKeywords] = useState([])
   const [keywordsLoading, setKeywordsLoading] = useState(false)
 
+  // Search state
+  const [search, setSearch] = useState('')
+  const [filteredUsers, setFilteredUsers] = useState([])
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
   const [pagination, setPagination] = useState({
@@ -26,6 +30,23 @@ export default function OnboardedUsersTable() {
   useEffect(() => {
     fetchUsers(currentPage)
   }, [currentPage])
+
+  useEffect(() => {
+    if (!search) {
+      setFilteredUsers(users)
+    } else {
+      const s = search.toLowerCase()
+      setFilteredUsers(
+        users.filter(
+          (u) =>
+            (u.full_name && u.full_name.toLowerCase().includes(s)) ||
+            (u.email && u.email.toLowerCase().includes(s)) ||
+            (u.company && u.company.toLowerCase().includes(s)) ||
+            (u.location && u.location.toLowerCase().includes(s))
+        )
+      )
+    }
+  }, [search, users])
 
   const fetchUsers = async (page = 1) => {
     try {
@@ -134,71 +155,63 @@ export default function OnboardedUsersTable() {
 
   if (error) return <div className="p-4 text-red-500 bg-red-50 rounded-lg">{error}</div>
 
+
   return (
     <div className="bg-white rounded-lg shadow">
-      <div className="p-6 border-b border-gray-200">
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">All Onboarded Users</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Showing {users.length} of {pagination.total} users
-            </p>
-          </div>
+      <div className="p-4 border-b border-gray-200 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">All Onboarded Users</h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Showing {filteredUsers.length} of {pagination.total} users
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search name, email, company, location..."
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-64"
+          />
           <button
             onClick={() => fetchUsers(currentPage)}
-            className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            className="px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors mt-2 sm:mt-0 sm:ml-2"
           >
             🔄 Refresh
           </button>
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto max-w-full">
         {loading ? (
           <div className="p-6 text-center text-gray-500">Loading users...</div>
-        ) : users.length === 0 ? (
-          <div className="p-6 text-center text-gray-500">No onboarded users yet</div>
+        ) : filteredUsers.length === 0 ? (
+          <div className="p-6 text-center text-gray-500">No onboarded users found</div>
         ) : (
           <>
-            <table className="w-full">
+            <table className="w-full min-w-[600px] text-xs sm:text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Email</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Job Title</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Company</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Location</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Joined</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
+                  <th className="px-3 py-2 text-left font-semibold text-gray-900 whitespace-nowrap">Name</th>
+                  <th className="px-3 py-2 text-left font-semibold text-gray-900 whitespace-nowrap">Email</th>
+                  <th className="px-3 py-2 text-left font-semibold text-gray-900 whitespace-nowrap">Job Title</th>
+                  <th className="px-3 py-2 text-left font-semibold text-gray-900 whitespace-nowrap">Company</th>
+                  <th className="px-3 py-2 text-left font-semibold text-gray-900 whitespace-nowrap">Location</th>
+                  <th className="px-3 py-2 text-left font-semibold text-gray-900 whitespace-nowrap">Joined</th>
+                  <th className="px-3 py-2 text-left font-semibold text-gray-900 whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {users.map((user) => (
+                {filteredUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                      {user.full_name || '—'}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {user.email}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {user.job_title || '—'}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {user.company || '—'}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {user.location || '—'}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {new Date(user.created_at).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </td>
-                    <td className="px-6 py-4 text-sm space-x-2">
-                      <div className="flex gap-2">
+                    <td className="px-3 py-2 font-medium text-gray-900 whitespace-nowrap">{user.full_name || '—'}</td>
+                    <td className="px-3 py-2 text-gray-600 whitespace-nowrap">{user.email}</td>
+                    <td className="px-3 py-2 text-gray-600 whitespace-nowrap">{user.job_title || '—'}</td>
+                    <td className="px-3 py-2 text-gray-600 whitespace-nowrap">{user.company || '—'}</td>
+                    <td className="px-3 py-2 text-gray-600 whitespace-nowrap">{user.location || '—'}</td>
+                    <td className="px-3 py-2 text-gray-600 whitespace-nowrap">{new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                    <td className="px-3 py-2 space-x-2">
+                      <div className="flex gap-2 flex-wrap">
                         <button
                           onClick={() => handleViewKeywords(user)}
                           className="px-3 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors text-xs font-medium"
@@ -225,7 +238,7 @@ export default function OnboardedUsersTable() {
             </table>
 
             {/* Pagination */}
-            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+            <div className="px-4 py-3 border-t border-gray-200 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div className="text-sm text-gray-600">
                 Page {pagination.page} of {pagination.totalPages} ({pagination.total} total users)
               </div>
