@@ -154,7 +154,7 @@ export async function POST(request) {
     // Run all 4 AI prompts in parallel for efficiency
     const [careerFit, johariWindow, skillGap, smartCombos] = await Promise.all([
       // 1. Career Fit Analysis
-      model.generateContent(`Analyze this person's COMPLETE professional profile:
+      model.generateContent(`Analyze this person's professional profile:
 
 TECHNICAL SKILLS: ${technicalSkills}
 DOMAIN EXPERTISE: ${domainExpertise}
@@ -163,16 +163,17 @@ WORK EXPERIENCE: ${experienceContext}
 EDUCATION: ${educationContext}
 PROJECTS: ${projectsContext}
 
-IMPORTANT: Consider ALL aspects equally:
-- Technical skills show what they can build
-- Projects show what they have actually built
-- Education shows their foundational knowledge and current learning
-- Work experience provides context but should NOT dominate the analysis
-- Domain expertise shows their areas of focus
+Consider ALL aspects - technical skills, projects, education, experience, and domain expertise.
 
-Return ONLY a JSON array of exactly 5 career paths/roles that best match this COMPLETE profile:
+BE GROUNDED AND REALISTIC:
+- Suggest roles that genuinely match their demonstrated abilities
+- Don't inflate - if skills are basic, suggest appropriate roles
+- Don't underestimate - recognize genuine strengths
+- Match percentages should be honest (50-80% is normal, 90%+ is rare)
+
+Return ONLY a JSON array of exactly 5 realistic career fits:
 [
-  {"role": "Job Title", "match": 85, "reason": "One sentence explaining which combination of skills, projects, and expertise make this a fit"},
+  {"role": "Job Title", "match": 70, "reason": "One sentence explaining the fit based on their actual profile"},
   ...
 ]
 
@@ -204,6 +205,11 @@ HIDDEN QUADRANT (Underutilized - valuable but not highlighted):
 UNKNOWN QUADRANT (Growth opportunities):
 - ${topComplementary ? `Pick 3-4 skills from: ${topComplementary}` : `Suggest 3-4 skills that would complement their technical skills AND domain expertise`}
 
+BE GROUNDED:
+- Base assessments on what's actually demonstrated in their profile
+- Don't assume expertise from basic exposure to a skill
+- Recognize genuine strengths without inflating them
+
 Return ONLY valid JSON:
 {
   "open": ["skill1", "skill2", "skill3", "skill4"],
@@ -231,6 +237,11 @@ Weight all aspects appropriately:
 - Education/academic focus indicates areas of interest and potential
 - Technical skills show capability
 - Experience provides context
+
+BE REALISTIC:
+- Suggest achievable career paths based on their current level
+- Current match percentages should be honest (40-70% is typical for aspirational roles)
+- Missing skills should be genuinely learnable progressions, not leaps
 
 Return ONLY a JSON object:
 {
@@ -260,6 +271,11 @@ Consider how:
 - Technical skills combine with domain expertise
 - Project experience demonstrates applied skills
 - Certain skill pairs create unique value
+
+BE GROUNDED:
+- Only highlight combinations that are genuinely demonstrated
+- Missing links should be realistic next steps, not dramatic transformations
+- Focus on practical value, not hype
 
 Return ONLY a JSON object:
 {
@@ -294,9 +310,17 @@ Return ONLY valid JSON, no markdown.`),
       }
     }
 
-    const careerFitData = parseJSON(careerFit)
+
+    // Sort job fit and skill progression roadmap by match percentage descending
+    let careerFitData = parseJSON(careerFit)
+    if (Array.isArray(careerFitData)) {
+      careerFitData = careerFitData.sort((a, b) => (b.match || 0) - (a.match || 0))
+    }
+    let skillGapData = parseJSON(skillGap)
+    if (skillGapData && Array.isArray(skillGapData.targetRoles)) {
+      skillGapData.targetRoles = skillGapData.targetRoles.sort((a, b) => (b.currentMatch || 0) - (a.currentMatch || 0))
+    }
     const johariData = parseJSON(johariWindow)
-    const skillGapData = parseJSON(skillGap)
     const smartCombosData = parseJSON(smartCombos)
 
     const insights = {
