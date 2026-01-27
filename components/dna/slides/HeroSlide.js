@@ -1,6 +1,8 @@
 'use client'
 
+
 import DNAHelixCanvas from '../DNAHelixCanvas'
+import PremiumBadge from '@/components/ui/PremiumBadge'
 
 export default function HeroSlide({ isVisible, profile, keywordProfile, totalMarkers, dnaCode, daysActive }) {
   return (
@@ -27,6 +29,15 @@ export default function HeroSlide({ isVisible, profile, keywordProfile, totalMar
               <span className="text-[10px] md:text-xs font-mono text-primary-400">{dnaCode}</span>
               <span className="text-xs md:text-sm font-semibold text-white truncate max-w-[150px] md:max-w-none">{profile?.full_name}</span>
             </div>
+            {profile?.is_premium && (
+              <PremiumBadge
+                isPremium={profile.is_premium}
+                premiumSource={profile.premium_source}
+                expiresAt={profile.premium_expires_at}
+                size="sm"
+                showLabel={true}
+              />
+            )}
           </div>
 
           <div>
@@ -53,7 +64,10 @@ export default function HeroSlide({ isVisible, profile, keywordProfile, totalMar
         <div className={`flex justify-center transition-all duration-1500 delay-300 ${
           isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
         }`}>
-          <DNAHelixCanvas keywords={keywordProfile?.keywords || []} />
+          <DNAHelixCanvas
+            keywords={keywordProfile?.keywords || []}
+            isPremium={!!profile?.is_premium}
+          />
         </div>
       </div>
     </div>

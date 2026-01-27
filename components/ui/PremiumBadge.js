@@ -26,6 +26,8 @@ export default function PremiumBadge({
 
   const getSourceLabel = () => {
     switch (premiumSource) {
+      case 'openpools.in':
+        return 'openpools.in'
       case 'coding_gita':
         return 'Coding Gita'
       case 'paid':

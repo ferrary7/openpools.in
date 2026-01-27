@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 
-export default function DNAHelixCanvas({ keywords = [], className = '' }) {
+
+export default function DNAHelixCanvas({ keywords = [], className = '', isPremium = false }) {
   const [rotation, setRotation] = useState(0)
   const [keywordOffset, setKeywordOffset] = useState(0)
   const [mounted, setMounted] = useState(false)
@@ -37,10 +38,10 @@ export default function DNAHelixCanvas({ keywords = [], className = '' }) {
     canvas.style.height = `${canvasHeight}px`
     ctx.scale(dpr, dpr)
 
-    drawDNAHelix(ctx, rotation, keywords, keywordOffset, canvasWidth, canvasHeight)
+    drawDNAHelix(ctx, rotation, keywords, keywordOffset, canvasWidth, canvasHeight, isPremium)
   }, [rotation, keywordOffset, mounted, keywords])
 
-  const drawDNAHelix = (ctx, angle, keywords, keywordFlowOffset, width = 400, height = 600) => {
+  const drawDNAHelix = (ctx, angle, keywords, keywordFlowOffset, width = 400, height = 600, isPremium = false) => {
     ctx.clearRect(0, 0, width, height)
 
     const centerX = width / 2
@@ -65,21 +66,33 @@ export default function DNAHelixCanvas({ keywords = [], className = '' }) {
         const size = 3 + z * 1.5
         const opacity = 0.4 + z * 0.3
 
-        // Gradient colors - hot pink to purple
-        const hue = strand === 0 ? 330 : 280 // Pink vs Purple
-        const saturation = 80
-        const lightness = 50 + z * 10
-
-        ctx.fillStyle = `hsla(${hue}, ${saturation}%, ${lightness}%, ${opacity})`
+        // Golden color for premium, else default
+        let fillColor, hue, saturation, lightness
+        if (isPremium) {
+          fillColor = `rgba(255, 215, 64, ${opacity})` // Gold
+        } else {
+          hue = strand === 0 ? 330 : 280 // Pink vs Purple
+          saturation = 80
+          lightness = 50 + z * 10
+          fillColor = `hsla(${hue}, ${saturation}%, ${lightness}%, ${opacity})`
+        }
+        ctx.fillStyle = fillColor
         ctx.beginPath()
         ctx.arc(x, y, size, 0, Math.PI * 2)
         ctx.fill()
 
         // Add glow effect
         if (i % 5 === 0) {
-          const gradient = ctx.createRadialGradient(x, y, 0, x, y, 15)
-          gradient.addColorStop(0, `hsla(${hue}, ${saturation}%, ${lightness}%, ${opacity * 0.6})`)
-          gradient.addColorStop(1, 'transparent')
+          let gradient
+          if (isPremium) {
+            gradient = ctx.createRadialGradient(x, y, 0, x, y, 15)
+            gradient.addColorStop(0, 'rgba(255, 215, 64, 0.6)') // Gold
+            gradient.addColorStop(1, 'transparent')
+          } else {
+            gradient = ctx.createRadialGradient(x, y, 0, x, y, 15)
+            gradient.addColorStop(0, `hsla(${hue}, ${saturation}%, ${lightness}%, ${opacity * 0.6})`)
+            gradient.addColorStop(1, 'transparent')
+          }
           ctx.fillStyle = gradient
           ctx.beginPath()
           ctx.arc(x, y, 15, 0, Math.PI * 2)
@@ -163,7 +176,11 @@ export default function DNAHelixCanvas({ keywords = [], className = '' }) {
   return (
     <div className={`relative ${className}`}>
       {/* Glow effect behind canvas */}
-      <div className="absolute inset-0 bg-gradient-to-r from-primary-500 to-purple-500 opacity-20 blur-3xl rounded-full"></div>
+      {isPremium ? (
+        <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-yellow-600 opacity-30 blur-3xl rounded-full"></div>
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-r from-primary-500 to-purple-500 opacity-20 blur-3xl rounded-full"></div>
+      )}
 
       {/* DNA Helix Canvas */}
       <canvas
