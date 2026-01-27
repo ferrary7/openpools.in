@@ -70,7 +70,11 @@ export async function GET(request, { params }) {
       created_at: profile.created_at,
       keywords: keywordProfile?.keywords || [],
       total_keywords: keywordProfile?.total_keywords || 0,
-      last_updated: keywordProfile?.last_updated || null
+      last_updated: keywordProfile?.last_updated || null,
+      // Premium fields - visible to everyone
+      is_premium: profile.is_premium || false,
+      premium_source: profile.premium_source || null,
+      premium_expires_at: profile.premium_expires_at || null
     }
 
     // Check if user is viewing their own profile

@@ -28,9 +28,10 @@ export async function GET(req) {
       collaborationsRes,
       notificationsRes,
       showcaseRes,
-      aiInsightsRes
+      aiInsightsRes,
+      premiumUsersRes
     ] = await Promise.all([
-      supabase.from('profiles').select('id, email, resume_url, created_at, bio, location, job_title, company'),
+      supabase.from('profiles').select('id, email, resume_url, created_at, bio, location, job_title, company, is_premium, premium_expires_at'),
       supabase.from('matches').select('id, user_id, matched_user_id, compatibility_score'),
       supabase.from('messages').select('id, sender_id, receiver_id, read, created_at'),
       supabase.from('journals').select('id, user_id, title, created_at'),
@@ -38,7 +39,8 @@ export async function GET(req) {
       supabase.from('collaborations').select('id, sender_id, receiver_id, status, created_at'),
       supabase.from('notifications').select('id, user_id, type, read, created_at'),
       supabase.from('showcase_items').select('id, user_id, type, created_at, visible'),
-      supabase.from('ai_insights').select('user_id, generated_at, updated_at')
+      supabase.from('ai_insights').select('user_id, generated_at, updated_at'),
+      supabase.from('profiles').select('id, premium_expires_at').eq('is_premium', true)
     ])
 
     const profiles = profilesRes.data || []
@@ -50,6 +52,8 @@ export async function GET(req) {
     const notifications = notificationsRes.data || []
     const showcaseItems = showcaseRes.data || []
     const aiInsights = aiInsightsRes.data || []
+    const premiumUsers = premiumUsersRes.data || []
+    const activePremiumUsers = premiumUsers.filter(p => !p.premium_expires_at || new Date(p.premium_expires_at) > new Date())
 
     // Log errors from queries
     if (profilesRes.error) console.error('Profiles error:', profilesRes.error)
@@ -61,6 +65,7 @@ export async function GET(req) {
     if (notificationsRes.error) console.error('Notifications error:', notificationsRes.error)
     if (showcaseRes.error) console.error('Showcase error:', showcaseRes.error)
     if (aiInsightsRes.error) console.error('AI insights error:', aiInsightsRes.error)
+    if (premiumUsersRes.error) console.error('Premium users error:', premiumUsersRes.error)
 
     console.log('Analytics Data:', {
       profiles: profiles.length,
@@ -128,7 +133,7 @@ export async function GET(req) {
     const analytics = {
       users: { total: totalUsers, withResume: resumesUploaded, resumesThisMonth: profiles.filter(p => p.resume_url && new Date(p.created_at) > thirtyDaysAgo).length, active30d: activeUsers, activePercent: totalUsers > 0 ? Math.round((activeUsers / totalUsers) * 100) : 0, avgProfileCompletion, completeProfiles, profilesWithBio: profiles.filter(p => p.bio).length, profilesWithLocation: profiles.filter(p => p.location).length, keywordUsersCount: keywordProfiles.length },
       engagement: { totalMatches: matches.length, avgMatchesPerUser: totalUsers > 0 ? Math.round(matches.length / totalUsers) : 0, avgMatchScore, matchesThisMonth: matches.filter(m => new Date(m.created_at) > thirtyDaysAgo).length, activeChats: conversations.size, totalMessages: messages.length, messagesThisMonth: messages.filter(m => new Date(m.created_at) > thirtyDaysAgo).length, unreadMessages: messages.filter(m => !m.read).length, journalEntries: journals.length, journalsThisMonth: journals.filter(j => new Date(j.created_at) > thirtyDaysAgo).length, avgEntriesPerUser: totalUsers > 0 ? Math.round(journals.length / totalUsers) : 0, uniqueJournalUsers: new Set(journals.map(j => j.user_id)).size },
-      content: { resumes: resumesUploaded, resumesThisMonth: profiles.filter(p => p.resume_url && new Date(p.created_at) > thirtyDaysAgo).length, totalKeywords: allKeywords.length, avgKeywordsPerUser: keywordProfiles.length > 0 ? Math.round(allKeywords.length / keywordProfiles.length) : 0, topKeywords, keywordUsersCount: keywordProfiles.length, showcaseItems: showcaseItems.length, visibleShowcaseItems: showcaseItems.filter(s => s.visible).length, uniqueShowcaseUsers: new Set(showcaseItems.map(s => s.user_id)).size, topShowcaseTypes, aiInsights: aiInsights.length, aiInsightsThisMonth: aiInsights.filter(a => new Date(a.updated_at) > thirtyDaysAgo).length },
+      content: { resumes: resumesUploaded, resumesThisMonth: profiles.filter(p => p.resume_url && new Date(p.created_at) > thirtyDaysAgo).length, totalKeywords: allKeywords.length, avgKeywordsPerUser: keywordProfiles.length > 0 ? Math.round(allKeywords.length / keywordProfiles.length) : 0, topKeywords, keywordUsersCount: keywordProfiles.length, showcaseItems: showcaseItems.length, visibleShowcaseItems: showcaseItems.filter(s => s.visible).length, uniqueShowcaseUsers: new Set(showcaseItems.map(s => s.user_id)).size, topShowcaseTypes, aiInsights: aiInsights.length, aiInsightsThisMonth: aiInsights.filter(a => new Date(a.updated_at) > thirtyDaysAgo).length, premiumUsers: premiumUsers.length, activePremium: activePremiumUsers.length },
       collaboration: { totalRequests: collaborations.length, pending: collaborations.filter(c => c.status === 'pending').length, accepted: acceptedCollabs, rejected: collaborations.filter(c => c.status === 'rejected').length, thisMonth: collaborations.filter(c => new Date(c.created_at) > thirtyDaysAgo).length, acceptanceRate: collabAcceptanceRate, notifications: notifications.length, unreadNotifications: notifications.filter(n => !n.read).length, collabNotifications: notifications.filter(n => n.type === 'collab_request').length },
       activity: { newUsersMonth: profiles.filter(p => new Date(p.created_at) > thirtyDaysAgo).length, newUsersWeek: profiles.filter(p => new Date(p.created_at) > sevenDaysAgo).length, signupRate: totalUsers > 0 ? Math.round((profiles.filter(p => new Date(p.created_at) > thirtyDaysAgo).length / totalUsers) * 100) : 0, dailyAvg: profiles.filter(p => new Date(p.created_at) > sevenDaysAgo).length > 0 ? Math.round(profiles.filter(p => new Date(p.created_at) > sevenDaysAgo).length / 7) : 0, topJobs: Object.entries(jobMap).map(([job, count]) => ({ job, count })).sort((a, b) => b.count - a.count).slice(0, 5), topCompanies: Object.entries(companyMap).map(([company, count]) => ({ company, count })).sort((a, b) => b.count - a.count).slice(0, 5) }
     }

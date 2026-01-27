@@ -56,7 +56,10 @@ export async function GET(request) {
           company,
           linkedin_url,
           github_url,
-          website
+          website,
+          is_premium,
+          premium_source,
+          premium_expires_at
         )
       `
       )
@@ -81,6 +84,10 @@ export async function GET(request) {
       fullName: profile.profiles?.full_name || 'Anonymous',
       email: profile.profiles?.email,
       keywords: profile.keywords,
+      // Premium fields
+      isPremium: profile.profiles?.is_premium || false,
+      premiumSource: profile.profiles?.premium_source || null,
+      premiumExpiresAt: profile.profiles?.premium_expires_at || null,
       profile: {
         full_name: profile.profiles?.full_name,
         bio: profile.profiles?.bio,

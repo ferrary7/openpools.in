@@ -159,9 +159,10 @@ export default function AdminAnalyticsPage() {
             subtext={`${analytics.collaboration.unreadNotifications} unread`}
           />
           <MetricCard
-            label="Featured Profiles"
-            value={analytics.content.uniqueShowcaseUsers}
-            icon="🌟"
+            label="Premium Profiles"
+            value={analytics.content.premiumUsers || 0}
+            icon="⭐"
+            subtext={`${analytics.content.activePremium || 0} active`}
           />
         </div>
       </div>

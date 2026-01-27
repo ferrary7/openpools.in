@@ -4,6 +4,7 @@ import KeywordDisplay from '@/components/onboarding/KeywordDisplay'
 import CompaniesSection from '@/components/ui/CompaniesSection'
 import InsightsRefresher from '@/components/dashboard/InsightsRefresher'
 import MatchesCount from '@/components/dashboard/MatchesCount'
+import PremiumBadge from '@/components/ui/PremiumBadge'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -56,13 +57,72 @@ export default async function DashboardPage() {
       />
       
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">
-          Welcome back, {profile?.full_name || 'there'}!
-        </h1>
+        <div className="flex items-center gap-3 flex-wrap">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Welcome back, {profile?.full_name || 'there'}!
+          </h1>
+          <PremiumBadge
+            isPremium={profile?.is_premium}
+            premiumSource={profile?.premium_source}
+            expiresAt={profile?.premium_expires_at}
+            size="lg"
+          />
+        </div>
         <p className="text-gray-600 mt-2">
           Your Skills, Your Vibe, Your Network - all in one place.
         </p>
       </div>
+
+      {/* Premium Member Banner */}
+      {profile?.is_premium && (!profile?.premium_expires_at || new Date(profile.premium_expires_at) > new Date()) && (
+        <div className="mb-8 relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 p-[2px]">
+          <div className="relative rounded-2xl bg-gradient-to-r from-amber-950 via-orange-950 to-yellow-950 p-6">
+            {/* Decorative elements */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-amber-500/20 to-transparent rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-yellow-500/20 to-transparent rounded-full blur-3xl" />
+
+            <div className="relative flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-4">
+                {/* Crown Icon */}
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500/30 to-yellow-500/30 flex items-center justify-center border border-amber-500/30">
+                  <svg className="w-8 h-8 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                    Premium Member
+                    {profile?.premium_source === 'coding_gita' && (
+                      <span className="text-sm font-medium text-amber-300">via Coding Gita</span>
+                    )}
+                  </h2>
+                  <p className="text-amber-200/80 text-sm">
+                    {profile?.premium_expires_at
+                      ? `Your premium access is valid until ${(() => { const d = new Date(profile.premium_expires_at); const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']; return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`; })()}`
+                      : 'Enjoy unlimited access to all premium features'
+                    }
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="hidden sm:flex items-center gap-2 text-amber-300 text-sm">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Priority Matching
+                </div>
+                <div className="hidden sm:flex items-center gap-2 text-amber-300 text-sm">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Verified Badge
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Feature Banners Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">

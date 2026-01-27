@@ -7,6 +7,7 @@ import PdfUploader from '@/components/profile/PdfUploader'
 import { mergeKeywords } from '@/lib/keywords'
 import { uploadProfilePicture, deleteProfilePicture } from '@/components/profile/ProfilePictureUploader'
 import { validateUsernameFormat, sanitizeUsername, generateUsernameSuggestions } from '@/lib/username'
+import PremiumBadge from '@/components/ui/PremiumBadge'
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState(null)
@@ -351,7 +352,14 @@ export default function ProfilePage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Your Profile</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-gray-900">Your Profile</h1>
+          <PremiumBadge
+            isPremium={profile?.is_premium}
+            premiumSource={profile?.premium_source}
+            expiresAt={profile?.premium_expires_at}
+          />
+        </div>
         {!editing ? (
           <button onClick={() => setEditing(true)} className="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white font-medium rounded-lg transition-colors">
             Edit Profile
@@ -373,6 +381,58 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+
+      {/* Premium Membership Card */}
+      {profile?.is_premium && (!profile?.premium_expires_at || new Date(profile.premium_expires_at) > new Date()) && (
+        <div className="mb-6 relative overflow-hidden rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 p-[2px]">
+          <div className="relative rounded-xl bg-gradient-to-r from-amber-950 via-orange-950 to-yellow-950 p-5">
+            {/* Decorative elements */}
+            <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-amber-500/20 to-transparent rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-yellow-500/20 to-transparent rounded-full blur-3xl" />
+
+            <div className="relative flex items-center gap-4">
+              {/* Crown Icon */}
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/30 to-yellow-500/30 flex items-center justify-center border border-amber-500/30 flex-shrink-0">
+                <svg className="w-6 h-6 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              </div>
+
+              <div className="flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-lg font-bold text-white">Premium Member</h2>
+                  {profile?.premium_source === 'coding_gita' && (
+                    <span className="text-xs font-medium text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-full">
+                      Coding Gita Partner
+                    </span>
+                  )}
+                </div>
+                <p className="text-amber-200/80 text-sm mt-1">
+                  {profile?.premium_expires_at
+                    ? `Valid until ${(() => { const d = new Date(profile.premium_expires_at); const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']; return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`; })()}`
+                    : 'Lifetime premium access'
+                  }
+                </p>
+              </div>
+
+              <div className="hidden sm:flex items-center gap-4 text-xs text-amber-300">
+                <div className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Verified
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Priority
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Profile Picture Section */}
       <div className="card mb-6">

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import KeywordDisplay from '@/components/onboarding/KeywordDisplay'
 import CollabButton from '@/components/collab/CollabButton'
 import CollabAnimation from '@/components/collab/CollabAnimation'
+import PremiumBadge from '@/components/ui/PremiumBadge'
 
 export default function UserProfilePage() {
   const params = useParams()
@@ -157,7 +158,14 @@ export default function UserProfilePage() {
 
           {/* User Info */}
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900">{userData.full_name}</h1>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-3xl font-bold text-gray-900">{userData.full_name}</h1>
+              <PremiumBadge
+                isPremium={userData.is_premium}
+                premiumSource={userData.premium_source}
+                expiresAt={userData.premium_expires_at}
+              />
+            </div>
             {userData.job_title && userData.company && (
               <p className="text-lg text-gray-600 mt-1">
                 {userData.job_title} at {userData.company}
