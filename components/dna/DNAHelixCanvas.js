@@ -164,8 +164,12 @@ export default function DNAHelixCanvas({ keywords = [], className = '', isPremiu
 
           if (keywordText) {
             ctx.font = 'bold 11px Inter, system-ui, sans-serif'
-            ctx.fillStyle = `rgba(255, 200, 230, ${textOpacity})`
             ctx.textAlign = 'center'
+            if (isPremium) {
+              ctx.fillStyle = `rgba(255,255,255,${textOpacity})` // White for premium
+            } else {
+              ctx.fillStyle = `rgba(255, 200, 230, ${textOpacity})` // Light pink for non-premium
+            }
             ctx.fillText(keywordText, textX, y + 4)
           }
         }

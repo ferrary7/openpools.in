@@ -285,17 +285,14 @@ export default function QuestionFlow({ userInput, onComplete }) {
       }
     })
 
-    // SCORING - apply each keyword as a scoring factor (OR logic)
-    // Candidates that match MORE keywords get higher scores
+    // SCORING - true percentage: matched keywords / total extracted keywords
     const steps = []
 
     for (const keyword of matchedKeywords) {
       const keywordVariations = getVariations(keyword)
       let matchCount = 0
 
-      // Score candidates that match this keyword (don't filter them out)
       candidateList.forEach(c => {
-        // Check if ANY searchable content contains ANY variation of the keyword
         const matches = keywordVariations.some(variant =>
           c.searchableContent.some(content => {
             return content.includes(variant) || content === variant
@@ -303,7 +300,6 @@ export default function QuestionFlow({ userInput, onComplete }) {
         )
         if (matches) {
           c.matchedFilters.push(keyword)
-          c.score += 25
           matchCount++
         }
       })
@@ -320,27 +316,28 @@ export default function QuestionFlow({ userInput, onComplete }) {
     // Filter to only keep candidates that matched at least ONE keyword
     candidateList = candidateList.filter(c => c.matchedFilters.length > 0)
 
-    // Add bonus points for profile completeness
+    // Add bonus points for profile completeness (optional, but does not affect %)
     candidateList = candidateList.map(c => {
       let bonus = 0
-      if (c.bio) bonus += 5
-      if (c.totalKeywords > 5) bonus += 10
-      if (c.company) bonus += 5
-      if (c.job_title) bonus += 5
-      if (c.hasLinkedIn) bonus += 5
-      if (c.hasResume) bonus += 5
-      return { ...c, score: c.score + bonus }
+      if (c.bio) bonus += 1
+      if (c.totalKeywords > 5) bonus += 1
+      if (c.company) bonus += 1
+      if (c.job_title) bonus += 1
+      if (c.hasLinkedIn) bonus += 1
+      if (c.hasResume) bonus += 1
+      return { ...c, bonus }
     })
 
-    // Sort by score and take top results
+    // Calculate true percentage: matched keywords / total extracted keywords
+    const totalKeywords = matchedKeywords.length || 1
     const sorted = candidateList
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 10)
       .map((c, idx) => ({
         ...c,
-        score: Math.min(98, Math.max(60, c.score + (10 - idx) * 2)),
+        score: Math.round((c.matchedFilters.length / totalKeywords) * 100),
         keywords: c.keywords.slice(0, 12)
       }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10)
 
     setCandidates(sorted)
     setLoading(false)
