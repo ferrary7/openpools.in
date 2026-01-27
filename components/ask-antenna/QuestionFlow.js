@@ -316,35 +316,50 @@ export default function QuestionFlow({ userInput, onComplete }) {
     // Filter to only keep candidates that matched at least ONE keyword
     candidateList = candidateList.filter(c => c.matchedFilters.length > 0)
 
-    // Add bonus points for profile completeness (optional, but does not affect %)
-    candidateList = candidateList.map(c => {
-      let bonus = 0
-      if (c.bio) bonus += 1
-      if (c.totalKeywords > 5) bonus += 1
-      if (c.company) bonus += 1
-      if (c.job_title) bonus += 1
-      if (c.hasLinkedIn) bonus += 1
-      if (c.hasResume) bonus += 1
-      return { ...c, bonus }
-    })
+    // Weighted antenna score: 85% keyword match, 10% profile completeness, 5% skill diversity, 5% premium boost
+    function calculateProfileCompleteness(profile) {
+      if (!profile) return 0;
+      const fields = [
+        'full_name', 'bio', 'job_title', 'company', 'location', 'linkedin_url', 'github_url', 'website'
+      ];
+      const filled = fields.filter(f => profile[f]?.toString().trim()).length;
+      return (filled / fields.length) * 10; // out of 10
+    }
 
-    // Calculate true percentage: matched keywords / total extracted keywords
-    const totalKeywords = matchedKeywords.length || 1
+    function calculateSkillDiversity(keywords) {
+      if (!keywords || keywords.length === 0) return 0;
+      const unique = new Set(keywords.map(k => k.toLowerCase())).size;
+      // Diversity: more unique keywords = higher, scale to 5
+      return Math.min(5, (unique / 12) * 5); // 12 is typical max shown
+    }
+
+    const totalKeywords = matchedKeywords.length || 1;
     const sorted = candidateList
-      .map((c, idx) => ({
-        ...c,
-        score: Math.round((c.matchedFilters.length / totalKeywords) * 100),
-        keywords: c.keywords.slice(0, 12)
-      }))
+      .map((c, idx) => {
+        // Premium boost
+        const isPremium = c.is_premium || c.isPremium;
+        const premiumBoost = isPremium ? 5 : 0;
+        // Weighted score
+        const keywordScore = (c.matchedFilters.length / totalKeywords) * 85;
+        const completenessScore = calculateProfileCompleteness(c);
+        const diversityScore = calculateSkillDiversity(c.keywords);
+        let score = keywordScore + completenessScore + diversityScore + premiumBoost;
+        score = Math.min(Math.round(score), 100);
+        return {
+          ...c,
+          score,
+          keywords: c.keywords.slice(0, 12)
+        };
+      })
       .sort((a, b) => b.score - a.score)
-      .slice(0, 10)
+      .slice(0, 10);
 
-    setCandidates(sorted)
-    setLoading(false)
+    setCandidates(sorted);
+    setLoading(false);
 
     // Show results after a brief pause
-    await new Promise(r => setTimeout(r, 600))
-    onComplete([], sorted)
+    await new Promise(r => setTimeout(r, 600));
+    onComplete([], sorted);
   }
 
   // Analyzing stage
