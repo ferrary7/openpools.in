@@ -397,34 +397,197 @@ export default function OnboardedUsersTable() {
   }), [safeTotalPages, safePageIndex, safePageSize, safeTotalRows]);
 
   return (
-    <DataTable
-      data={users}
-      columns={columns}
-      loading={loading}
-      error={error}
-      title="All Onboarded Users"
-      subtitle={`${safeTotalRows} total users${hasActiveFilters ? ' (filtered)' : ''}`}
-      exportFilename="users-export"
-      enableColumnFilters={true}
-      enableRowSelection={false}
-      enableExport={true}
-      emptyMessage={hasActiveFilters ? 'No users match your filters' : 'No onboarded users found'}
-      serverSidePagination={serverSidePagination}
-      serverSideSort={{
-        sorting: sortBy ? [{ id: sortBy, desc: sortOrder === 'desc' }] : [],
-        onSortingChange: (updater) => {
-          const sort = typeof updater === 'function' ? updater([{ id: sortBy, desc: sortOrder === 'desc' }]) : updater;
-          if (sort.length > 0) {
-            setSortBy(sort[0].id);
-            setSortOrder(sort[0].desc ? 'desc' : 'asc');
-          }
-        },
-      }}
-      serverSideFilter={{
-        globalFilter: debouncedSearch,
-        onGlobalFilterChange: (value) => setSearch(value),
-      }}
-      actions={null}
-    />
+    <>
+      <DataTable
+        data={users}
+        columns={columns}
+        loading={loading}
+        error={error}
+        title="All Onboarded Users"
+        subtitle={`${safeTotalRows} total users${hasActiveFilters ? ' (filtered)' : ''}`}
+        exportFilename="users-export"
+        enableColumnFilters={true}
+        enableRowSelection={false}
+        enableExport={true}
+        emptyMessage={hasActiveFilters ? 'No users match your filters' : 'No onboarded users found'}
+        serverSidePagination={serverSidePagination}
+        serverSideSort={{
+          sorting: sortBy ? [{ id: sortBy, desc: sortOrder === 'desc' }] : [],
+          onSortingChange: (updater) => {
+            const sort = typeof updater === 'function' ? updater([{ id: sortBy, desc: sortOrder === 'desc' }]) : updater;
+            if (sort.length > 0) {
+              setSortBy(sort[0].id);
+              setSortOrder(sort[0].desc ? 'desc' : 'asc');
+            }
+          },
+        }}
+        serverSideFilter={{
+          globalFilter: debouncedSearch,
+          onGlobalFilterChange: (value) => setSearch(value),
+        }}
+        actions={null}
+      />
+
+      {/* View Keywords Modal */}
+      {viewingKeywords && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Keywords for {viewingKeywords.full_name || viewingKeywords.email}
+              </h3>
+              <button
+                onClick={() => setViewingKeywords(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
+              {keywordsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
+                </div>
+              ) : keywords.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {keywords.map((kw, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-800"
+                    >
+                      {kw.keyword}
+                      {kw.weight && (
+                        <span className="ml-1 text-purple-500 text-xs">({kw.weight})</span>
+                      )}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center py-4">No keywords found for this user.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Modal */}
+      {editingUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-lg max-w-lg w-full mx-4">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">Edit User</h3>
+              <button
+                onClick={() => setEditingUser(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <input
+                  type="text"
+                  value={formData.full_name || ''}
+                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={formData.email || ''}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
+                <input
+                  type="text"
+                  value={formData.job_title || ''}
+                  onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
+                <input
+                  type="text"
+                  value={formData.company || ''}
+                  onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                <input
+                  type="text"
+                  value={formData.location || ''}
+                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                <textarea
+                  value={formData.bio || ''}
+                  onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+              <button
+                onClick={() => setEditingUser(null)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={isSubmitting}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-lg max-w-md w-full mx-4">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-red-600">Delete User</h3>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-600">
+                Are you sure you want to delete this user? This action cannot be undone.
+              </p>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(deleteConfirm)}
+                disabled={isSubmitting}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+              >
+                {isSubmitting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
