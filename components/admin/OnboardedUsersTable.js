@@ -262,27 +262,27 @@ export default function OnboardedUsersTable() {
 
   // DataTable columns definition
   const columns = [
-        {
-          header: 'DNA',
-          id: 'dna',
-          cell: info => {
-            const username = info.row.original.username;
-            const id = info.row.original.id;
-            const hasUsername = typeof username === 'string' && username.trim().length > 0;
-            const dnaLink = hasUsername ? `/dna/${username}` : `/dna/${id}`;
-            return (
-              <a
-                href={dnaLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 underline hover:text-blue-800 text-xs"
-              >
-                View DNA
-              </a>
-            );
-          },
-          enableSorting: false,
-        },
+    {
+      header: 'DNA',
+      id: 'dna',
+      cell: info => {
+        const username = info.row.original.username;
+        const id = info.row.original.id;
+        const hasUsername = typeof username === 'string' && username.trim().length > 0;
+        const dnaLink = hasUsername ? `/dna/${username}` : `/dna/${id}`;
+        return (
+          <a
+            href={dnaLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 underline hover:text-blue-800 text-xs"
+          >
+            View DNA
+          </a>
+        );
+      },
+      enableSorting: false,
+    },
     {
       header: 'Name',
       accessorKey: 'full_name',
@@ -437,7 +437,7 @@ export default function OnboardedUsersTable() {
                 Keywords for {viewingKeywords.full_name || viewingKeywords.email}
               </h3>
               <button
-                onClick={() => setViewingKeywords(null)}
+                onClick={() => { setViewingKeywords(null); setKeywords([]); }}
                 className="text-gray-400 hover:text-gray-600"
               >
                 ✕
@@ -455,7 +455,7 @@ export default function OnboardedUsersTable() {
                       key={index}
                       className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-800"
                     >
-                      {kw.keyword}
+                      {typeof kw === 'string' ? kw : kw.keyword || kw.name || JSON.stringify(kw)}
                       {kw.weight && (
                         <span className="ml-1 text-purple-500 text-xs">({kw.weight})</span>
                       )}
@@ -473,11 +473,11 @@ export default function OnboardedUsersTable() {
       {/* Edit User Modal */}
       {editingUser && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-lg max-w-lg w-full mx-4">
+          <div className="bg-white rounded-xl shadow-lg max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">Edit User</h3>
               <button
-                onClick={() => setEditingUser(null)}
+                onClick={() => { setEditingUser(null); setFormData({}); }}
                 className="text-gray-400 hover:text-gray-600"
               >
                 ✕
@@ -490,7 +490,7 @@ export default function OnboardedUsersTable() {
                   type="text"
                   value={formData.full_name || ''}
                   onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
               <div>
@@ -499,7 +499,7 @@ export default function OnboardedUsersTable() {
                   type="email"
                   value={formData.email || ''}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
               <div>
@@ -508,7 +508,7 @@ export default function OnboardedUsersTable() {
                   type="text"
                   value={formData.job_title || ''}
                   onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
               <div>
@@ -517,7 +517,7 @@ export default function OnboardedUsersTable() {
                   type="text"
                   value={formData.company || ''}
                   onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
               <div>
@@ -526,7 +526,7 @@ export default function OnboardedUsersTable() {
                   type="text"
                   value={formData.location || ''}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
               <div>
@@ -535,14 +535,15 @@ export default function OnboardedUsersTable() {
                   value={formData.bio || ''}
                   onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
             </div>
             <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
               <button
-                onClick={() => setEditingUser(null)}
+                onClick={() => { setEditingUser(null); setFormData({}); }}
                 className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                disabled={isSubmitting}
               >
                 Cancel
               </button>
@@ -574,6 +575,7 @@ export default function OnboardedUsersTable() {
               <button
                 onClick={() => setDeleteConfirm(null)}
                 className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                disabled={isSubmitting}
               >
                 Cancel
               </button>
