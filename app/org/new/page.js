@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
 
 export default function CreateOrganizationPage() {
   const router = useRouter()
+  const supabase = createClient()
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
@@ -16,6 +18,37 @@ export default function CreateOrganizationPage() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [checking, setChecking] = useState(true)
+  const [canCreate, setCanCreate] = useState(false)
+
+  useEffect(() => {
+    checkPermission()
+  }, [])
+
+  const checkPermission = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.push('/login?redirect=/org/new')
+        return
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('can_create_org, role')
+        .eq('id', user.id)
+        .single()
+
+      // Allow if can_create_org is true OR if user is admin
+      if (profile?.can_create_org || profile?.role === 'admin') {
+        setCanCreate(true)
+      }
+    } catch (err) {
+      console.error('Error checking permission:', err)
+    } finally {
+      setChecking(false)
+    }
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -88,6 +121,46 @@ export default function CreateOrganizationPage() {
     { value: 'nonprofit', label: 'Non-profit' },
     { value: 'other', label: 'Other' }
   ]
+
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
+  if (!canCreate) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+            <div className="text-6xl mb-4">🔒</div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Access Restricted
+            </h1>
+            <p className="text-gray-600 mb-6">
+              Organization creation is currently invite-only. Please contact the OpenPools team if you'd like to create an organization for your company.
+            </p>
+            <div className="flex items-center justify-center gap-4">
+              <Link
+                href="/org"
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                ← Back
+              </Link>
+              <a
+                href="mailto:hi@openpools.in?subject=Organization Access Request"
+                className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Request Access
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">

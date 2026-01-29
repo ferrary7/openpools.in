@@ -3,28 +3,54 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 
 export default function OrganizationsPage() {
   const [organizations, setOrganizations] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [canCreate, setCanCreate] = useState(false)
   const router = useRouter()
+  const supabase = createClient()
 
   useEffect(() => {
-    fetchOrganizations()
+    checkAccessAndFetch()
   }, [])
 
-  const fetchOrganizations = async () => {
+  const checkAccessAndFetch = async () => {
     try {
-      const response = await fetch('/api/org')
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch organizations')
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.push('/login?redirect=/org')
+        return
       }
 
-      setOrganizations(data.organizations || [])
+      // Fetch organizations and permissions in parallel
+      const [orgsResponse, profileResult] = await Promise.all([
+        fetch('/api/org'),
+        supabase
+          .from('profiles')
+          .select('can_create_org, role')
+          .eq('id', user.id)
+          .single()
+      ])
+
+      const orgsData = await orgsResponse.json()
+      const userOrgs = orgsData.organizations || []
+      const profile = profileResult.data
+
+      const hasCreatePermission = profile?.can_create_org || profile?.role === 'admin'
+
+      // If user has no orgs and can't create one, redirect to dashboard
+      if (userOrgs.length === 0 && !hasCreatePermission) {
+        router.push('/dashboard')
+        return
+      }
+
+      setOrganizations(userOrgs)
+      setCanCreate(hasCreatePermission)
     } catch (err) {
+      console.error('Error:', err)
       setError(err.message)
     } finally {
       setLoading(false)
@@ -51,13 +77,15 @@ export default function OrganizationsPage() {
                 Manage your organization dashboards
               </p>
             </div>
-            <Link
-              href="/org/new"
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <span className="mr-2">+</span>
-              Create Organization
-            </Link>
+            {canCreate && (
+              <Link
+                href="/org/new"
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <span className="mr-2">+</span>
+                Create Organization
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -76,15 +104,31 @@ export default function OrganizationsPage() {
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
               No organizations yet
             </h3>
-            <p className="text-gray-500 mb-6">
-              Create your first organization to start using the talent search dashboard.
-            </p>
-            <Link
-              href="/org/new"
-              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Create your first organization
-            </Link>
+            {canCreate ? (
+              <>
+                <p className="text-gray-500 mb-6">
+                  Create your first organization to start using the talent search dashboard.
+                </p>
+                <Link
+                  href="/org/new"
+                  className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Create your first organization
+                </Link>
+              </>
+            ) : (
+              <>
+                <p className="text-gray-500 mb-6">
+                  You haven't been invited to any organizations yet. Contact your team admin to get an invitation.
+                </p>
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  ← Back to Dashboard
+                </Link>
+              </>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
