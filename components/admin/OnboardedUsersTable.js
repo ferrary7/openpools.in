@@ -262,27 +262,27 @@ export default function OnboardedUsersTable() {
 
   // DataTable columns definition
   const columns = [
-        {
-          header: 'DNA',
-          id: 'dna',
-          cell: info => {
-            const username = info.row.original.username;
-            const id = info.row.original.id;
-            const hasUsername = typeof username === 'string' && username.trim().length > 0;
-            const dnaLink = hasUsername ? `/dna/${username}` : `/dna/${id}`;
-            return (
-              <a
-                href={dnaLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 underline hover:text-blue-800 text-xs"
-              >
-                View DNA
-              </a>
-            );
-          },
-          enableSorting: false,
-        },
+    {
+      header: 'DNA',
+      id: 'dna',
+      cell: info => {
+        const username = info.row.original.username;
+        const id = info.row.original.id;
+        const hasUsername = typeof username === 'string' && username.trim().length > 0;
+        const dnaLink = hasUsername ? `/dna/${username}` : `/dna/${id}`;
+        return (
+          <a
+            href={dnaLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 underline hover:text-blue-800 text-xs"
+          >
+            View DNA
+          </a>
+        );
+      },
+      enableSorting: false,
+    },
     {
       header: 'Name',
       accessorKey: 'full_name',
@@ -428,29 +428,43 @@ export default function OnboardedUsersTable() {
         actions={null}
       />
 
-      {/* Delete Confirmation Modal */}
-      {deleteConfirm && (
+      {/* View Keywords Modal */}
+      {viewingKeywords && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete User</h3>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to delete this user? This action cannot be undone.
-            </p>
-            <div className="flex justify-end gap-3">
+          <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Keywords for {viewingKeywords.full_name || viewingKeywords.email}
+              </h3>
               <button
-                onClick={() => setDeleteConfirm(null)}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800"
-                disabled={isSubmitting}
+                onClick={() => { setViewingKeywords(null); setKeywords([]); }}
+                className="text-gray-400 hover:text-gray-600"
               >
-                Cancel
+                ✕
               </button>
-              <button
-                onClick={() => handleDelete(deleteConfirm)}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Deleting...' : 'Delete'}
-              </button>
+            </div>
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
+              {keywordsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
+                </div>
+              ) : keywords.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {keywords.map((kw, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-800"
+                    >
+                      {typeof kw === 'string' ? kw : kw.keyword || kw.name || JSON.stringify(kw)}
+                      {kw.weight && (
+                        <span className="ml-1 text-purple-500 text-xs">({kw.weight})</span>
+                      )}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center py-4">No keywords found for this user.</p>
+              )}
             </div>
           </div>
         </div>
@@ -459,9 +473,17 @@ export default function OnboardedUsersTable() {
       {/* Edit User Modal */}
       {editingUser && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-lg w-full mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Edit User</h3>
-            <div className="space-y-4">
+          <div className="bg-white rounded-xl shadow-lg max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">Edit User</h3>
+              <button
+                onClick={() => { setEditingUser(null); setFormData({}); }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
                 <input
@@ -517,7 +539,7 @@ export default function OnboardedUsersTable() {
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-3 mt-6">
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
               <button
                 onClick={() => { setEditingUser(null); setFormData({}); }}
                 className="px-4 py-2 text-gray-600 hover:text-gray-800"
@@ -527,8 +549,8 @@ export default function OnboardedUsersTable() {
               </button>
               <button
                 onClick={handleSaveEdit}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                 disabled={isSubmitting}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
                 {isSubmitting ? 'Saving...' : 'Save Changes'}
               </button>
@@ -537,42 +559,34 @@ export default function OnboardedUsersTable() {
         </div>
       )}
 
-      {/* View Keywords Modal */}
-      {viewingKeywords && (
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Keywords</h3>
-                <p className="text-sm text-gray-500">{viewingKeywords.full_name || viewingKeywords.email}</p>
-              </div>
+          <div className="bg-white rounded-xl shadow-lg max-w-md w-full mx-4">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-red-600">Delete User</h3>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-600">
+                Are you sure you want to delete this user? This action cannot be undone.
+              </p>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
               <button
-                onClick={() => { setViewingKeywords(null); setKeywords([]); }}
-                className="text-gray-400 hover:text-gray-600"
+                onClick={() => setDeleteConfirm(null)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                disabled={isSubmitting}
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(deleteConfirm)}
+                disabled={isSubmitting}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+              >
+                {isSubmitting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
-            {keywordsLoading ? (
-              <div className="flex justify-center py-8">
-                <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-              </div>
-            ) : keywords.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">No keywords found for this user.</p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {keywords.map((kw, idx) => (
-                  <span
-                    key={idx}
-                    className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
-                  >
-                    {typeof kw === 'string' ? kw : kw.keyword || kw.name || JSON.stringify(kw)}
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
         </div>
       )}
