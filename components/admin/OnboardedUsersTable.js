@@ -397,34 +397,185 @@ export default function OnboardedUsersTable() {
   }), [safeTotalPages, safePageIndex, safePageSize, safeTotalRows]);
 
   return (
-    <DataTable
-      data={users}
-      columns={columns}
-      loading={loading}
-      error={error}
-      title="All Onboarded Users"
-      subtitle={`${safeTotalRows} total users${hasActiveFilters ? ' (filtered)' : ''}`}
-      exportFilename="users-export"
-      enableColumnFilters={true}
-      enableRowSelection={false}
-      enableExport={true}
-      emptyMessage={hasActiveFilters ? 'No users match your filters' : 'No onboarded users found'}
-      serverSidePagination={serverSidePagination}
-      serverSideSort={{
-        sorting: sortBy ? [{ id: sortBy, desc: sortOrder === 'desc' }] : [],
-        onSortingChange: (updater) => {
-          const sort = typeof updater === 'function' ? updater([{ id: sortBy, desc: sortOrder === 'desc' }]) : updater;
-          if (sort.length > 0) {
-            setSortBy(sort[0].id);
-            setSortOrder(sort[0].desc ? 'desc' : 'asc');
-          }
-        },
-      }}
-      serverSideFilter={{
-        globalFilter: debouncedSearch,
-        onGlobalFilterChange: (value) => setSearch(value),
-      }}
-      actions={null}
-    />
+    <>
+      <DataTable
+        data={users}
+        columns={columns}
+        loading={loading}
+        error={error}
+        title="All Onboarded Users"
+        subtitle={`${safeTotalRows} total users${hasActiveFilters ? ' (filtered)' : ''}`}
+        exportFilename="users-export"
+        enableColumnFilters={true}
+        enableRowSelection={false}
+        enableExport={true}
+        emptyMessage={hasActiveFilters ? 'No users match your filters' : 'No onboarded users found'}
+        serverSidePagination={serverSidePagination}
+        serverSideSort={{
+          sorting: sortBy ? [{ id: sortBy, desc: sortOrder === 'desc' }] : [],
+          onSortingChange: (updater) => {
+            const sort = typeof updater === 'function' ? updater([{ id: sortBy, desc: sortOrder === 'desc' }]) : updater;
+            if (sort.length > 0) {
+              setSortBy(sort[0].id);
+              setSortOrder(sort[0].desc ? 'desc' : 'asc');
+            }
+          },
+        }}
+        serverSideFilter={{
+          globalFilter: debouncedSearch,
+          onGlobalFilterChange: (value) => setSearch(value),
+        }}
+        actions={null}
+      />
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete User</h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete this user? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                disabled={isSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(deleteConfirm)}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Modal */}
+      {editingUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-lg w-full mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Edit User</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <input
+                  type="text"
+                  value={formData.full_name || ''}
+                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={formData.email || ''}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
+                <input
+                  type="text"
+                  value={formData.job_title || ''}
+                  onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
+                <input
+                  type="text"
+                  value={formData.company || ''}
+                  onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                <input
+                  type="text"
+                  value={formData.location || ''}
+                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                <textarea
+                  value={formData.bio || ''}
+                  onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => { setEditingUser(null); setFormData({}); }}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                disabled={isSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Keywords Modal */}
+      {viewingKeywords && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Keywords</h3>
+                <p className="text-sm text-gray-500">{viewingKeywords.full_name || viewingKeywords.email}</p>
+              </div>
+              <button
+                onClick={() => { setViewingKeywords(null); setKeywords([]); }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            {keywordsLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : keywords.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">No keywords found for this user.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {keywords.map((kw, idx) => (
+                  <span
+                    key={idx}
+                    className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
+                  >
+                    {typeof kw === 'string' ? kw : kw.keyword || kw.name || JSON.stringify(kw)}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </>
   )
 }
