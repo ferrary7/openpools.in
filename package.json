@@ -13,6 +13,7 @@
   "description": "",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "date-fns": "^3.6.0",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.81.1",
     "@tanstack/react-table": "^8.21.3",
@@ -22,6 +23,7 @@
     "pdf-parse-fork": "^1.2.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-dropzone": "^14.3.5",
     "resend": "^6.5.2",
     "zustand": "^5.0.0"
   },
