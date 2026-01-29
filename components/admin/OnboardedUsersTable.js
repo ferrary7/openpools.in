@@ -450,17 +450,21 @@ export default function OnboardedUsersTable() {
                 </div>
               ) : keywords.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
-                  {keywords.map((kw, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-800"
-                    >
-                      {typeof kw === 'string' ? kw : kw.keyword || kw.name || JSON.stringify(kw)}
-                      {kw.weight && (
-                        <span className="ml-1 text-purple-500 text-xs">({kw.weight})</span>
-                      )}
-                    </span>
-                  ))}
+                  {keywords.map((kw, index) => {
+                    const keyword = typeof kw === 'string' ? kw : (kw.keyword || kw.name || '')
+                    const weight = typeof kw === 'object' && typeof kw.weight === 'number' ? kw.weight : null
+                    return (
+                      <span
+                        key={index}
+                        className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-800"
+                      >
+                        {keyword}
+                        {weight !== null && (
+                          <span className="ml-1 text-purple-500 text-xs">({weight.toFixed(1)})</span>
+                        )}
+                      </span>
+                    )
+                  })}
                 </div>
               ) : (
                 <p className="text-gray-500 text-center py-4">No keywords found for this user.</p>
