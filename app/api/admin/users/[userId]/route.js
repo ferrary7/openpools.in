@@ -77,17 +77,20 @@ export async function PATCH(req, context) {
 
     const body = await req.json()
 
+    // Build update object (only include fields that are provided)
+    const updateData = {}
+    if (body.full_name !== undefined) updateData.full_name = body.full_name
+    if (body.email !== undefined) updateData.email = body.email
+    if (body.job_title !== undefined) updateData.job_title = body.job_title
+    if (body.company !== undefined) updateData.company = body.company
+    if (body.location !== undefined) updateData.location = body.location
+    if (body.bio !== undefined) updateData.bio = body.bio
+    if (body.can_create_org !== undefined) updateData.can_create_org = body.can_create_org
+
     // Update user profile
     const { error } = await supabase
       .from('profiles')
-      .update({
-        full_name: body.full_name,
-        email: body.email,
-        job_title: body.job_title,
-        company: body.company,
-        location: body.location,
-        bio: body.bio,
-      })
+      .update(updateData)
       .eq('id', userId)
 
     if (error) {

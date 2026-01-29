@@ -38,6 +38,20 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Check if user has permission to create organizations
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('can_create_org, role')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile?.can_create_org && profile?.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'You do not have permission to create organizations' },
+        { status: 403 }
+      )
+    }
+
     const body = await request.json()
     const { name, slug, description, website, industry, size, logo_url } = body
 
