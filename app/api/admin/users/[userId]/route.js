@@ -1,8 +1,9 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 export async function DELETE(req, context) {
   try {
     const supabase = await createClient()
+    const serviceClient = createServiceClient() // Bypasses RLS for admin operations
 
     // Check admin authorization
     const { data: { user } } = await supabase.auth.getUser()
@@ -27,51 +28,41 @@ export async function DELETE(req, context) {
     console.log('Deleting user completely:', userId)
 
     // Clear all foreign key references that don't have ON DELETE CASCADE
+    // Using try-catch for each to handle tables that might not exist
 
-    // organization_members.invited_by
-    await supabase
-      .from('organization_members')
-      .update({ invited_by: null })
-      .eq('invited_by', userId)
+    // Use service client (bypasses RLS) for cleanup operations
+    try {
+      // organization_members.invited_by - THIS IS THE CRITICAL ONE
+      const { error: invitedByError } = await serviceClient
+        .from('organization_members')
+        .update({ invited_by: null })
+        .eq('invited_by', userId)
 
-    // organization_members.user_id (remove memberships)
-    await supabase
-      .from('organization_members')
-      .delete()
-      .eq('user_id', userId)
+      if (invitedByError) {
+        console.log('Error clearing invited_by:', invitedByError.message)
+      }
 
-    // org_invitations.invited_by
-    await supabase
-      .from('org_invitations')
-      .update({ invited_by: null })
-      .eq('invited_by', userId)
+      // organization_members.user_id (remove memberships)
+      await serviceClient
+        .from('organization_members')
+        .delete()
+        .eq('user_id', userId)
+    } catch (e) {
+      console.log('organization_members cleanup error:', e.message)
+    }
 
-    // org_candidates.uploaded_by
-    await supabase
-      .from('org_candidates')
-      .update({ uploaded_by: null })
-      .eq('uploaded_by', userId)
+    try {
+      await serviceClient.from('org_invitations').update({ invited_by: null }).eq('invited_by', userId)
+      await serviceClient.from('org_candidates').update({ uploaded_by: null }).eq('uploaded_by', userId)
+      await serviceClient.from('org_job_descriptions').update({ created_by: null }).eq('created_by', userId)
+      await serviceClient.from('org_searches').update({ created_by: null }).eq('created_by', userId)
+      await serviceClient.from('employees').update({ manager_id: null }).eq('manager_id', userId)
+    } catch (e) {
+      console.log('Other tables cleanup error:', e.message)
+    }
 
-    // org_job_descriptions.created_by
-    await supabase
-      .from('org_job_descriptions')
-      .update({ created_by: null })
-      .eq('created_by', userId)
-
-    // org_searches.created_by
-    await supabase
-      .from('org_searches')
-      .update({ created_by: null })
-      .eq('created_by', userId)
-
-    // employees.manager_id (from admin tables)
-    await supabase
-      .from('employees')
-      .update({ manager_id: null })
-      .eq('manager_id', userId)
-
-    // Delete the profile - all related data with ON DELETE CASCADE will be removed automatically
-    const { error: profileError } = await supabase
+    // Delete the profile using service client to bypass RLS
+    const { error: profileError } = await serviceClient
       .from('profiles')
       .delete()
       .eq('id', userId)
