@@ -72,12 +72,36 @@ export async function POST(request) {
     // Extract complete profile data and keywords from the text
     const result = await extractCompleteProfile(text, 'pdf')
 
+    // Upload PDF to storage for future reference
+    let resumeUrl = null
+    try {
+      const fileName = `${user.id}/${Date.now()}-${safeFileName}`
+      const { error: uploadError } = await supabase.storage
+        .from('resumes')
+        .upload(fileName, buffer, { contentType: 'application/pdf', upsert: true })
+
+      if (!uploadError) {
+        const { data: { publicUrl } } = supabase.storage.from('resumes').getPublicUrl(fileName)
+        resumeUrl = publicUrl
+
+        // Update profile with resume URL
+        await supabase
+          .from('profiles')
+          .update({ resume_url: publicUrl })
+          .eq('id', user.id)
+      }
+    } catch (storageError) {
+      // Non-blocking - continue even if storage fails
+      console.error('Resume storage error:', storageError)
+    }
+
     return NextResponse.json({
       success: true,
       text: text,
       profile: result.profile,
       keywords: result.keywords,
       wordCount: text.split(/\s+/).length,
+      resumeUrl: resumeUrl,
     })
   } catch (error) {
     console.error('Error processing PDF:', error)
