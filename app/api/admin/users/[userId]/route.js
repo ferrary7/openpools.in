@@ -26,25 +26,51 @@ export async function DELETE(req, context) {
 
     console.log('Deleting user completely:', userId)
 
-    // Clear foreign key references in organization_members (invited_by)
+    // Clear all foreign key references that don't have ON DELETE CASCADE
+
+    // organization_members.invited_by
     await supabase
       .from('organization_members')
       .update({ invited_by: null })
       .eq('invited_by', userId)
 
-    // Remove user from organization memberships
+    // organization_members.user_id (remove memberships)
     await supabase
       .from('organization_members')
       .delete()
       .eq('user_id', userId)
 
-    // Clear foreign key references in org_invitations
+    // org_invitations.invited_by
     await supabase
       .from('org_invitations')
       .update({ invited_by: null })
       .eq('invited_by', userId)
 
-    // Delete the profile - all related data cascades automatically
+    // org_candidates.uploaded_by
+    await supabase
+      .from('org_candidates')
+      .update({ uploaded_by: null })
+      .eq('uploaded_by', userId)
+
+    // org_job_descriptions.created_by
+    await supabase
+      .from('org_job_descriptions')
+      .update({ created_by: null })
+      .eq('created_by', userId)
+
+    // org_searches.created_by
+    await supabase
+      .from('org_searches')
+      .update({ created_by: null })
+      .eq('created_by', userId)
+
+    // employees.manager_id (from admin tables)
+    await supabase
+      .from('employees')
+      .update({ manager_id: null })
+      .eq('manager_id', userId)
+
+    // Delete the profile - all related data with ON DELETE CASCADE will be removed automatically
     const { error: profileError } = await supabase
       .from('profiles')
       .delete()
