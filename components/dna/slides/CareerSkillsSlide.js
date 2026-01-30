@@ -155,14 +155,37 @@ export default function CareerSkillsSlide({
               const weightB = typeof b === 'object' && b.weight ? b.weight : 1.0
               return weightB - weightA
             })
-            
-            // Find max weight to normalize percentages
-            const maxWeight = Math.max(...sortedSkills.map(skill => typeof skill === 'object' && skill.weight ? skill.weight : 1.0), 1)
-            
+
+            // Generate descending random percentages (all > 75%)
+            // Use skill name as seed for consistent randomness per user
+            const generatePercentages = (skills) => {
+              const percentages = []
+              let prevPercentage = 100
+
+              skills.forEach((skill, index) => {
+                const skillName = typeof skill === 'string' ? skill : skill.keyword || skill.name || ''
+                // Create a simple hash from skill name for consistent "randomness"
+                const hash = skillName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+
+                if (index === 0) {
+                  // First skill: 94-98%
+                  percentages.push(94 + (hash % 5))
+                } else {
+                  // Each subsequent skill: 3-6% lower than previous, but never below 75%
+                  const drop = 3 + (hash % 4)
+                  const newPercentage = Math.max(75, prevPercentage - drop)
+                  percentages.push(newPercentage)
+                }
+                prevPercentage = percentages[index]
+              })
+              return percentages
+            }
+
+            const percentages = generatePercentages(sortedSkills)
+
             return sortedSkills.map((skill, index) => {
               const skillName = typeof skill === 'string' ? skill : skill.keyword || skill.name || 'Skill'
-              const weight = typeof skill === 'object' && skill.weight ? skill.weight : 1.0
-              const percentage = Math.round((weight / maxWeight) * 100)
+              const percentage = percentages[index]
 
               return (
                 <div key={index} className="relative group w-full">
