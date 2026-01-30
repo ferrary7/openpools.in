@@ -26,6 +26,24 @@ export async function DELETE(req, context) {
 
     console.log('Deleting user completely:', userId)
 
+    // Clear foreign key references in organization_members (invited_by)
+    await supabase
+      .from('organization_members')
+      .update({ invited_by: null })
+      .eq('invited_by', userId)
+
+    // Remove user from organization memberships
+    await supabase
+      .from('organization_members')
+      .delete()
+      .eq('user_id', userId)
+
+    // Clear foreign key references in org_invitations
+    await supabase
+      .from('org_invitations')
+      .update({ invited_by: null })
+      .eq('invited_by', userId)
+
     // Delete the profile - all related data cascades automatically
     const { error: profileError } = await supabase
       .from('profiles')

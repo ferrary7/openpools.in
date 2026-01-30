@@ -238,7 +238,8 @@ export default function OnboardedUsersTable() {
 
       if (!res.ok) {
         const data = await res.json()
-        setError(data.error)
+        setError(typeof data.error === 'string' ? data.error : 'Failed to delete user')
+        setDeleteConfirm(null)
         return
       }
 
@@ -258,7 +259,7 @@ export default function OnboardedUsersTable() {
 
   const hasActiveFilters = filters.company || filters.location || filters.premium || debouncedSearch
 
-  if (error) return <div className="p-4 text-red-500 bg-red-50 rounded-lg">{error}</div>
+  if (error) return <div className="p-4 text-red-500 bg-red-50 rounded-lg">{typeof error === 'string' ? error : JSON.stringify(error)}</div>
 
   // DataTable columns definition
   const columns = [
