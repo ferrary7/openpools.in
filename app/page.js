@@ -626,8 +626,10 @@ export default function Home() {
               </p>
             </div>
           </div>
-          <div className="border-t border-gray-800 pt-8 text-center text-gray-500 text-sm">
-            © 2025 OpenPools.in. All rights reserved.
+          <div className="border-t border-gray-800 pt-8 text-center text-gray-500 text-sm flex flex-col md:flex-row items-center justify-center gap-4">
+            <span>© 2025 OpenPools.in. All rights reserved.</span>
+            <a href="/privacy-policy" className="text-primary-400 hover:text-primary-300 ml-2">Privacy Policy</a>
+            <a href="/terms-of-service" className="text-primary-400 hover:text-primary-300 ml-2">Terms of Service</a>
           </div>
         </div>
       </footer>
