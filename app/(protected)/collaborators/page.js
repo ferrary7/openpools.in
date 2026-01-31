@@ -124,27 +124,33 @@ export default function CollaboratorsPage() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div className="card text-center">
           <div className="text-3xl font-bold text-primary-600">
             {collaborators.length}
           </div>
-          <div className="text-sm text-gray-600 mt-1">Active Collaborations</div>
-        </div>
-        <div className="card text-center">
-          <div className="text-3xl font-bold text-green-600">
-            {filteredCollaborators.length}
-          </div>
-          <div className="text-sm text-gray-600 mt-1">Search Results</div>
+          <div className="text-sm text-gray-600 mt-1">Collaborators</div>
         </div>
         <div className="card text-center">
           <div className="text-3xl font-bold text-blue-600">
+            {collaborators.reduce((sum, c) => sum + (c.message_stats?.total || 0), 0)}
+          </div>
+          <div className="text-sm text-gray-600 mt-1">Total Messages</div>
+        </div>
+        <div className="card text-center">
+          <div className="text-3xl font-bold text-orange-600">
+            {collaborators.reduce((sum, c) => sum + (c.message_stats?.unread || 0), 0)}
+          </div>
+          <div className="text-sm text-gray-600 mt-1">Unread Messages</div>
+        </div>
+        <div className="card text-center">
+          <div className="text-3xl font-bold text-green-600">
             {new Set(collaborators.map(c => {
               const collab = getCollaboratorInfo(c)
               return collab.company
             }).filter(Boolean)).size}
           </div>
-          <div className="text-sm text-gray-600 mt-1">Companies Your Collaborators Work With</div>
+          <div className="text-sm text-gray-600 mt-1">Companies</div>
         </div>
       </div>
 
@@ -227,6 +233,35 @@ export default function CollaboratorsPage() {
                   )}
                 </div>
 
+                {/* Message Stats */}
+                {collab.message_stats && (
+                  <div className="py-3 border-t border-gray-100">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                        <span className="text-sm text-gray-600">
+                          {collab.message_stats.total} messages
+                        </span>
+                      </div>
+                      {collab.message_stats.unread > 0 && (
+                        <span className="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs font-semibold rounded-full">
+                          {collab.message_stats.unread} new
+                        </span>
+                      )}
+                    </div>
+                    {collab.message_stats.last_message && (
+                      <p className="text-xs text-gray-500 mt-1 truncate">
+                        {collab.message_stats.last_message.is_from_me ? 'You: ' : ''}
+                        {collab.message_stats.last_message.preview?.startsWith('{')
+                          ? '🔒 Encrypted message'
+                          : collab.message_stats.last_message.preview || 'No messages yet'}
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 {/* Footer with Actions */}
                 <div className="pt-4 border-t border-gray-200 space-y-3">
                   <div className="flex items-center justify-between text-sm">
@@ -245,12 +280,17 @@ export default function CollaboratorsPage() {
                       </Link>
                       <Link
                         href={`/chat/${collaborator.username || collaborator.id}`}
-                        className="flex-1 text-center px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm font-medium flex items-center justify-center gap-1"
+                        className="relative flex-1 text-center px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm font-medium flex items-center justify-center gap-1"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                         </svg>
                         Chat
+                        {collab.message_stats?.unread > 0 && (
+                          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                            {collab.message_stats.unread > 9 ? '9+' : collab.message_stats.unread}
+                          </span>
+                        )}
                       </Link>
                     </div>
                     <button

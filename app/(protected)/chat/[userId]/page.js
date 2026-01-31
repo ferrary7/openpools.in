@@ -1,14 +1,26 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import {
+  initializeEncryption,
+  encryptMessage,
+  decryptMessage,
+  isEncryptedMessage,
+  isEncryptionSupported,
+  verifyKeyMatch,
+  regenerateKeys,
+  isValidPublicKey
+} from '@/lib/encryption'
+import { useCollaboratorsStore } from '@/store/collaboratorsStore'
 
 export default function PremiumChatPage() {
   const params = useParams()
   const router = useRouter()
   const supabase = createClient()
+  const { markMessagesRead, incrementMessageCount } = useCollaboratorsStore()
   const messagesEndRef = useRef(null)
   const messagesContainerRef = useRef(null)
   const inputRef = useRef(null)
@@ -21,37 +33,127 @@ export default function PremiumChatPage() {
   const [messages, setMessages] = useState([])
   const [sending, setSending] = useState(false)
   const [currentUserId, setCurrentUserId] = useState(null)
+  const [currentUserUsername, setCurrentUserUsername] = useState(null)
   const [collabId, setCollabId] = useState(null)
   const [isTyping, setIsTyping] = useState(false)
   const [isOnline, setIsOnline] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
 
-  // Fetch current user
+  // Encryption state - simplified with TweetNaCl
+  const [encryptionReady, setEncryptionReady] = useState(false)
+  const [myKeys, setMyKeys] = useState(null) // { publicKey, privateKey }
+  const [recipientPublicKey, setRecipientPublicKey] = useState(null)
+  const [encryptionError, setEncryptionError] = useState(null)
+
+  // Initialize encryption for current user
   useEffect(() => {
-    const getCurrentUser = async () => {
+    const initUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         setCurrentUserId(user.id)
+
+        // Fetch current user's username for DNA link
+        const { data: myProfile, error: profileError } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('id', user.id)
+          .single()
+
+        if (profileError) {
+          console.error('Error fetching username:', profileError)
+        } else if (myProfile?.username) {
+          setCurrentUserUsername(myProfile.username)
+        }
+
+        if (isEncryptionSupported()) {
+          try {
+            // Initialize or get existing keys
+            let keys = await initializeEncryption(user.id)
+
+            // Check if local keys are valid NaCl format (32 bytes)
+            if (!keys.isNew && !isValidPublicKey(keys.publicKey)) {
+              console.log('Local keys are old format, regenerating...')
+              keys = await regenerateKeys(user.id)
+              keys.isNew = true
+            }
+
+            setMyKeys(keys)
+
+            // Get server key status
+            const response = await fetch(`/api/user/keys?userId=${user.id}`)
+            const serverData = await response.json()
+
+            // Check if server has old format key or mismatched key
+            const serverKeyInvalid = serverData.publicKey && !isValidPublicKey(serverData.publicKey)
+            const keyMismatch = serverData.publicKey && serverData.publicKey !== keys.publicKey
+
+            if (keys.isNew || serverKeyInvalid || keyMismatch) {
+              // Clear old key and upload new one
+              if (serverData.publicKey) {
+                await fetch('/api/user/keys', { method: 'DELETE' })
+              }
+              await fetch('/api/user/keys', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ publicKey: keys.publicKey })
+              })
+            } else if (!serverData.publicKey) {
+              // No key on server, upload local one
+              await fetch('/api/user/keys', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ publicKey: keys.publicKey })
+              })
+            }
+
+            setEncryptionReady(true)
+          } catch (err) {
+            console.error('Encryption initialization error:', err)
+            setEncryptionError('Failed to initialize encryption')
+          }
+        }
       }
     }
-    getCurrentUser()
+    initUser()
   }, [])
 
-  // Fetch profile and messages
+  // Fetch profile
   useEffect(() => {
     fetchProfile()
-    fetchMessages()
+  }, [params.userId])
+
+  // Fetch recipient's public key
+  useEffect(() => {
+    const fetchRecipientKey = async () => {
+      if (!params.userId) return
+
+      try {
+        const response = await fetch(`/api/user/keys?userId=${params.userId}`)
+        const data = await response.json()
+
+        if (data.publicKey && isValidPublicKey(data.publicKey)) {
+          setRecipientPublicKey(data.publicKey)
+        } else if (data.publicKey) {
+          console.log('Recipient has old format key, encryption disabled for this chat')
+        }
+      } catch (err) {
+        console.error('Error fetching recipient public key:', err)
+      }
+    }
+
+    fetchRecipientKey()
   }, [params.userId])
 
   // Poll for new messages
   useEffect(() => {
-    if (isCollaborating) {
+    if (isCollaborating && currentUserId && myKeys) {
+      fetchMessages()
       const interval = setInterval(fetchMessages, 3000)
       return () => clearInterval(interval)
     }
-  }, [isCollaborating, params.userId])
+  }, [isCollaborating, params.userId, myKeys, currentUserId])
 
-  // Auto-scroll to bottom only when user sends a message
+  // Auto-scroll when user sends a message
   const lastMessageCount = useRef(messages.length)
   useEffect(() => {
     if (messages.length > lastMessageCount.current) {
@@ -105,16 +207,73 @@ export default function PremiumChatPage() {
     }
   }
 
+  // Decrypt a message - TweetNaCl makes this simple
+  const decryptMessageContent = useCallback((msg) => {
+    const encryptedStatus = isEncryptedMessage(msg.content)
+
+    // If not encrypted format, return as-is
+    if (!encryptedStatus) {
+      return msg.content
+    }
+
+    // Legacy messages from old encryption system can't be decrypted
+    if (encryptedStatus === 'legacy') {
+      return '[Old encrypted message]'
+    }
+
+    if (!myKeys?.privateKey) {
+      return '[Encrypted - keys not available]'
+    }
+
+    try {
+      return decryptMessage(msg.content, myKeys.privateKey)
+    } catch (err) {
+      // Old format messages without recipientPublicKey can't be read by sender
+      if (err.message === 'OLD_FORMAT') {
+        return '[Sent encrypted]'
+      }
+      console.error('Decryption error:', err.message)
+      return '[Unable to decrypt]'
+    }
+  }, [myKeys])
+
   const fetchMessages = async () => {
+    if (!currentUserId || !myKeys) return
+
     try {
       const response = await fetch(`/api/messages?userId=${params.userId}`)
+
+      // Handle non-JSON responses (server errors return HTML)
+      const contentType = response.headers.get('content-type')
+      if (!contentType?.includes('application/json')) {
+        console.warn('Messages API returned non-JSON response')
+        return
+      }
+
       const data = await response.json()
 
-      if (response.ok) {
-        setMessages(data.messages || [])
+      if (response.ok && data.messages) {
+        const decryptedMessages = data.messages.map((msg) => {
+          // Check if we already decrypted this message
+          const existingMsg = messages.find(m => m.id === msg.id)
+          if (existingMsg?.decryptedContent && !existingMsg.decryptedContent.startsWith('[')) {
+            return { ...msg, decryptedContent: existingMsg.decryptedContent }
+          }
+
+          return { ...msg, decryptedContent: decryptMessageContent(msg) }
+        })
+        setMessages(decryptedMessages)
+
+        // Update collaborators store - mark messages as read (use profile.id for UUID)
+        if (profile?.id) {
+          markMessagesRead(profile.id)
+        }
       }
     } catch (err) {
-      console.error('Error fetching messages:', err)
+      // Silently handle errors during polling (likely server restart)
+      if (!err.message?.includes('JSON')) {
+        console.error('Error fetching messages:', err)
+      }
     }
   }
 
@@ -123,25 +282,46 @@ export default function PremiumChatPage() {
     if (!message.trim() || sending) return
 
     setSending(true)
+    const messageText = message.trim()
     const tempMessage = {
       id: `temp-${Date.now()}`,
-      content: message.trim(),
+      content: messageText,
+      decryptedContent: messageText,
       sender_id: currentUserId,
       created_at: new Date().toISOString(),
-      status: 'sending'
+      status: 'sending',
+      is_encrypted: false
     }
 
     setMessages(prev => [...prev, tempMessage])
-    const messageToSend = message.trim()
     setMessage('')
 
     try {
+      let contentToSend = messageText
+      let isEncrypted = false
+
+      // Encrypt if we have all required keys
+      if (encryptionReady && recipientPublicKey && myKeys) {
+        try {
+          contentToSend = encryptMessage(
+            messageText,
+            recipientPublicKey,
+            myKeys.privateKey,
+            myKeys.publicKey
+          )
+          isEncrypted = true
+        } catch (encErr) {
+          console.error('Encryption failed, sending unencrypted:', encErr)
+        }
+      }
+
       const response = await fetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           receiver_id: params.userId,
-          content: messageToSend
+          content: contentToSend,
+          is_encrypted: isEncrypted
         })
       })
 
@@ -150,8 +330,15 @@ export default function PremiumChatPage() {
       if (!response.ok) throw new Error(data.error || 'Failed to send message')
 
       setMessages(prev => prev.map(msg =>
-        msg.id === tempMessage.id ? { ...data.message, status: 'sent' } : msg
+        msg.id === tempMessage.id
+          ? { ...data.message, decryptedContent: messageText, status: 'sent' }
+          : msg
       ))
+
+      // Update collaborators store - increment message count
+      if (profile?.id) {
+        incrementMessageCount(profile.id)
+      }
     } catch (err) {
       console.error('Error sending message:', err)
       setMessages(prev => prev.map(msg =>
@@ -196,7 +383,7 @@ export default function PremiumChatPage() {
     if (!previousMsg) return false
     if (currentMsg.sender_id !== previousMsg.sender_id) return false
     const timeDiff = new Date(currentMsg.created_at) - new Date(previousMsg.created_at)
-    return timeDiff < 120000 // 2 minutes
+    return timeDiff < 120000
   }
 
   const getInitials = (name) => {
@@ -288,7 +475,7 @@ export default function PremiumChatPage() {
         }
       `}</style>
 
-      {/* Fixed Header with glass effect */}
+      {/* Header */}
       <div className="flex-shrink-0 glass-effect border-b border-gray-200/50 px-6 py-4 shadow-sm header-animate">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4 min-w-0 flex-1">
@@ -339,6 +526,17 @@ export default function PremiumChatPage() {
                     <span className="text-xs text-gray-600 truncate">{profile.job_title}</span>
                   </>
                 )}
+                {encryptionReady && recipientPublicKey && (
+                  <>
+                    <span className="text-gray-300">•</span>
+                    <span className="text-xs text-green-600 flex items-center gap-1" title="End-to-end encrypted">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                      </svg>
+                      Encrypted
+                    </span>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -355,7 +553,7 @@ export default function PremiumChatPage() {
             <div className="max-w-4xl mx-auto space-y-1">
               {messages.length === 0 ? (
                 <div className="flex items-center justify-center h-full min-h-[60vh]">
-                  <div className="text-center max-w-sm">
+                  <div className="text-center max-w-md">
                     <div className="relative w-20 h-20 mx-auto mb-6">
                       <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary-200 to-purple-200 animate-pulse"></div>
                       <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-primary-100 to-purple-100 flex items-center justify-center">
@@ -365,9 +563,67 @@ export default function PremiumChatPage() {
                       </div>
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 mb-2">Start the conversation</h3>
-                    <p className="text-sm text-gray-600 leading-relaxed">
-                      Send a message to {profile?.full_name?.split(' ')[0]} and start collaborating
+                    <p className="text-sm text-gray-600 leading-relaxed mb-6">
+                      Break the ice with {profile?.full_name?.split(' ')[0]}
                     </p>
+
+                    {/* Quick starter messages */}
+                    <div className="flex flex-col gap-2">
+                      <button
+                        onClick={() => {
+                          setMessage(`Hi ${profile?.full_name?.split(' ')[0]}! Great to connect with you.`)
+                          inputRef.current?.focus()
+                        }}
+                        className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl text-left hover:border-primary-300 hover:bg-primary-50 transition-all group"
+                      >
+                        <span className="text-sm text-gray-700 group-hover:text-primary-700">
+                          👋 Hi {profile?.full_name?.split(' ')[0]}! Great to connect with you.
+                        </span>
+                      </button>
+
+                      <button
+                        onClick={async () => {
+                          // Fetch username fresh if not already set
+                          let dnaPath = currentUserUsername
+                          if (!dnaPath && currentUserId) {
+                            const { data } = await supabase
+                              .from('profiles')
+                              .select('username')
+                              .eq('id', currentUserId)
+                              .single()
+                            dnaPath = data?.username || currentUserId
+                          }
+                          setMessage(`Hey! Check out my DNA to learn more about me: ${window.location.origin}/dna/${dnaPath || currentUserId}`)
+                          inputRef.current?.focus()
+                        }}
+                        className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl text-left hover:border-primary-300 hover:bg-primary-50 transition-all group"
+                      >
+                        <span className="text-sm text-gray-700 group-hover:text-primary-700">
+                          🧬 Share my DNA profile
+                        </span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setMessage(`I saw your profile and I'd love to explore how we could collaborate. What projects are you working on?`)
+                          inputRef.current?.focus()
+                        }}
+                        className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl text-left hover:border-primary-300 hover:bg-primary-50 transition-all group"
+                      >
+                        <span className="text-sm text-gray-700 group-hover:text-primary-700">
+                          💼 Let's explore collaboration
+                        </span>
+                      </button>
+                    </div>
+
+                    {encryptionReady && recipientPublicKey && (
+                      <p className="text-xs text-green-600 mt-4 flex items-center justify-center gap-1">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                        </svg>
+                        Messages are end-to-end encrypted
+                      </p>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -377,6 +633,7 @@ export default function PremiumChatPage() {
                     const previousMsg = index > 0 ? messages[index - 1] : null
                     const showDate = shouldShowDateDivider(msg, previousMsg)
                     const isGrouped = shouldGroupMessage(msg, previousMsg)
+                    const displayContent = msg.decryptedContent || msg.content
 
                     return (
                       <div key={msg.id}>
@@ -415,7 +672,7 @@ export default function PremiumChatPage() {
                               }`}
                             >
                               <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
-                                {msg.content}
+                                {displayContent}
                               </p>
                             </div>
 
@@ -424,7 +681,12 @@ export default function PremiumChatPage() {
                                 {formatTime(msg.created_at)}
                               </p>
                               {isSent && (
-                                <span>
+                                <span className="flex items-center gap-1">
+                                  {isEncryptedMessage(msg.content) && (
+                                    <svg className="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 20 20" title="Encrypted">
+                                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                                    </svg>
+                                  )}
                                   {msg.status === 'sending' && (
                                     <span className="text-gray-400">○</span>
                                   )}
@@ -446,7 +708,6 @@ export default function PremiumChatPage() {
                   })}
                   <div ref={messagesEndRef} />
 
-                  {/* Typing Indicator */}
                   {isTyping && (
                     <div className="flex gap-3 mt-4">
                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center text-white font-semibold text-xs shadow-md overflow-hidden">
@@ -474,7 +735,7 @@ export default function PremiumChatPage() {
             </div>
           </div>
 
-          {/* Fixed Input Area */}
+          {/* Input Area */}
           <div className="flex-shrink-0 glass-effect border-t border-gray-200/50 px-6 py-4 shadow-lg">
             <div className="max-w-4xl mx-auto">
               <form onSubmit={handleSendMessage} className="flex items-end gap-3">
@@ -494,7 +755,6 @@ export default function PremiumChatPage() {
                     className="w-full pl-5 pr-12 py-3.5 bg-white border-2 border-gray-200 rounded-full focus:outline-none focus:border-primary-300 transition-all duration-200 text-sm placeholder-gray-400 shadow-sm"
                   />
 
-                  {/* Emoji Picker */}
                   <div ref={emojiPickerRef} className="absolute right-3 top-1/2 -translate-y-1/2">
                     <button
                       type="button"

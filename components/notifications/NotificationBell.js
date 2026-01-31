@@ -33,13 +33,23 @@ export default function NotificationBell() {
   const fetchNotifications = async () => {
     try {
       const response = await fetch('/api/notifications')
+
+      // Handle non-JSON responses (server errors return HTML)
+      const contentType = response.headers.get('content-type')
+      if (!contentType?.includes('application/json')) {
+        return // Silently skip if server returned HTML error page
+      }
+
       if (response.ok) {
         const data = await response.json()
         setNotifications(data.notifications || [])
         setUnreadCount(data.unreadCount || 0)
       }
     } catch (error) {
-      console.error('Error fetching notifications:', error)
+      // Silently handle JSON parse errors (likely server restart)
+      if (!error.message?.includes('JSON') && !error.message?.includes('Unexpected token')) {
+        console.error('Error fetching notifications:', error)
+      }
     } finally {
       setLoading(false)
     }
@@ -64,9 +74,15 @@ export default function NotificationBell() {
       markAsRead([notification.id])
     }
 
-    // Navigate to the related user's profile
+    // Navigate based on notification type
     if (notification.related_user_id) {
-      router.push(`/user/${notification.related_user_id}`)
+      if (notification.type === 'new_message') {
+        // Go to chat for message notifications
+        router.push(`/chat/${notification.related_user?.username || notification.related_user_id}`)
+      } else {
+        // Go to profile for other notifications
+        router.push(`/user/${notification.related_user?.username || notification.related_user_id}`)
+      }
       setIsOpen(false)
     }
   }
@@ -86,6 +102,14 @@ export default function NotificationBell() {
           <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
             <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 24 24">
               <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        )
+      case 'new_message':
+        return (
+          <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+            <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
           </div>
         )

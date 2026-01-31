@@ -25,15 +25,60 @@ export async function GET(request) {
 
     if (error) throw error
 
-    // Separate into sent, received, and active
-    const sent = collabs.filter(c => c.sender_id === user.id)
-    const received = collabs.filter(c => c.receiver_id === user.id && c.status === 'pending')
+    // Get message counts for active collaborations
     const active = collabs.filter(c => c.status === 'accepted')
+
+    // Fetch message counts for each active collaboration
+    const activeWithCounts = await Promise.all(
+      active.map(async (collab) => {
+        const otherUserId = collab.sender_id === user.id ? collab.receiver_id : collab.sender_id
+
+        // Get total message count between users
+        const { count: totalMessages } = await supabase
+          .from('messages')
+          .select('*', { count: 'exact', head: true })
+          .or(`and(sender_id.eq.${user.id},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${user.id})`)
+
+        // Get unread message count (messages sent to current user that are unread)
+        const { count: unreadMessages } = await supabase
+          .from('messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('sender_id', otherUserId)
+          .eq('receiver_id', user.id)
+          .eq('read', false)
+
+        // Get last message
+        const { data: lastMessageData } = await supabase
+          .from('messages')
+          .select('content, created_at, sender_id')
+          .or(`and(sender_id.eq.${user.id},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${user.id})`)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single()
+
+        return {
+          ...collab,
+          message_stats: {
+            total: totalMessages || 0,
+            unread: unreadMessages || 0,
+            last_message: lastMessageData ? {
+              preview: lastMessageData.content?.substring(0, 50) + (lastMessageData.content?.length > 50 ? '...' : ''),
+              created_at: lastMessageData.created_at,
+              is_from_me: lastMessageData.sender_id === user.id
+            } : null
+          }
+        }
+      })
+    )
+
+    // Separate into sent, received, and active
+    const sent = collabs.filter(c => c.sender_id === user.id && c.status === 'pending')
+    const received = collabs.filter(c => c.receiver_id === user.id && c.status === 'pending')
 
     return NextResponse.json({
       sent,
       received,
-      active,
+      active: activeWithCounts,
       total: collabs.length
     })
   } catch (error) {

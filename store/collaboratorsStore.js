@@ -107,5 +107,43 @@ export const useCollaboratorsStore = create((set, get) => ({
     }
   },
 
-  clearSearch: () => set({ searchQuery: '' })
+  clearSearch: () => set({ searchQuery: '' }),
+
+  // Update message stats for a specific collaborator (called from chat page)
+  markMessagesRead: (otherUserId) => {
+    set(state => ({
+      collaborators: state.collaborators.map(collab => {
+        const isMatch = collab.sender_id === otherUserId || collab.receiver_id === otherUserId
+        if (isMatch && collab.message_stats) {
+          return {
+            ...collab,
+            message_stats: {
+              ...collab.message_stats,
+              unread: 0
+            }
+          }
+        }
+        return collab
+      })
+    }))
+  },
+
+  // Increment message count (called when sending a message)
+  incrementMessageCount: (otherUserId) => {
+    set(state => ({
+      collaborators: state.collaborators.map(collab => {
+        const isMatch = collab.sender_id === otherUserId || collab.receiver_id === otherUserId
+        if (isMatch && collab.message_stats) {
+          return {
+            ...collab,
+            message_stats: {
+              ...collab.message_stats,
+              total: (collab.message_stats.total || 0) + 1
+            }
+          }
+        }
+        return collab
+      })
+    }))
+  }
 }))
