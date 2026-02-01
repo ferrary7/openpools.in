@@ -121,7 +121,10 @@ export async function GET(request) {
 
         // Create profile if it doesn't exist
         if (profileError && profileError.code === 'PGRST116') {
-          await supabase
+          // Use service client to bypass RLS for profile creation
+          const serviceClient = getServiceClient()
+
+          const { error: insertError } = await serviceClient
             .from('profiles')
             .insert({
               id: user.id,
@@ -129,6 +132,11 @@ export async function GET(request) {
               full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
               onboarding_completed: false,
             })
+
+          if (insertError) {
+            console.error('Failed to create profile:', insertError)
+            return NextResponse.redirect(`${origin}/login?error=profile_creation_failed`)
+          }
 
           // Check for pending invite and auto-claim
           const claimedInvite = await claimPendingInvite(user.id, user.email)
