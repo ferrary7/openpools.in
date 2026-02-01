@@ -29,6 +29,7 @@ export default function AdminLayout({ children }) {
     { name: 'Dashboard', href: '/admin', icon: '📊' },
     { name: 'Employees', href: '/admin/employees', icon: '👥' },
     { name: 'Organizations', href: '/admin/organizations', icon: '🏢' },
+    { name: 'Invite Users', href: '/admin/invite', icon: '✉️' },
     { name: 'Premium', href: '/admin/premium', icon: '⭐' },
     { name: 'Analytics', href: '/admin/analytics', icon: '📈' },
   ]

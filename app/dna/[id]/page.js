@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { isUUID } from '@/lib/username'
 import DNAWrap from '@/components/dna/DNAWrap'
 
 export default function UserDNAPage() {
@@ -11,11 +10,12 @@ export default function UserDNAPage() {
   const router = useRouter()
   const [profile, setProfile] = useState(null)
   const [keywordProfile, setKeywordProfile] = useState(null)
-  const [collaborations, setCollaborations] = useState([])
+  const [collaborationCount, setCollaborationCount] = useState(0)
   const [showcaseItems, setShowcaseItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [isOwnDNA, setIsOwnDNA] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -26,56 +26,28 @@ export default function UserDNAPage() {
     try {
       const identifier = params.id
 
-      // Check if viewing own DNA
+      // Check if user is logged in
       const { data: { user } } = await supabase.auth.getUser()
+      setIsLoggedIn(!!user)
 
-      // Determine if identifier is UUID or username
-      const isId = isUUID(identifier)
+      // Fetch DNA data from public API
+      const response = await fetch(`/api/dna/${identifier}`)
 
-      // Load profile - query by ID or username
-      let profileQuery = supabase
-        .from('profiles')
-        .select('*')
-
-      if (isId) {
-        profileQuery = profileQuery.eq('id', identifier)
-      } else {
-        profileQuery = profileQuery.eq('username', identifier)
-      }
-
-      const { data: profileData, error: profileError } = await profileQuery.single()
-
-      if (profileError || !profileData) {
+      if (!response.ok) {
         setNotFound(true)
         setLoading(false)
         return
       }
 
-      // Set if viewing own DNA (compare with actual user ID)
-      setIsOwnDNA(user?.id === profileData.id)
+      const data = await response.json()
 
-      // Load keywords using the actual user ID from profile
-      const { data: keywordData } = await supabase
-        .from('keyword_profiles')
-        .select('*')
-        .eq('user_id', profileData.id)
-        .single()
+      // Set if viewing own DNA
+      setIsOwnDNA(user?.id === data.profile.id)
 
-      // Load collaborations using the actual user ID from profile
-      const { data: collabData } = await supabase
-        .from('collaborations')
-        .select('*')
-        .or(`sender_id.eq.${profileData.id},receiver_id.eq.${profileData.id}`)
-        .eq('status', 'accepted')
-
-      // Load showcase items
-      const showcaseResponse = await fetch(`/api/showcase?user_id=${profileData.id}`)
-      const showcaseData = await showcaseResponse.json()
-
-      setProfile(profileData)
-      setKeywordProfile(keywordData)
-      setCollaborations(collabData || [])
-      setShowcaseItems(showcaseData.items || [])
+      setProfile(data.profile)
+      setKeywordProfile(data.keywordProfile)
+      setCollaborationCount(data.collaborationCount)
+      setShowcaseItems(data.showcaseItems || [])
     } catch (error) {
       console.error('Error loading DNA data:', error)
       setNotFound(true)
@@ -111,26 +83,32 @@ export default function UserDNAPage() {
           <p className="text-gray-400 mb-6">
             This professional DNA profile doesn't exist or has been removed.
           </p>
-          <button
-            onClick={() => router.push('/dna')}
-            className="px-6 py-3 bg-gradient-to-r from-primary-500 to-purple-500 hover:from-primary-600 hover:to-purple-600 text-white font-semibold rounded-xl transition-all duration-300"
-          >
-            View Your DNA
-          </button>
+          {isLoggedIn ? (
+            <button
+              onClick={() => router.push('/dna')}
+              className="px-6 py-3 bg-gradient-to-r from-primary-500 to-purple-500 hover:from-primary-600 hover:to-purple-600 text-white font-semibold rounded-xl transition-all duration-300"
+            >
+              View Your DNA
+            </button>
+          ) : (
+            <button
+              onClick={() => router.push('/login')}
+              className="px-6 py-3 bg-gradient-to-r from-primary-500 to-purple-500 hover:from-primary-600 hover:to-purple-600 text-white font-semibold rounded-xl transition-all duration-300"
+            >
+              Sign In to OpenPools
+            </button>
+          )}
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#1E1E1E]">
-      {/* Scroll-Based DNA Wrap - Spotify Style */}
-      <DNAWrap
-        profile={profile}
-        keywordProfile={keywordProfile}
-        showcaseItems={showcaseItems}
-        isOwnDNA={isOwnDNA}
-      />
-    </div>
+    <DNAWrap
+      profile={profile}
+      keywordProfile={keywordProfile}
+      showcaseItems={showcaseItems}
+      isOwnDNA={isOwnDNA}
+    />
   )
 }

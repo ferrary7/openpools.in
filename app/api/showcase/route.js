@@ -1,10 +1,25 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
-// GET - List showcase items
+// Service client for public showcase access (bypasses RLS)
+function getServiceClient() {
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
+}
+
+// GET - List showcase items (public)
 export async function GET(request) {
   try {
-    const supabase = await createClient()
+    const supabase = getServiceClient()
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('user_id')
     const type = searchParams.get('type')

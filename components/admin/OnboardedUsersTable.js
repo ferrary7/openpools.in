@@ -259,8 +259,6 @@ export default function OnboardedUsersTable() {
 
   const hasActiveFilters = filters.company || filters.location || filters.premium || debouncedSearch
 
-  if (error) return <div className="p-4 text-red-500 bg-red-50 rounded-lg">{typeof error === 'string' ? error : JSON.stringify(error)}</div>
-
   // DataTable columns definition
   const columns = [
     {
@@ -399,6 +397,19 @@ export default function OnboardedUsersTable() {
 
   return (
     <>
+      {/* Error Banner */}
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between">
+          <span className="text-red-600">{typeof error === 'string' ? error : JSON.stringify(error)}</span>
+          <button
+            onClick={() => setError(null)}
+            className="text-red-400 hover:text-red-600 ml-4"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       <DataTable
         data={users}
         columns={columns}

@@ -1,10 +1,24 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { findTopMatches } from '@/lib/matching'
 import { recalculateKeywordWeights } from '@/lib/keywords'
 
 // Disable caching for this endpoint - always fetch fresh data
 export const dynamic = 'force-dynamic'
+
+// Service client for public DNA metrics access (bypasses RLS)
+function getServiceClient() {
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
+}
 
 export async function GET(request) {
   try {
@@ -15,7 +29,7 @@ export async function GET(request) {
       return NextResponse.json({ error: 'user_id required' }, { status: 400 })
     }
 
-    const supabase = await createClient()
+    const supabase = getServiceClient()
 
     // Get user's profile and keywords
     const { data: profile } = await supabase

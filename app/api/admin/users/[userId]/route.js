@@ -57,6 +57,9 @@ export async function DELETE(req, context) {
       await serviceClient.from('org_job_descriptions').update({ created_by: null }).eq('created_by', userId)
       await serviceClient.from('org_searches').update({ created_by: null }).eq('created_by', userId)
       await serviceClient.from('employees').update({ manager_id: null }).eq('manager_id', userId)
+      // Pending invites references
+      await serviceClient.from('pending_invites').update({ invited_by: null }).eq('invited_by', userId)
+      await serviceClient.from('pending_invites').update({ claimed_by: null }).eq('claimed_by', userId)
     } catch (e) {
       console.log('Other tables cleanup error:', e.message)
     }
