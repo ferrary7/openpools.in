@@ -58,11 +58,11 @@ async function claimPendingInvite(userId, userEmail) {
 
   // Copy keywords if available
   if (invite.keywords && invite.keywords.length > 0) {
-    const { data: existingKeywords } = await serviceClient
+    const { data: existingKeywords, error: keywordError } = await serviceClient
       .from('keyword_profiles')
       .select('id')
       .eq('user_id', userId)
-      .single()
+      .maybeSingle()
 
     if (existingKeywords) {
       await serviceClient
