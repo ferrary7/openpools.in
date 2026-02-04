@@ -73,8 +73,8 @@ export default function CompaniesSection() {
     <>
       <style>{style}</style>
       <div className="py-0">
-        <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mb-4 uppercase tracking-wide font-semibold">Talent from top organizations</p>
-        
+        <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mb-4 uppercase tracking-wide font-semibold">Trusted by Talent from top organizations</p>
+
         {/* Row 1 - Scrolls right */}
         <div className="mb-3 overflow-hidden">
           <div className="flex gap-2 md:gap-3 animate-scroll-companies-right">

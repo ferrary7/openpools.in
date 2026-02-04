@@ -28,14 +28,14 @@ export default function MatchesList() {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-        <span className="ml-3 text-gray-600">Finding your matches...</span>
+        <span className="ml-3 text-gray-500 font-medium">Finding your matches...</span>
       </div>
     )
   }
 
   if (error && matches.length === 0) {
     return (
-      <div className="bg-red-50 text-red-600 p-4 rounded-lg">
+      <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100">
         Error: {error}
       </div>
     )
@@ -43,7 +43,7 @@ export default function MatchesList() {
 
   return (
     <div>
-      {/* Search Bar */}
+      {/* Original Search Hub Layout */}
       <div className="mb-6">
         <div className="relative">
           <input
@@ -51,7 +51,7 @@ export default function MatchesList() {
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             placeholder="Search by name, username, or keywords (comma-separated)..."
-            className="input-field w-full pl-10"
+            className="w-full pl-10 pr-10 py-3 bg-white border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all placeholder-gray-400"
           />
           <svg
             className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
@@ -80,20 +80,19 @@ export default function MatchesList() {
 
         {/* Display keywords as tags */}
         {searchKeywords.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-3">
+          <div className="flex flex-wrap gap-2 mt-4">
             {searchKeywords.map((keyword, index) => (
               <span
                 key={index}
-                className="inline-flex items-center gap-1 px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm font-medium"
+                className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-sm font-semibold border border-primary-100"
               >
                 {keyword}
                 <button
                   onClick={() => removeKeyword(index)}
                   className="hover:text-primary-900 transition-colors"
-                  aria-label={`Remove ${keyword}`}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </span>
@@ -102,39 +101,35 @@ export default function MatchesList() {
         )}
       </div>
 
-      <div className="mb-4 flex justify-between items-center">
+      <div className="mb-6 flex justify-between items-center text-sm">
         <p className="text-gray-600">
-          <span className="font-semibold text-gray-900">{matches.length}</span> {matches.length === 1 ? 'match' : 'matches'} found
-          {searchKeywords.length > 0 && ` for ${searchKeywords.length} keyword${searchKeywords.length > 1 ? 's' : ''}`}
+          <span className="font-bold text-gray-900">{matches.length}</span> matches found
         </p>
         <button
           onClick={() => fetchMatches(true)}
           disabled={loading}
-          className="text-sm text-primary-600 hover:text-primary-700 font-medium disabled:opacity-50 flex items-center gap-1"
+          className="text-primary-600 hover:text-primary-700 font-bold hover:underline transition-all disabled:opacity-50"
         >
-          {loading && (
-            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary-600"></div>
-          )}
-          Refresh
+          {loading ? 'Refreshing...' : 'Refresh'}
         </button>
       </div>
 
       {/* Empty State */}
       {matches.length === 0 && (
-        <div className="card text-center py-12">
-          <div className="text-4xl mb-4">🔍</div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            {searchKeywords.length > 0 ? 'No matches found' : 'No matches found yet'}
+        <div className="bg-white border border-gray-100 rounded-2xl text-center py-16 shadow-sm">
+          <div className="text-5xl mb-6">🔍</div>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">
+            No matches found
           </h3>
-          <p className="text-gray-600">
+          <p className="text-gray-500 max-w-sm mx-auto mb-8 font-medium">
             {searchKeywords.length > 0
-              ? `No users found with the keyword${searchKeywords.length > 1 ? 's' : ''}: ${searchKeywords.join(', ')}. Try different search terms.`
-              : 'There are no other users with keyword profiles yet. Check back later!'}
+              ? `No users found with the keywords: ${searchKeywords.join(', ')}. Try broadening your search.`
+              : 'The signal pool is currently awaiting new profiles. Check back later!'}
           </p>
           {searchKeywords.length > 0 && (
             <button
               onClick={clearSearch}
-              className="mt-4 btn-secondary"
+              className="px-8 py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-black transition-colors shadow-lg"
             >
               Clear Search
             </button>
@@ -144,8 +139,8 @@ export default function MatchesList() {
 
       {/* Matches Grid */}
       {matches.length > 0 && (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {matches.slice(0, displayCount).map((match, index) => (
               <MatchCard key={match.userId || index} match={match} />
             ))}
@@ -156,7 +151,7 @@ export default function MatchesList() {
             <div className="mt-8 text-center">
               <button
                 onClick={handleShowMore}
-                className="px-6 py-3 bg-white border-2 border-primary-500 text-primary-600 rounded-lg hover:bg-primary-50 transition-colors font-semibold shadow-sm hover:shadow-md"
+                className="px-8 py-4 bg-white border-2 border-primary-500 text-primary-600 rounded-xl hover:bg-primary-50 transition-all font-bold shadow-sm hover:shadow-md active:scale-95"
               >
                 Show more matches ({matches.length - displayCount} remaining)
               </button>
@@ -164,14 +159,14 @@ export default function MatchesList() {
           )}
 
           {/* All Loaded Message */}
-          {displayCount >= matches.length && matches.length > 10 && (
-            <div className="mt-8 text-center">
-              <p className="text-gray-500 text-sm">
-                You've reached the end! All {matches.length} matches shown.
+          {displayCount >= matches.length && matches.length > 6 && (
+            <div className="mt-12 text-center">
+              <p className="text-gray-400 text-xs font-bold uppercase tracking-widest opacity-50">
+                You've reached the end of the pool.
               </p>
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   )
