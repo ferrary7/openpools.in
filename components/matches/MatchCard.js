@@ -122,7 +122,7 @@ export default function MatchCard({ match }) {
         {hasBreakdown ? (
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className={`flex items-center gap-2 text-sm font-bold uppercase tracking-widest transition-all group/btn ${isPremiumActive ? 'text-amber-600 hover:text-amber-900' : 'text-primary-600 hover:text-primary-800'
+            className={`flex items-center gap-2 text-[10px] md:text-sm font-bold uppercase tracking-widest transition-all group/btn ${isPremiumActive ? 'text-amber-600 hover:text-amber-900' : 'text-primary-600 hover:text-primary-800'
               }`}
           >
             <span>Why you match</span>
@@ -133,7 +133,7 @@ export default function MatchCard({ match }) {
         ) : <div />}
 
         <Link href={`/user/${match.username || match.userId}`}>
-          <div className={`flex items-center gap-1.5 text-sm font-bold uppercase tracking-widest transition-all group/link cursor-pointer ${isPremiumActive ? 'text-amber-700 hover:text-amber-900' : 'text-primary-600 hover:text-primary-700'
+          <div className={`flex items-center gap-1.5 text-[10px] md:text-sm font-bold uppercase tracking-widest transition-all group/link cursor-pointer ${isPremiumActive ? 'text-amber-700 hover:text-amber-900' : 'text-primary-600 hover:text-primary-700'
             }`}>
             <span>View Profile</span>
             <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -118,8 +118,8 @@ export default function UserProfilePage() {
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 md:py-10">
-        {/* Navigation Bar */}
-        <div className="flex justify-between items-center mb-8">
+        {/* Navigation Bar - Cleaned for Mobile */}
+        <div className="flex justify-between items-center mb-6 md:mb-8">
           <button
             onClick={() => router.back()}
             className="group flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 hover:text-slate-900 transition-all"
@@ -130,7 +130,8 @@ export default function UserProfilePage() {
             Pool
           </button>
 
-          <div className="flex gap-3">
+          {/* Desktop Only Buttons - Moved for Mobile */}
+          <div className="hidden md:flex gap-3">
             <CollabButton
               userId={userData.id}
               collabStatus={collabStatus}
@@ -153,15 +154,15 @@ export default function UserProfilePage() {
 
           {/* Main Dossier Content */}
           <div className="lg:col-span-8 space-y-6">
-            {/* Identity Hero Header */}
-            <div className={`relative overflow-hidden p-8 md:p-10 rounded-2xl border transition-all duration-500 ${isPremiumActive
+            {/* Identity Hero Header - Compounded for Mobile */}
+            <div className={`relative overflow-hidden p-6 md:p-10 rounded-2xl border transition-all duration-500 ${isPremiumActive
               ? 'bg-gradient-to-br from-amber-50/30 via-white to-transparent border-amber-100 shadow-sm'
               : 'bg-white border-slate-200 shadow-sm'
               }`}>
-              <div className="relative z-10 flex flex-col md:flex-row gap-8 items-center md:items-start">
+              <div className="relative z-10 flex flex-col md:flex-row gap-6 md:gap-8 items-center md:items-start">
                 {/* Profile Picture */}
                 <div className="relative shrink-0">
-                  <div className={`w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden border-2 bg-slate-50 shadow-sm ${isPremiumActive ? 'border-amber-200' : 'border-slate-100'
+                  <div className={`w-20 h-20 md:w-32 md:h-32 rounded-full overflow-hidden border-2 bg-slate-50 shadow-sm ${isPremiumActive ? 'border-amber-200' : 'border-slate-100'
                     }`}>
                     {userData.profile_picture_url ? (
                       <img
@@ -170,7 +171,7 @@ export default function UserProfilePage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-300 text-4xl font-bold">
+                      <div className="w-full h-full flex items-center justify-center text-slate-300 text-2xl md:text-4xl font-bold">
                         {userData.full_name?.charAt(0) || '?'}
                       </div>
                     )}
@@ -179,13 +180,13 @@ export default function UserProfilePage() {
 
                 {/* Name & Credentials */}
                 <div className="flex-1 min-w-0 text-center md:text-left">
-                  <div className="flex flex-wrap items-center gap-3 justify-center md:justify-start mb-3">
-                    <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
+                  <div className="flex flex-wrap items-center gap-2 justify-center md:justify-start mb-2 md:mb-3">
+                    <h1 className="text-2xl md:text-4xl font-bold text-slate-900 tracking-tight">
                       {userData.full_name}
                     </h1>
                     {isPremiumActive && (
-                      <div className="flex items-center gap-1.5 px-2 py-0.5 bg-gradient-to-r from-amber-400 to-orange-500 text-white rounded-md text-[9px] font-bold uppercase tracking-widest shadow-sm">
-                        <svg className="w-2.5 h-2.5 fill-current" viewBox="0 0 20 20">
+                      <div className="flex items-center gap-1.5 px-2 py-0.5 bg-gradient-to-r from-amber-400 to-orange-500 text-white rounded-md text-[8px] md:text-[9px] font-bold uppercase tracking-widest shadow-sm">
+                        <svg className="w-2 md:w-2.5 h-2 md:h-2.5 fill-current" viewBox="0 0 20 20">
                           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                         </svg>
                         {userData.premium_source || 'Verified'}
@@ -193,20 +194,40 @@ export default function UserProfilePage() {
                     )}
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5 md:space-y-2 mb-6 md:mb-0">
                     {userData.job_title && (
-                      <p className="text-lg md:text-xl font-semibold text-slate-500 tracking-tight">
+                      <p className="text-base md:text-xl font-semibold text-slate-500 tracking-tight">
                         {userData.job_title} {userData.company && <span className="text-slate-300 font-medium">@ {userData.company}</span>}
                       </p>
                     )}
                     {userData.location && (
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center justify-center md:justify-start gap-1.5">
-                        <svg className="w-3.5 h-3.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center justify-center md:justify-start gap-1.5">
+                        <svg className="w-3 md:w-3.5 h-3 md:h-3.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                         {userData.location}
                       </p>
+                    )}
+                  </div>
+
+                  {/* Mobile Action Buttons - Integrated into Hero */}
+                  <div className="flex md:hidden flex-col items-center gap-2.5 pt-6 border-t border-slate-100/50 mt-6">
+                    <div className="w-full">
+                      <CollabButton
+                        userId={userData.id}
+                        collabStatus={collabStatus}
+                        onCollabSuccess={handleCollabSuccess}
+                      />
+                    </div>
+                    {isCollaborating && (
+                      <button
+                        onClick={handleRemoveConnection}
+                        disabled={removing}
+                        className="w-full py-2.5 bg-white border border-slate-200 text-slate-400 rounded-xl hover:bg-rose-50 hover:text-rose-600 hover:border-rose-100 transition-all text-[10px] font-bold uppercase tracking-widest shadow-sm disabled:opacity-50"
+                      >
+                        {removing ? '...' : 'Remove Connection'}
+                      </button>
                     )}
                   </div>
                 </div>
