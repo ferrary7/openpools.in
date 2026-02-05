@@ -4,9 +4,46 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Logo from './Logo'
 import DNAHelixCanvas from '../dna/DNAHelixCanvas'
+import { createClient } from '@/lib/supabase/client'
 
 export default function HeroSection({ user }) {
   const [scrollY, setScrollY] = useState(0)
+  const [userProfile, setUserProfile] = useState(null)
+  const [userDNA, setUserDNA] = useState(null)
+
+  const supabase = createClient()
+
+  // Fetch user profile and DNA data when user is available
+  useEffect(() => {
+    if (user) {
+      fetchUserData()
+    }
+  }, [user])
+
+  const fetchUserData = async () => {
+    if (!user) return
+    
+    try {
+      // Fetch user profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, profile_picture_url')
+        .eq('id', user.id)
+        .single()
+
+      // Fetch user DNA/keywords
+      const { data: keywordProfile } = await supabase
+        .from('keyword_profiles')
+        .select('keywords')
+        .eq('user_id', user.id)
+        .single()
+
+      setUserProfile(profile)
+      setUserDNA(keywordProfile)
+    } catch (error) {
+      console.error('Error fetching user data:', error)
+    }
+  }
 
   useEffect(() => {
     const handleScroll = () => {
@@ -123,9 +160,26 @@ export default function HeroSection({ user }) {
               <div className="mt-8 p-6 bg-[#0f0f0f] rounded-b-xl overflow-hidden min-h-[600px] text-left">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
-                  <div>
-                    <h2 className="text-2xl font-bold text-white mb-1">Welcome back, Aryan!</h2>
-                    <p className="text-gray-500 text-sm">Your Skills, Your Vibe, Your Network.</p>
+                  <div className="flex items-center gap-4">
+                    {user && userProfile?.profile_picture_url ? (
+                      <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary-500">
+                        <img src={userProfile.profile_picture_url} alt={userProfile.full_name} className="w-full h-full object-cover" />
+                      </div>
+                    ) : user && userProfile ? (
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-400 to-purple-600 flex items-center justify-center text-white text-lg font-bold border-2 border-primary-500">
+                        {userProfile.full_name?.charAt(0) || '?'}
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-700 to-gray-600 flex items-center justify-center text-white text-lg font-bold">
+                        A
+                      </div>
+                    )}
+                    <div>
+                      <h2 className="text-2xl font-bold text-white mb-1">
+                        Welcome back, {user && userProfile ? userProfile.full_name?.split(' ')[0] : 'Aryan'}!
+                      </h2>
+                      <p className="text-gray-500 text-sm">Your Skills, Your Vibe, Your Network.</p>
+                    </div>
                   </div>
                   <div className="px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/30 text-amber-300 text-xs font-medium flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
@@ -149,7 +203,7 @@ export default function HeroSection({ user }) {
 
                       <div className="relative h-[300px] w-full flex items-center justify-center">
                         <DNAHelixCanvas
-                          keywords={[
+                          keywords={user && userDNA && userDNA.keywords ? userDNA.keywords.slice(0, 8) : [
                             { keyword: 'React' }, { keyword: 'Next.js' }, { keyword: 'TypeScript' },
                             { keyword: 'Node.js' }, { keyword: 'Design' }, { keyword: 'Strategy' },
                             { keyword: 'Leadership' }, { keyword: 'AI' }

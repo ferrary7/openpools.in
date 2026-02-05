@@ -162,7 +162,7 @@ export default function UserProfilePage() {
               <div className="relative z-10 flex flex-col md:flex-row gap-6 md:gap-8 items-center md:items-start">
                 {/* Profile Picture */}
                 <div className="relative shrink-0">
-                  <div className={`w-20 h-20 md:w-32 md:h-32 rounded-full overflow-hidden border-2 bg-slate-50 shadow-sm ${isPremiumActive ? 'border-amber-200' : 'border-slate-100'
+                  <div className={`w-20 h-20 md:w-32 md:h-32 rounded-full overflow-hidden border-2 shadow-sm flex items-center justify-center bg-gradient-to-br from-primary-400 to-purple-400 ${isPremiumActive ? 'border-amber-200' : 'border-slate-100'
                     }`}>
                     {userData.profile_picture_url ? (
                       <img
@@ -171,8 +171,8 @@ export default function UserProfilePage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-300 text-2xl md:text-4xl font-bold">
-                        {userData.full_name?.charAt(0) || '?'}
+                      <div className="text-white text-2xl md:text-4xl font-bold">
+                        {userData.full_name?.charAt(0) || userData.email?.charAt(0).toUpperCase() || '?'}
                       </div>
                     )}
                   </div>

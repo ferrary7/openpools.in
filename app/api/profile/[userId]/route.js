@@ -81,8 +81,8 @@ export async function GET(request, { params }) {
     const isOwnProfile = user.id === profile.id
 
     // Handle profile picture visibility
-    // Show to owner always, or to accepted collaborators if not hidden
-    if (isOwnProfile || (isCollaborating && profile.profile_picture_url && !profile.hide_profile_picture_from_collaborators)) {
+    // Show to owner always, or to everyone if not hidden (public by default)
+    if (isOwnProfile || !profile.hide_profile_picture_from_collaborators) {
       publicProfile.profile_picture_url = profile.profile_picture_url
     }
 

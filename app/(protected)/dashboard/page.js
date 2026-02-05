@@ -75,8 +75,18 @@ export default async function DashboardPage() {
             {/* Profile Card */}
             <div className="relative bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="text-center mb-6">
-                <div className="w-24 h-24 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full mx-auto mb-4 flex items-center justify-center text-white text-3xl font-bold shadow-lg">
-                  {profile?.full_name?.charAt(0) || 'U'}
+                <div className="w-24 h-24 rounded-full mx-auto mb-4 overflow-hidden border-2 border-slate-100 flex items-center justify-center bg-gradient-to-br from-primary-400 to-purple-400 shadow-lg">
+                  {profile?.profile_picture_url ? (
+                    <img
+                      src={profile.profile_picture_url}
+                      alt={profile.full_name || 'User'}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-white text-3xl font-bold">
+                      {profile?.full_name?.charAt(0) || user.email?.charAt(0).toUpperCase() || 'U'}
+                    </span>
+                  )}
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-1">{profile?.full_name || 'User'}</h3>
                 <p className="text-sm text-gray-500 mb-3">@{profile?.username || user.id.slice(0, 8)}</p>

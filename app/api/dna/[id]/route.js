@@ -27,7 +27,7 @@ export async function GET(request, { params }) {
     // Load profile - query by ID or username
     let profileQuery = supabase
       .from('profiles')
-      .select('id, username, full_name, email, job_title, company, location, bio, linkedin_url, website, is_premium, created_at')
+      .select('id, username, full_name, email, job_title, company, location, bio, linkedin_url, website, is_premium, created_at, profile_picture_url')
 
     if (isId) {
       profileQuery = profileQuery.eq('id', id)
