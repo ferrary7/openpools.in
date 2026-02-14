@@ -60,7 +60,7 @@ export default function MatchCard({ match }) {
             <div className={`text-5xl font-extrabold leading-none mb-3 tracking-tighter tabular-nums flex items-baseline justify-end ${isPremiumActive ? 'text-amber-600' : 'text-slate-900'
               }`}>
               <span className={isPremiumActive ? '' : 'text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-pink-600'}>
-                {match.compatibility.toFixed(1)}
+                {(match.compatibility || 0).toFixed(1)}
               </span>
               <span className="text-lg opacity-30 ml-0.5">%</span>
             </div>
@@ -81,7 +81,7 @@ export default function MatchCard({ match }) {
             <div className={`flex-1 h-0.5 rounded-full ${isPremiumActive ? 'bg-amber-100' : 'bg-slate-50'}`}></div>
           </h4>
           <div className="flex flex-wrap gap-2">
-            {match.commonKeywords.slice(0, 10).map((kw, index) => (
+            {(match.commonKeywords || []).slice(0, 10).map((kw, index) => (
               <span
                 key={index}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${isPremiumActive
@@ -92,10 +92,10 @@ export default function MatchCard({ match }) {
                 {kw.keyword}
               </span>
             ))}
-            {match.commonKeywords.length > 10 && (
+            {(match.commonKeywords || []).length > 10 && (
               <span className={`px-2 py-1 text-xs font-black uppercase tracking-widest ${isPremiumActive ? 'text-amber-400' : 'text-slate-300'
                 }`}>
-                +{match.commonKeywords.length - 10}
+                +{(match.commonKeywords || []).length - 10}
               </span>
             )}
           </div>
@@ -147,7 +147,7 @@ export default function MatchCard({ match }) {
       <div className={`overflow-hidden transition-all duration-700 ease-in-out ${isExpanded ? 'max-h-[600px] opacity-100 pt-2 pb-8' : 'max-h-0 opacity-0'}`}>
         <div className="px-8 space-y-4">
           <div className="grid grid-cols-1 gap-3">
-            {Object.entries(match.scoreBreakdown).map(([key, value], idx) => {
+            {Object.entries(match.scoreBreakdown || {}).map(([key, value], idx) => {
               if (value === 0) return null
               const labels = {
                 keyword: 'Common Keywords Score',
