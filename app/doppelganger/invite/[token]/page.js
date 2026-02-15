@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
 
 export default function InvitePage() {
   const params = useParams()
@@ -13,9 +14,24 @@ export default function InvitePage() {
   const [loading, setLoading] = useState(true)
   const [accepting, setAccepting] = useState(false)
   const [error, setError] = useState(null)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
 
   useEffect(() => {
-    async function fetchInvite() {
+    async function init() {
+      // Check if user is logged in
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      setIsLoggedIn(!!user)
+
+      // If user came back after signup/onboarding with this token, clear the stored token
+      if (user) {
+        const storedToken = localStorage.getItem('dg_pending_invite')
+        if (storedToken === token) {
+          localStorage.removeItem('dg_pending_invite')
+        }
+      }
+
+      // Fetch invite details
       try {
         const res = await fetch(`/api/doppelganger/invite/${token}`)
         const data = await res.json()
@@ -33,11 +49,18 @@ export default function InvitePage() {
     }
 
     if (token) {
-      fetchInvite()
+      init()
     }
   }, [token])
 
   const handleAccept = async () => {
+    // If not logged in, store token and redirect to signup
+    if (!isLoggedIn) {
+      localStorage.setItem('dg_pending_invite', token)
+      router.push('/signup')
+      return
+    }
+
     setAccepting(true)
     setError(null)
 
@@ -72,7 +95,7 @@ export default function InvitePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-[#030303] flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-500 font-black tracking-widest uppercase text-xs italic">DECODING INCOMING SIGNAL...</p>
@@ -83,7 +106,7 @@ export default function InvitePage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-[#030303] flex items-center justify-center">
         <div className="max-w-md mx-auto px-6 text-center">
           <div className="w-20 h-20 bg-red-500/10 border border-red-500/20 rounded-[2rem] flex items-center justify-center mx-auto mb-8 animate-shake">
             <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -103,7 +126,7 @@ export default function InvitePage() {
   }
 
   return (
-    <div className="min-h-screen py-24 animate-fadeIn flex items-center justify-center">
+    <div className="min-h-screen bg-[#030303] py-24 animate-fadeIn flex items-center justify-center">
       <div className="max-w-xl w-full mx-auto px-6">
         <div className="glass-dark rounded-[3rem] border border-white/5 overflow-hidden relative group">
           {/* Animated Background Element */}
@@ -129,6 +152,15 @@ export default function InvitePage() {
               </div>
             </div>
 
+            {/* Show signup hint for non-logged-in users */}
+            {!isLoggedIn && (
+              <div className="mb-6 p-4 bg-purple-500/10 border border-purple-500/20 rounded-2xl">
+                <p className="text-[10px] text-purple-400 font-bold uppercase tracking-widest">
+                  NEW_RECRUIT_DETECTED — SIGNUP REQUIRED TO JOIN SQUAD
+                </p>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 gap-4">
               <button
                 onClick={handleAccept}
@@ -145,7 +177,7 @@ export default function InvitePage() {
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    CONFIRM_ENLISTMENT
+                    {isLoggedIn ? 'CONFIRM_ENLISTMENT' : 'SIGNUP_&_JOIN'}
                   </>
                 )}
               </button>

@@ -66,6 +66,8 @@ export async function POST(request, { params }) {
     const {
       prototype_url,
       prototype_description,
+      social_links,
+      // Legacy fields for backward compatibility
       social_post_url,
       social_platform
     } = await request.json()
@@ -122,8 +124,11 @@ export async function POST(request, { params }) {
         team_id: teamId,
         prototype_url,
         prototype_description: prototype_description || null,
-        social_post_url: social_post_url || null,
-        social_platform: social_platform || null
+        // Support new multiple links format
+        social_links: social_links || null,
+        // Keep legacy fields for backward compatibility
+        social_post_url: social_links?.[0]?.url || social_post_url || null,
+        social_platform: social_links?.[0]?.platform || social_platform || null
       })
       .select()
       .single()

@@ -159,6 +159,31 @@ export const useDoppelgangerStore = create((set, get) => ({
     }
   },
 
+  // Remove member or cancel invite
+  removeMember: async (teamId, memberId) => {
+    set({ loadingMembers: true, error: null })
+
+    try {
+      const response = await fetch(`/api/doppelganger/teams/${teamId}/members?member_id=${memberId}`, {
+        method: 'DELETE'
+      })
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to remove member')
+      }
+
+      // Refresh team data
+      await get().fetchTeam(teamId, true)
+      return true
+    } catch (err) {
+      set({ error: err.message })
+      return false
+    } finally {
+      set({ loadingMembers: false })
+    }
+  },
+
   // Generate problem statement
   generateProblem: async (teamId) => {
     set({ loading: true, error: null })

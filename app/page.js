@@ -62,7 +62,7 @@ export default function Home() {
       </header>
 
       <main>
-        <HeroSection user={user} />
+        <HeroSection user={user} authLoading={authLoading} />
 
         <div id="how-it-works">
           <HowItWorks />
@@ -91,12 +91,18 @@ export default function Home() {
               Join thousands of professionals building the future together.
               No noise, just signal.
             </p>
-            <Link
-              href={user ? '/dashboard' : '/signup'}
-              className="inline-block px-10 py-4 bg-white text-black rounded-full text-lg font-bold hover:scale-105 transition-transform shadow-[0_0_50px_-10px_rgba(255,255,255,0.3)]"
-            >
-              {user ? 'Go to Dashboard' : 'Get Started Now'}
-            </Link>
+            {authLoading ? (
+              <div className="inline-block px-10 py-4 bg-white/10 text-transparent rounded-full text-lg font-bold w-48 animate-pulse">
+                Loading...
+              </div>
+            ) : (
+              <Link
+                href={user ? '/dashboard' : '/signup'}
+                className="inline-block px-10 py-4 bg-white text-black rounded-full text-lg font-bold hover:scale-105 transition-transform shadow-[0_0_50px_-10px_rgba(255,255,255,0.3)]"
+              >
+                {user ? 'Go to Dashboard' : 'Get Started Now'}
+              </Link>
+            )}
           </div>
         </section>
       </main>

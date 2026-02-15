@@ -61,6 +61,7 @@ export default function SprintPage() {
   const eventStatus = team.event?.status
   const isSprintActive = eventStatus === 'active'
   const sprintNotStarted = eventStatus === 'registration' || eventStatus === 'draft'
+  const activeCheckpoint = team.event?.active_checkpoint
 
   // For display purposes only
   const now = new Date()
@@ -68,7 +69,20 @@ export default function SprintPage() {
   const sprintEnd = new Date(team.event?.sprint_end)
 
   const completedCheckpoints = logs.map(l => l.checkpoint_number)
-  const nextCheckpoint = [1, 2, 3, 4, 5].find(n => !completedCheckpoints.includes(n)) || null
+
+  // Check if user has already submitted the active checkpoint
+  const hasSubmittedActiveCheckpoint = activeCheckpoint ? completedCheckpoints.includes(activeCheckpoint) : false
+
+  // Check if final checkpoint (5) has been submitted
+  const hasSubmittedFinalLog = completedCheckpoints.includes(5)
+
+  // Calculate missed checkpoints (checkpoints before the active one that weren't submitted)
+  const missedCheckpoints = activeCheckpoint
+    ? Array.from({ length: activeCheckpoint - 1 }, (_, i) => i + 1).filter(n => !completedCheckpoints.includes(n))
+    : []
+
+  // Show form if checkpoint is open and user hasn't submitted it yet
+  const canSubmitLog = isSprintActive && activeCheckpoint && !hasSubmittedActiveCheckpoint
 
   return (
     <div className="min-h-screen py-24 animate-fadeIn">
@@ -146,11 +160,29 @@ export default function SprintPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Main Feed */}
           <div className="lg:col-span-8 space-y-8">
-            {/* Log form as Upload Terminal */}
-            {isSprintActive && nextCheckpoint && (
-              <div className="animate-fadeInUp">
+            {/* Log form as Upload Terminal - only show when checkpoint is open */}
+            {canSubmitLog && (
+              <div className="animate-fadeInUp space-y-4">
+                {/* Missed checkpoints warning */}
+                {missedCheckpoints.length > 0 && (
+                  <div className="p-6 glass-dark border border-amber-500/20 bg-amber-500/5 rounded-[2rem]">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-amber-500 font-black uppercase tracking-widest text-[10px] mb-1">SIGNAL_GAPS_DETECTED</p>
+                        <p className="text-amber-400/80 text-xs font-medium italic">
+                          You missed LOG_{missedCheckpoints.join(', LOG_')}. These windows have closed. Submit LOG_{activeCheckpoint} now.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <LogForm
-                  checkpointNumber={nextCheckpoint}
+                  checkpointNumber={activeCheckpoint}
                   onSubmit={handleSubmitLog}
                   disabled={loadingLogs}
                 />
@@ -166,8 +198,21 @@ export default function SprintPage() {
 
               {logs.length === 0 ? (
                 <div className="glass-dark rounded-[2.5rem] p-16 border border-white/5 text-center">
-                  <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center mx-auto mb-6 text-xl opacity-20 italic">🚫</div>
-                  <p className="text-gray-600 font-bold uppercase tracking-[0.2em] italic text-[10px]">NO SIGNALS REGISTERED IN CURRENT STREAM</p>
+                  {isSprintActive && !activeCheckpoint ? (
+                    <>
+                      <div className="w-12 h-12 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-center mx-auto mb-6">
+                        <svg className="w-6 h-6 text-amber-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <p className="text-amber-500 font-bold uppercase tracking-[0.2em] italic text-[10px]">AWAITING NEXT SIGNAL WINDOW</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center mx-auto mb-6 text-xl opacity-20 italic">🚫</div>
+                      <p className="text-gray-600 font-bold uppercase tracking-[0.2em] italic text-[10px]">NO SIGNALS REGISTERED IN CURRENT STREAM</p>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-6">
@@ -192,6 +237,35 @@ export default function SprintPage() {
                       <p className="text-gray-400 text-sm font-medium leading-relaxed italic">{log.content}</p>
                     </div>
                   ))}
+
+                  {/* Show status when no checkpoint is currently open or user has submitted current one */}
+                  {isSprintActive && !canSubmitLog && (
+                    <div className="flex items-center justify-center gap-3 py-6">
+                      {hasSubmittedFinalLog ? (
+                        // Final log submitted - sprint complete
+                        <>
+                          <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-green-500">
+                            ALL SIGNALS TRANSMITTED — PROCEED TO FINAL DEPLOYMENT
+                          </span>
+                        </>
+                      ) : (
+                        // Still waiting for next checkpoint
+                        <>
+                          <svg className="w-4 h-4 animate-pulse text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-amber-500">
+                            {hasSubmittedActiveCheckpoint && activeCheckpoint
+                              ? `LOG_${activeCheckpoint} SUBMITTED — AWAITING NEXT WINDOW`
+                              : 'AWAITING NEXT SIGNAL WINDOW'}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

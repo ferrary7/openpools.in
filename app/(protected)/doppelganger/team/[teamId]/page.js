@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
 import { useDoppelgangerStore } from '@/store/doppelgangerStore'
 import { MemberCard, ProblemStatement, ProgressTracker } from '@/components/doppelganger'
 
@@ -15,24 +16,37 @@ export default function TeamDashboardPage() {
   const [inviteEmail, setInviteEmail] = useState('')
   const [showInviteForm, setShowInviteForm] = useState(false)
   const [initialLoading, setInitialLoading] = useState(true)
+  const [currentUserId, setCurrentUserId] = useState(null)
 
   const {
     team,
     members,
     logs,
     loadingTeam,
+    loadingMembers,
     error,
     fetchTeam,
     inviteMember,
+    removeMember,
     generateProblem,
     loading,
     clearError
   } = useDoppelgangerStore()
 
   useEffect(() => {
-    if (teamId) {
-      fetchTeam(teamId).finally(() => setInitialLoading(false))
+    const init = async () => {
+      // Get current user
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) setCurrentUserId(user.id)
+
+      // Fetch team
+      if (teamId) {
+        await fetchTeam(teamId)
+      }
+      setInitialLoading(false)
     }
+    init()
   }, [teamId, fetchTeam])
 
   // Handle doppelganger action from URL
@@ -55,6 +69,22 @@ export default function TeamDashboardPage() {
 
   const handleGenerateProblem = async () => {
     await generateProblem(teamId)
+  }
+
+  const handleRemoveMember = async (memberId) => {
+    // Find the member to show appropriate message
+    const member = members.find(m => m.id === memberId)
+    const isPending = member?.invite_status === 'pending'
+    const name = member?.user?.full_name || member?.email || 'this member'
+
+    const message = isPending
+      ? `Cancel invite for ${name}?`
+      : `Remove ${name} from the team?`
+
+    if (confirm(message)) {
+      clearError()
+      await removeMember(teamId, memberId)
+    }
   }
 
   if (initialLoading || (loadingTeam && !team)) {
@@ -220,12 +250,22 @@ export default function TeamDashboardPage() {
 
                 {/* Other members */}
                 {acceptedMembers.map(member => (
-                  <MemberCard key={member.id} member={member} />
+                  <MemberCard
+                    key={member.id}
+                    member={member}
+                    canRemove={currentUserId === team.created_by && !team.is_locked}
+                    onRemove={handleRemoveMember}
+                  />
                 ))}
 
                 {/* Pending invites */}
                 {pendingMembers.map(member => (
-                  <MemberCard key={member.id} member={member} />
+                  <MemberCard
+                    key={member.id}
+                    member={member}
+                    canRemove={currentUserId === team.created_by && !team.is_locked}
+                    onRemove={handleRemoveMember}
+                  />
                 ))}
               </div>
 

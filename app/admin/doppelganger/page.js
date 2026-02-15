@@ -44,14 +44,31 @@ export default function DoppelgangerAdminPage() {
     }
   }
 
+  // Convert datetime-local value to ISO string (preserves local time as intended)
+  const toISOLocal = (dateTimeLocalValue) => {
+    if (!dateTimeLocalValue) return null
+    // datetime-local gives "2025-02-15T11:40", convert to proper ISO with timezone
+    const date = new Date(dateTimeLocalValue)
+    return date.toISOString()
+  }
+
   const createEvent = async (e) => {
     e.preventDefault()
     setCreating(true)
     try {
+      // Convert all datetime fields to proper ISO strings
+      const eventData = {
+        ...newEvent,
+        registration_start: toISOLocal(newEvent.registration_start),
+        registration_end: toISOLocal(newEvent.registration_end),
+        sprint_start: toISOLocal(newEvent.sprint_start),
+        sprint_end: toISOLocal(newEvent.sprint_end),
+        submission_deadline: toISOLocal(newEvent.submission_deadline)
+      }
       const res = await fetch('/api/admin/doppelganger', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newEvent)
+        body: JSON.stringify(eventData)
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
@@ -101,6 +118,25 @@ export default function DoppelgangerAdminPage() {
       if (res.ok) {
         setSelectedEvent(data.event)
         setEvents(prev => prev.map(e => e.id === data.event.id ? data.event : e))
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const updateActiveCheckpoint = async (checkpoint) => {
+    try {
+      const res = await fetch('/api/admin/doppelganger', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_id: selectedEvent.id, active_checkpoint: checkpoint })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setSelectedEvent(data.event)
+        setEvents(prev => prev.map(e => e.id === data.event.id ? data.event : e))
+      } else {
+        alert('Error: ' + data.error)
       }
     } catch (err) {
       console.error(err)
@@ -441,6 +477,51 @@ export default function DoppelgangerAdminPage() {
               {teamsWithSubmissions.filter(t => t.score?.final_score).length}
             </div>
             <div className="text-sm text-gray-500">Scored</div>
+          </div>
+        </div>
+      )}
+
+      {/* Sprint Checkpoint Controls */}
+      {selectedEvent && selectedEvent.status === 'active' && (
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-800">Sprint Log Checkpoints</h3>
+            <span className="text-sm text-gray-500">
+              {selectedEvent.active_checkpoint
+                ? `Checkpoint ${selectedEvent.active_checkpoint} is OPEN`
+                : 'All checkpoints closed'}
+            </span>
+          </div>
+          <div className="grid grid-cols-5 gap-2">
+            {[1, 2, 3, 4, 5].map(cp => {
+              const isActive = selectedEvent.active_checkpoint === cp
+              const logsForCheckpoint = teams.reduce((acc, t) =>
+                acc + (t.logs?.filter(l => l.checkpoint_number === cp).length || 0), 0)
+
+              return (
+                <div key={cp} className={`p-3 rounded-lg border-2 ${isActive ? 'border-green-500 bg-green-50' : 'border-gray-200'}`}>
+                  <div className="text-center mb-2">
+                    <div className="text-lg font-bold text-gray-800">Log {cp}</div>
+                    <div className="text-xs text-gray-500">{logsForCheckpoint} submitted</div>
+                  </div>
+                  {isActive ? (
+                    <button
+                      onClick={() => updateActiveCheckpoint(null)}
+                      className="w-full py-2 bg-red-600 text-white rounded-lg text-xs font-semibold hover:bg-red-700"
+                    >
+                      Stop
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => updateActiveCheckpoint(cp)}
+                      className="w-full py-2 bg-green-600 text-white rounded-lg text-xs font-semibold hover:bg-green-700"
+                    >
+                      Start
+                    </button>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
       )}

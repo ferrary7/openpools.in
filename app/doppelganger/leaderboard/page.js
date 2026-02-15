@@ -93,13 +93,13 @@ export default function LeaderboardPage() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
           <div className="max-w-2xl">
-            <Link href="/doppelganger" className="inline-flex items-center gap-2 text-gray-500 hover:text-white mb-8 transition-colors group">
+            <Link href={isCompleted ? "/dashboard" : "/doppelganger"} className="inline-flex items-center gap-2 text-gray-500 hover:text-white mb-8 transition-colors group">
               <div className="p-2 glass-dark rounded-xl border border-white/5 group-hover:border-white/10">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
                 </svg>
               </div>
-              <span className="font-black text-[10px] tracking-[0.2em] uppercase">BACK TO HANGAR</span>
+              <span className="font-black text-[10px] tracking-[0.2em] uppercase">{isCompleted ? "BACK TO DASHBOARD" : "BACK TO HANGAR"}</span>
             </Link>
 
             <h1 className="text-6xl md:text-8xl font-black text-white italic tracking-tighter uppercase mb-6">

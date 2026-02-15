@@ -108,6 +108,15 @@ export async function POST(request, { params }) {
       }
     }
 
+    // Check if this checkpoint is currently active (admin-controlled)
+    const activeCheckpoint = team.event.active_checkpoint
+    if (activeCheckpoint === null || activeCheckpoint === undefined) {
+      return NextResponse.json({ error: 'No checkpoint is currently open for submissions' }, { status: 400 })
+    }
+    if (checkpoint_number !== activeCheckpoint) {
+      return NextResponse.json({ error: `Only checkpoint ${activeCheckpoint} is currently open` }, { status: 400 })
+    }
+
     // Logs submitted after sprint_end are marked as late (for display purposes)
     const now = new Date()
     const sprintEnd = new Date(team.event.sprint_end)

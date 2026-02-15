@@ -6,7 +6,7 @@ import Logo from './Logo'
 import DNAHelixCanvas from '../dna/DNAHelixCanvas'
 import { createClient } from '@/lib/supabase/client'
 
-export default function HeroSection({ user }) {
+export default function HeroSection({ user, authLoading }) {
   const [scrollY, setScrollY] = useState(0)
   const [userProfile, setUserProfile] = useState(null)
   const [userDNA, setUserDNA] = useState(null)
@@ -96,7 +96,11 @@ export default function HeroSection({ user }) {
           className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16"
           style={{ transform: `translateY(${scrollY * 0.05}px)` }}
         >
-          {user ? (
+          {authLoading ? (
+            <div className="px-8 py-4 bg-white/10 text-transparent rounded-full font-medium w-40 animate-pulse">
+              Loading
+            </div>
+          ) : user ? (
             <Link
               href="/dashboard"
               className="px-8 py-4 bg-primary-600 hover:bg-primary-500 text-white rounded-full font-medium transition-all hover:scale-105 shadow-[0_0_40px_-10px_rgba(232,68,153,0.5)]"
@@ -170,13 +174,13 @@ export default function HeroSection({ user }) {
                         {userProfile.full_name?.charAt(0) || '?'}
                       </div>
                     ) : (
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-700 to-gray-600 flex items-center justify-center text-white text-lg font-bold">
-                        A
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-700 to-gray-600 flex items-center justify-center animate-pulse">
+                        <div className="w-6 h-6 bg-gray-500 rounded"></div>
                       </div>
                     )}
                     <div>
                       <h2 className="text-2xl font-bold text-white mb-1">
-                        Welcome back, {user && userProfile ? userProfile.full_name?.split(' ')[0] : 'Aryan'}!
+                        Welcome back{user && userProfile ? `, ${userProfile.full_name?.split(' ')[0]}` : ''}!
                       </h2>
                       <p className="text-gray-500 text-sm">Your Skills, Your Vibe, Your Network.</p>
                     </div>

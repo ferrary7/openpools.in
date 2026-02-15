@@ -177,25 +177,44 @@ export async function PUT(request) {
 
 /**
  * PATCH /api/admin/doppelganger
- * Update event status
+ * Update event status or active checkpoint
  */
 export async function PATCH(request) {
   try {
     const serviceClient = createServiceClient()
-    const { event_id, status } = await request.json()
+    const body = await request.json()
+    const { event_id, status, active_checkpoint } = body
 
-    if (!event_id || !status) {
-      return NextResponse.json({ error: 'event_id and status required' }, { status: 400 })
+    if (!event_id) {
+      return NextResponse.json({ error: 'event_id required' }, { status: 400 })
     }
 
-    const validStatuses = ['draft', 'registration', 'active', 'judging', 'completed']
-    if (!validStatuses.includes(status)) {
-      return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
+    const updates = {}
+
+    // Handle status update
+    if (status !== undefined) {
+      const validStatuses = ['draft', 'registration', 'active', 'judging', 'completed']
+      if (!validStatuses.includes(status)) {
+        return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
+      }
+      updates.status = status
+    }
+
+    // Handle active checkpoint update (null to stop, 1-5 to start)
+    if (active_checkpoint !== undefined) {
+      if (active_checkpoint !== null && (active_checkpoint < 1 || active_checkpoint > 5)) {
+        return NextResponse.json({ error: 'Invalid checkpoint (must be 1-5 or null)' }, { status: 400 })
+      }
+      updates.active_checkpoint = active_checkpoint
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json({ error: 'No updates provided' }, { status: 400 })
     }
 
     const { data: event, error } = await serviceClient
       .from('dg_events')
-      .update({ status })
+      .update(updates)
       .eq('id', event_id)
       .select()
       .single()

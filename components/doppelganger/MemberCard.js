@@ -1,10 +1,21 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 
 export default function MemberCard({ member, isCaptain = false, canRemove = false, onRemove }) {
+  const [removing, setRemoving] = useState(false)
   const isAccepted = member.invite_status === 'accepted'
   const isPending = member.invite_status === 'pending'
+
+  const handleRemove = async () => {
+    setRemoving(true)
+    try {
+      await onRemove?.(member.id)
+    } finally {
+      setRemoving(false)
+    }
+  }
 
   return (
     <div className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 ${isAccepted
@@ -62,13 +73,18 @@ export default function MemberCard({ member, isCaptain = false, canRemove = fals
 
       {canRemove && !isCaptain && (
         <button
-          onClick={() => onRemove?.(member.id)}
-          className="p-2 text-gray-600 hover:text-white hover:bg-white/5 rounded-xl transition-all"
-          title="Remove member"
+          onClick={handleRemove}
+          disabled={removing}
+          className="p-2 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all disabled:opacity-50"
+          title={isPending ? 'Cancel invite' : 'Remove member'}
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          {removing ? (
+            <div className="w-5 h-5 border-2 border-gray-600 border-t-transparent rounded-full animate-spin"></div>
+          ) : (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          )}
         </button>
       )}
     </div>)
