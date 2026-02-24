@@ -62,11 +62,18 @@ export async function GET(request) {
         const score = scoreMap[team.id] || {}
         const submission = team.submission?.[0] || null
 
+        const memberUserIds = [
+          team.creator?.id,
+          ...(team.members?.filter(m => m.invite_status === 'accepted').map(m => m.user?.id) || []),
+          team.doppelganger?.id
+        ].filter(Boolean)
+
         return {
           id: team.id,
           name: team.name,
           captain: team.creator,
           doppelganger: team.doppelganger,
+          memberUserIds,
           memberCount: (team.members?.filter(m => m.invite_status === 'accepted').length || 0) + (team.doppelganger ? 1 : 0),
           problemTitle: team.problem_statement?.title,
           hasSubmission: !!submission,

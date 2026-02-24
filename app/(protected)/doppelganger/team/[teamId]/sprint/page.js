@@ -19,14 +19,19 @@ export default function SprintPage() {
     error,
     fetchTeam,
     submitLog,
-    clearError
+    clearError,
+    startPolling,
+    stopPolling
   } = useDoppelgangerStore()
 
   useEffect(() => {
     if (teamId) {
       fetchTeam(teamId).finally(() => setInitialLoading(false))
+      startPolling(teamId)
     }
-  }, [teamId, fetchTeam])
+
+    return () => stopPolling()
+  }, [teamId, fetchTeam, startPolling, stopPolling])
 
   const handleSubmitLog = async (checkpointNumber, title, content) => {
     const result = await submitLog(teamId, checkpointNumber, title, content)
@@ -36,10 +41,7 @@ export default function SprintPage() {
   if (initialLoading || (loadingTeam && !team)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-500 font-bold tracking-widest uppercase text-xs">SYNCHRONIZING COMMAND CENTER...</p>
-        </div>
+        <div className="w-8 h-8 border-2 border-primary-500/30 border-t-primary-500 rounded-full animate-spin"></div>
       </div>
     )
   }
@@ -48,136 +50,115 @@ export default function SprintPage() {
     return (
       <div className="min-h-screen flex items-center justify-center text-center">
         <div>
-          <h2 className="text-2xl font-black text-white italic tracking-tighter uppercase mb-6">SIGNAL LOST</h2>
-          <Link href="/doppelganger" className="text-purple-400 font-bold tracking-widest uppercase text-xs hover:text-purple-300 transition-colors">
-            RETURN TO HANGAR
+          <h2 className="text-xl font-bold text-white mb-3">Team not found</h2>
+          <Link href="/doppelganger" className="text-primary-400 text-sm font-medium hover:text-primary-300 transition-colors">
+            Back to event
           </Link>
         </div>
       </div>
     )
   }
 
-  // Use admin-controlled status as source of truth
   const eventStatus = team.event?.status
   const isSprintActive = eventStatus === 'active'
   const sprintNotStarted = eventStatus === 'registration' || eventStatus === 'draft'
   const activeCheckpoint = team.event?.active_checkpoint
 
-  // For display purposes only
   const now = new Date()
   const sprintStart = new Date(team.event?.sprint_start)
   const sprintEnd = new Date(team.event?.sprint_end)
 
   const completedCheckpoints = logs.map(l => l.checkpoint_number)
-
-  // Check if user has already submitted the active checkpoint
   const hasSubmittedActiveCheckpoint = activeCheckpoint ? completedCheckpoints.includes(activeCheckpoint) : false
-
-  // Check if final checkpoint (5) has been submitted
   const hasSubmittedFinalLog = completedCheckpoints.includes(5)
 
-  // Calculate missed checkpoints (checkpoints before the active one that weren't submitted)
   const missedCheckpoints = activeCheckpoint
     ? Array.from({ length: activeCheckpoint - 1 }, (_, i) => i + 1).filter(n => !completedCheckpoints.includes(n))
     : []
 
-  // Show form if checkpoint is open and user hasn't submitted it yet
   const canSubmitLog = isSprintActive && activeCheckpoint && !hasSubmittedActiveCheckpoint
 
   return (
-    <div className="min-h-screen py-24 animate-fadeIn">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
-          <div className="max-w-2xl">
-            <Link href={`/doppelganger/team/${teamId}`} className="inline-flex items-center gap-2 text-gray-500 hover:text-white mb-8 transition-colors group">
-              <div className="p-2 glass-dark rounded-xl border border-white/5 group-hover:border-white/10">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-                </svg>
-              </div>
-              <span className="font-black text-[10px] tracking-[0.2em] uppercase">ABORT TO DASHBOARD</span>
+    <div className="min-h-screen py-12 md:py-20 animate-fadeIn">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+          <div>
+            <Link href={`/doppelganger/team/${teamId}`} className="inline-flex items-center gap-2 text-gray-500 hover:text-white mb-6 transition-colors text-sm">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Back to dashboard
             </Link>
 
-            <h1 className="text-6xl md:text-8xl font-black text-white italic tracking-tighter uppercase mb-6">
-              COMMAND <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500">CENTER</span>
-            </h1>
-            <div className="flex items-center gap-4">
-              <div className="px-3 py-1 bg-white/5 border border-white/5 rounded-lg text-[10px] font-black text-white uppercase tracking-widest italic">{team.name}</div>
-              <div className="w-[1px] h-4 bg-white/10"></div>
-              <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{team.event?.name}</div>
+            <h1 className="text-3xl md:text-5xl font-bold text-white mb-2">Sprint</h1>
+            <div className="flex items-center gap-3 text-sm">
+              <span className="text-gray-400">{team.name}</span>
+              <span className="text-gray-700">·</span>
+              <span className="text-gray-500">{team.event?.name}</span>
             </div>
           </div>
 
-          <div className="glass-dark rounded-[2rem] p-6 border border-white/5 flex items-center gap-8">
-            {isSprintActive && (
-              <>
-                <div className="text-right">
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">SPRINT_UPTIME</p>
-                  <div className="text-3xl font-black text-white italic tracking-tighter">
-                    {Math.floor((sprintEnd - now) / (1000 * 60 * 60))}H {Math.floor(((sprintEnd - now) % (1000 * 60 * 60)) / (1000 * 60))}M
-                  </div>
-                </div>
-                <div className="w-[1px] h-12 bg-white/5"></div>
-                <div className="text-right">
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">SIGNAL_STATUS</p>
-                  <div className="flex items-center gap-2 justify-end">
-                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                    <span className="text-xs font-black text-green-500 uppercase tracking-widest italic">ACTIVE_TRANSMISSION</span>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
+          {isSprintActive && (
+            <div className="glass-dark rounded-2xl px-6 py-4 border border-white/5 flex items-center gap-6">
+              <div>
+                <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wider mb-1">Time Left</p>
+                <p className="text-2xl font-bold text-white">
+                  {Math.max(0, Math.floor((sprintEnd - now) / (1000 * 60 * 60)))}h {Math.floor(((sprintEnd - now) % (1000 * 60 * 60)) / (1000 * 60))}m
+                </p>
+              </div>
+              <div className="w-px h-10 bg-white/5"></div>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="text-xs font-medium text-emerald-400">Live</span>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Error display */}
+        {/* Error */}
         {error && (
-          <div className="mb-12 p-6 glass-dark border border-red-500/20 rounded-[2rem] text-red-500 flex items-center justify-between animate-shake">
-            <span className="text-xs font-black uppercase tracking-[0.2em]">ERROR_CAUGHT: {error}</span>
-            <button onClick={clearError} className="p-2 hover:bg-white/5 rounded-xl transition-colors">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+          <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 flex items-center justify-between">
+            <span className="text-sm font-medium">{error}</span>
+            <button onClick={clearError} className="p-1 hover:bg-red-500/20 rounded-lg transition-colors">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
         )}
 
+        {/* Sprint not started */}
         {sprintNotStarted && (
-          <div className="mb-12 glass-dark rounded-[2.5rem] p-12 border border-orange-500/20 bg-orange-500/5 text-center">
-            <div className="w-20 h-20 bg-orange-500/10 rounded-[2rem] flex items-center justify-center mx-auto mb-8 border border-orange-500/20 animate-pulse">
-              <svg className="w-10 h-10 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <div className="mb-10 glass-dark rounded-[2.5rem] p-10 border border-amber-500/15 text-center">
+            <div className="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-amber-500/20">
+              <svg className="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h2 className="text-3xl font-black text-white italic tracking-tighter uppercase mb-4">AWAITING COMMENCEMENT</h2>
-            <p className="text-gray-500 font-medium max-w-md mx-auto italic uppercase text-[10px] tracking-widest">
-              The sprint stream begins on {sprintStart.toLocaleDateString()} at {sprintStart.toLocaleTimeString()}. Prepare your environment.
+            <h2 className="text-xl font-bold text-white mb-2">Sprint hasn't started yet</h2>
+            <p className="text-sm text-gray-500">
+              Begins on {sprintStart.toLocaleDateString()} at {sprintStart.toLocaleTimeString()}
             </p>
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Main Feed */}
-          <div className="lg:col-span-8 space-y-8">
-            {/* Log form as Upload Terminal - only show when checkpoint is open */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Main */}
+          <div className="lg:col-span-8 space-y-6">
+            {/* Log form */}
             {canSubmitLog && (
-              <div className="animate-fadeInUp space-y-4">
-                {/* Missed checkpoints warning */}
+              <div className="space-y-4">
                 {missedCheckpoints.length > 0 && (
-                  <div className="p-6 glass-dark border border-amber-500/20 bg-amber-500/5 rounded-[2rem]">
-                    <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="text-amber-500 font-black uppercase tracking-widest text-[10px] mb-1">SIGNAL_GAPS_DETECTED</p>
-                        <p className="text-amber-400/80 text-xs font-medium italic">
-                          You missed LOG_{missedCheckpoints.join(', LOG_')}. These windows have closed. Submit LOG_{activeCheckpoint} now.
-                        </p>
-                      </div>
+                  <div className="p-4 bg-amber-500/10 border border-amber-500/15 rounded-xl flex items-start gap-3">
+                    <svg className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div>
+                      <p className="text-sm font-medium text-amber-400">Missed checkpoints</p>
+                      <p className="text-xs text-amber-400/70 mt-0.5">
+                        You missed checkpoint{missedCheckpoints.length > 1 ? 's' : ''} {missedCheckpoints.join(', ')}. Submit checkpoint {activeCheckpoint} now.
+                      </p>
                     </div>
                   </div>
                 )}
@@ -189,78 +170,63 @@ export default function SprintPage() {
               </div>
             )}
 
-            {/* Submitted Stream */}
-            <div className="space-y-6">
-              <div className="flex items-center gap-4 px-8">
-                <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] italic">SIGNAL_FEED</h2>
-                <div className="h-[1px] flex-1 bg-white/5"></div>
-              </div>
+            {/* Submitted logs */}
+            <div className="space-y-4">
+              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">Activity Log</h2>
 
               {logs.length === 0 ? (
-                <div className="glass-dark rounded-[2.5rem] p-16 border border-white/5 text-center">
+                <div className="glass-dark rounded-[2.5rem] p-12 border border-white/5 text-center">
                   {isSprintActive && !activeCheckpoint ? (
                     <>
-                      <div className="w-12 h-12 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-center mx-auto mb-6">
-                        <svg className="w-6 h-6 text-amber-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <p className="text-amber-500 font-bold uppercase tracking-[0.2em] italic text-[10px]">AWAITING NEXT SIGNAL WINDOW</p>
+                      <svg className="w-8 h-8 text-amber-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <p className="text-sm text-gray-500">Waiting for the next checkpoint to open</p>
                     </>
                   ) : (
-                    <>
-                      <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center mx-auto mb-6 text-xl opacity-20 italic">🚫</div>
-                      <p className="text-gray-600 font-bold uppercase tracking-[0.2em] italic text-[10px]">NO SIGNALS REGISTERED IN CURRENT STREAM</p>
-                    </>
+                    <p className="text-sm text-gray-600">No logs submitted yet</p>
                   )}
                 </div>
               ) : (
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {logs.map((log, i) => (
-                    <div key={log.id} className="glass-dark rounded-[2.5rem] p-8 border border-white/5 hover:border-white/10 transition-all group animate-fadeInUp" style={{ animationDelay: `${0.1 * i}s` }}>
-                      <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center font-black text-xs text-purple-400 border border-white/5 group-hover:bg-purple-500/10 group-hover:text-purple-300 transition-colors">
-                            0{log.checkpoint_number}
+                    <div key={log.id} className="glass-dark rounded-[2rem] p-6 border border-white/5 hover:border-white/10 transition-all">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-white/5 rounded-lg flex items-center justify-center text-xs font-bold text-primary-400">
+                            {log.checkpoint_number}
                           </div>
                           <div>
-                            <h3 className="font-black text-white italic tracking-tight uppercase group-hover:text-purple-400 transition-colors">{log.title}</h3>
-                            <p className="text-[8px] font-black text-gray-600 uppercase tracking-widest">ENCRYPTED_SIGNAL // {new Date(log.submitted_at).toLocaleTimeString()}</p>
+                            <h3 className="text-sm font-semibold text-white">{log.title}</h3>
+                            <p className="text-[10px] text-gray-600">{new Date(log.submitted_at).toLocaleString()}</p>
                           </div>
                         </div>
                         {log.is_late && (
-                          <div className="px-3 py-1 bg-orange-500/10 border border-orange-500/20 rounded-full">
-                            <span className="text-[8px] font-black text-orange-500 uppercase tracking-widest">DELAYED_SIGNAL</span>
-                          </div>
+                          <span className="text-[10px] text-amber-400 font-medium bg-amber-500/10 px-2 py-0.5 rounded-md">Late</span>
                         )}
                       </div>
-                      <p className="text-gray-400 text-sm font-medium leading-relaxed italic">{log.content}</p>
+                      <p className="text-gray-400 text-sm leading-relaxed">{log.content}</p>
                     </div>
                   ))}
 
-                  {/* Show status when no checkpoint is currently open or user has submitted current one */}
                   {isSprintActive && !canSubmitLog && (
-                    <div className="flex items-center justify-center gap-3 py-6">
+                    <div className="flex items-center justify-center gap-2 py-4">
                       {hasSubmittedFinalLog ? (
-                        // Final log submitted - sprint complete
                         <>
-                          <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          <span className="text-[10px] font-black uppercase tracking-widest text-green-500">
-                            ALL SIGNALS TRANSMITTED — PROCEED TO FINAL DEPLOYMENT
-                          </span>
+                          <span className="text-xs text-emerald-400 font-medium">All logs submitted — ready for final submission</span>
                         </>
                       ) : (
-                        // Still waiting for next checkpoint
                         <>
-                          <svg className="w-4 h-4 animate-pulse text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          <svg className="w-4 h-4 text-gray-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          <span className="text-[10px] font-black uppercase tracking-widest text-amber-500">
+                          <span className="text-xs text-gray-500">
                             {hasSubmittedActiveCheckpoint && activeCheckpoint
-                              ? `LOG_${activeCheckpoint} SUBMITTED — AWAITING NEXT WINDOW`
-                              : 'AWAITING NEXT SIGNAL WINDOW'}
+                              ? `Checkpoint ${activeCheckpoint} submitted — waiting for next`
+                              : 'Waiting for next checkpoint'}
                           </span>
                         </>
                       )}
@@ -270,22 +236,17 @@ export default function SprintPage() {
               )}
             </div>
 
-            {/* Mission Parameters HUD */}
-            <div className="relative group overflow-hidden rounded-[2.5rem] animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
-              <div className="absolute top-8 left-8 z-20">
-                <div className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>
-                  <span className="text-[10px] font-black text-purple-400 uppercase tracking-[0.3em] italic">MISSION_PARAMETERS</span>
-                </div>
-              </div>
-              <div className="p-1 glass-dark rounded-[2.5rem] border border-white/5">
+            {/* Problem statement */}
+            {team.problem_statement && (
+              <div>
+                <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider px-1 mb-4">Challenge Details</h2>
                 <ProblemStatement problem={team.problem_statement} />
               </div>
-            </div>
+            )}
           </div>
 
-          {/* Tactical Sidebar */}
-          <div className="lg:col-span-4 space-y-8 sticky top-24">
+          {/* Sidebar */}
+          <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-24">
             <ProgressTracker
               logs={logs}
               requiredLogs={team.event?.required_logs || 5}
@@ -293,37 +254,14 @@ export default function SprintPage() {
               sprintEnd={team.event?.sprint_end}
             />
 
-            {/* Final Submission Button */}
             <Link href={`/doppelganger/team/${teamId}/submit`}>
-              <button className="w-full py-6 bg-white text-black rounded-[2rem] font-black text-sm tracking-[0.3em] uppercase transition-all hover:scale-[1.02] active:scale-95 shadow-2xl shadow-white/5 flex items-center justify-center gap-3 group">
-                <svg className="w-6 h-6 animate-pulse group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <button className="w-full py-4 bg-primary-500 text-white rounded-xl font-semibold text-sm hover:bg-primary-400 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                 </svg>
-                INIT_FINAL_DEPLOY
+                Submit Project
               </button>
             </Link>
-
-            {/* Tactical Intel */}
-            <div className="glass-dark rounded-[2.5rem] p-8 border border-white/5">
-              <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-6">SIGNAL_MONITOR</h3>
-              <div className="space-y-6">
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center text-[10px] font-black">
-                    <span className="text-gray-600 uppercase">RELIABILITY_INDEX</span>
-                    <span className="text-purple-400">98.4%</span>
-                  </div>
-                  <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-                    <div className="w-[98.4%] h-full bg-purple-500 animate-[pulse_3s_infinite]"></div>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-purple-500/5 rounded-2xl border border-purple-500/10">
-                  <p className="text-[9px] text-gray-500 font-bold uppercase tracking-tight leading-relaxed italic">
-                    Multiple signal points detected. All transmissions are subject to AI-resonance analysis during the final scoring protocol.
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>

@@ -217,24 +217,32 @@ export default async function DashboardPage() {
                   {/* Doppelganger - Only show if event exists */}
                   {doppelgangerEvent && (
                     <Link href="/doppelganger" className="group block h-full">
-                      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-900 via-violet-900 to-indigo-900 p-6 hover:shadow-2xl hover:shadow-purple-500/30 shadow-xl transition-all duration-300 hover:-translate-y-2 border-2 border-purple-800 hover:border-purple-500/50 h-full flex flex-col">
-                        <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-purple-500/20 to-pink-500/10 rounded-full blur-3xl"></div>
-                        <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 rounded-2xl opacity-0 group-hover:opacity-30 blur transition-opacity"></div>
+                      <div className="relative overflow-hidden rounded-2xl bg-[#1e1e1e] p-6 hover:shadow-2xl hover:shadow-primary-500/30 shadow-xl transition-all duration-300 hover:-translate-y-2 border-2 border-gray-800 hover:border-primary-500/50 h-full flex flex-col">
+                        <div className="absolute inset-0 opacity-20">
+                          <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-primary-500/30 to-pink-500/20 rounded-full blur-3xl"></div>
+                        </div>
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-primary-500 via-pink-500 to-primary-500 rounded-2xl opacity-0 group-hover:opacity-30 blur transition-opacity"></div>
                         <div className="relative flex-1 flex flex-col">
                           <div className="flex items-center gap-3 mb-4">
-                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/50">
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center shadow-lg shadow-primary-500/50">
                               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0z" />
                               </svg>
                             </div>
                             <div>
-                              <h2 className="text-xl font-bold text-white"><span className="text-purple-300">Doppelganger</span></h2>
-                              <p className="text-purple-400 text-xs">30-Hour Sprint</p>
+                              <h2 className="text-xl font-bold text-white"><span className="text-gray-300">Doppel</span><span className="text-pink-400">ganger</span></h2>
+                              <p className="text-gray-400 text-xs">30-hour sprint</p>
                             </div>
                           </div>
-                          <p className="text-purple-200 text-sm mb-4 flex-1">Find your signal twin and build together</p>
-                          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl text-sm font-semibold group-hover:from-purple-600 group-hover:to-pink-600 transition-all shadow-lg shadow-purple-500/30 mt-auto">
-                            Join Event
+                          <p className="text-gray-300 text-sm mb-4 flex-1">Match your signal twin and ship in 30 hours</p>
+                          <div className="mb-4">
+                            <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold border ${doppelgangerEvent.status === 'completed' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' : doppelgangerEvent.status === 'judging' ? 'bg-amber-500/10 text-amber-300 border-amber-500/20' : 'bg-primary-500/10 text-primary-300 border-primary-500/20'}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${doppelgangerEvent.status === 'completed' ? 'bg-emerald-400' : doppelgangerEvent.status === 'judging' ? 'bg-amber-400' : 'bg-primary-400'}`}></span>
+                              {doppelgangerEvent.status === 'completed' ? 'Completed' : doppelgangerEvent.status === 'judging' ? 'Judging' : 'Live Event'}
+                            </span>
+                          </div>
+                          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-500 to-pink-500 text-white rounded-xl text-sm font-semibold group-hover:from-primary-600 group-hover:to-pink-600 transition-all shadow-lg shadow-primary-500/30 mt-auto">
+                            {doppelgangerEvent.status === 'completed' ? 'View Results' : doppelgangerEvent.status === 'judging' ? 'View Standings' : 'Join Sprint'}
                             <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                             </svg>

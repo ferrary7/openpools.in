@@ -9,93 +9,72 @@ export default function ProgressTracker({ logs = [], requiredLogs = 5, sprintSta
   const now = new Date()
   const end = new Date(sprintEnd)
   const isExpired = now > end
-  const timeLeft = isExpired ? 'SPRINT EXPIRED' : formatDistanceToNow(end, { addSuffix: true }).toUpperCase()
-
-  // Progress status colors
-  const getStatusColor = () => {
-    if (progressPercent >= 100) return 'from-green-500 to-emerald-500'
-    if (progressPercent >= 50) return 'from-purple-500 to-pink-500'
-    return 'from-blue-500 to-indigo-500'
-  }
+  const timeLeft = isExpired ? 'Sprint ended' : `Ends ${formatDistanceToNow(end, { addSuffix: true })}`
 
   return (
-    <div className="glass-dark rounded-[2.5rem] p-6 md:p-8 border border-white/5 relative overflow-hidden group">
-      <div className="flex flex-col gap-6 mb-10">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>
-            TACTICAL TIMELINE
-          </h2>
-          <div className="text-right">
-            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">REMAINING UPTIME</p>
-            <div className={`text-base font-black italic tracking-tighter ${isExpired ? 'text-red-500' : 'text-white'}`}>
-              {timeLeft}
-            </div>
-          </div>
-        </div>
-
-        <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest">
-          {completedLogs} / {requiredLogs} LOGS REGISTERED
-        </p>
+    <div className="glass-dark rounded-[2.5rem] p-6 md:p-8 border border-white/5">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Progress</h2>
+        <span className={`text-xs font-medium ${isExpired ? 'text-red-400' : 'text-gray-500'}`}>
+          {timeLeft}
+        </span>
       </div>
 
-      {/* Progress Bar HUD */}
-      <div className="relative mb-14">
-        <div className="h-4 w-full bg-white/5 rounded-full overflow-hidden border border-white/5 p-1">
+      {/* Progress bar */}
+      <div className="mb-2">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-sm font-semibold text-white">{completedLogs}/{requiredLogs} logs</span>
+          <span className="text-xs font-medium text-gray-500">{Math.round(progressPercent)}%</span>
+        </div>
+        <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
           <div
-            className={`h-full bg-gradient-to-r ${getStatusColor()} rounded-full transition-all duration-1000 ease-out shadow-[0_0_20px_-5px_rgba(168,85,247,0.5)]`}
+            className="h-full bg-primary-500 rounded-full transition-all duration-1000 ease-out"
             style={{ width: `${progressPercent}%` }}
-          >
-            <div className="w-full h-full bg-[linear-gradient(45deg,rgba(255,255,255,0.2)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.2)_50%,rgba(255,255,255,0.2)_75%,transparent_75%,transparent)] bg-[length:20px_20px] animate-[pulse_2s_linear_infinite]"></div>
-          </div>
-        </div>
-
-        {/* Markers - Hidden on mobile if too many */}
-        <div className="absolute top-8 left-0 w-full flex justify-between px-1">
-          {[...Array(requiredLogs + 1)].map((_, i) => {
-            const hasLog = logs.some(l => l.checkpoint_number === i)
-            return (
-              <div key={i} className="flex flex-col items-center">
-                <div className={`w-0.5 h-2 ${hasLog || i === 0 ? 'bg-white/40' : 'bg-white/10'}`}></div>
-                <span className={`text-[8px] font-black mt-2 ${hasLog || i === 0 ? 'text-gray-400' : 'text-gray-600'}`}>0{i}</span>
-              </div>
-            )
-          })}
+          ></div>
         </div>
       </div>
 
-      {/* Checkpoints - Vertical for narrow, grid for wide */}
-      <div className="flex flex-col gap-3 mt-8">
+      {/* Checkpoint list */}
+      <div className="space-y-2 mt-6">
         {[...Array(requiredLogs)].map((_, i) => {
           const checkpointNumber = i + 1
-          // Find log by checkpoint_number, not by array index
           const log = logs.find(l => l.checkpoint_number === checkpointNumber)
           const isMissed = !log && checkpointNumber < Math.max(...logs.map(l => l.checkpoint_number), 0)
 
           return (
             <div
               key={i}
-              className={`p-4 rounded-2xl border transition-all duration-300 flex items-center justify-between ${log
-                  ? 'glass-dark border-green-500/20 bg-green-500/5'
+              className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all ${log
+                  ? 'bg-emerald-500/10 border border-emerald-500/15'
                   : isMissed
-                    ? 'glass-dark border-amber-500/20 bg-amber-500/5'
-                    : 'bg-white/5 border-white/5 opacity-40'
+                    ? 'bg-amber-500/10 border border-amber-500/15'
+                    : 'bg-white/[0.02] border border-white/5 opacity-50'
                 }`}
             >
-              <div className="flex flex-col">
-                <span className={`text-[8px] font-black uppercase tracking-widest mb-1 ${log ? 'text-green-500' : isMissed ? 'text-amber-500' : 'text-gray-500'}`}>
-                  LOG_0{checkpointNumber}
+              <div className="flex items-center gap-3">
+                <div className={`w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-bold ${log
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : isMissed
+                      ? 'bg-amber-500/20 text-amber-400'
+                      : 'bg-white/5 text-gray-600'
+                  }`}>
+                  {checkpointNumber}
+                </div>
+                <span className={`text-xs font-medium ${log ? 'text-emerald-400' : isMissed ? 'text-amber-400' : 'text-gray-600'}`}>
+                  {log ? 'Submitted' : isMissed ? 'Missed' : 'Pending'}
                 </span>
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">
-                  {log ? 'ENCRYPTED' : isMissed ? 'MISSED' : 'PENDING'}
-                </p>
               </div>
 
-              <div className="flex items-center gap-3">
-                {log && <span className="text-xs">✅</span>}
-                {isMissed && <span className="text-[8px] font-black text-amber-500">⚠️</span>}
-                <div className={`h-8 w-1 rounded-full ${log ? 'bg-green-500' : isMissed ? 'bg-amber-500' : 'bg-white/10'}`}></div>
-              </div>
+              {log && (
+                <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+              {isMissed && (
+                <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01" />
+                </svg>
+              )}
             </div>
           )
         })}

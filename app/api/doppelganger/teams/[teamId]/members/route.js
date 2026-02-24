@@ -159,6 +159,19 @@ export async function POST(request, { params }) {
       .eq('id', user.id)
       .single()
 
+    // Create in-app notification for the invited user (if they have an account)
+    if (existingUser) {
+      await serviceClient
+        .from('notifications')
+        .insert({
+          user_id: existingUser.id,
+          type: 'dg_invite',
+          title: `Team invite: ${team.name}`,
+          message: `${inviter?.full_name || 'Someone'} invited you to join "${team.name}" for ${team.event?.name || 'Doppelganger Sprint'}. Token: ${token}`,
+          related_user_id: user.id
+        })
+    }
+
     // Send invite email
     const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://openpools.in'}/doppelganger/invite/${token}`
     await sendTeamInviteEmail(

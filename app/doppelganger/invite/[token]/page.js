@@ -18,12 +18,10 @@ export default function InvitePage() {
 
   useEffect(() => {
     async function init() {
-      // Check if user is logged in
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       setIsLoggedIn(!!user)
 
-      // If user came back after signup/onboarding with this token, clear the stored token
       if (user) {
         const storedToken = localStorage.getItem('dg_pending_invite')
         if (storedToken === token) {
@@ -31,7 +29,6 @@ export default function InvitePage() {
         }
       }
 
-      // Fetch invite details
       try {
         const res = await fetch(`/api/doppelganger/invite/${token}`)
         const data = await res.json()
@@ -42,7 +39,7 @@ export default function InvitePage() {
           setInvite(data.invite)
         }
       } catch (err) {
-        setError('SIGNAL_DECODER_FAILURE')
+        setError('Failed to load invite details')
       } finally {
         setLoading(false)
       }
@@ -54,7 +51,6 @@ export default function InvitePage() {
   }, [token])
 
   const handleAccept = async () => {
-    // If not logged in, store token and redirect to signup
     if (!isLoggedIn) {
       localStorage.setItem('dg_pending_invite', token)
       router.push('/signup')
@@ -76,7 +72,7 @@ export default function InvitePage() {
         router.push(`/doppelganger/team/${encodeURIComponent(data.teamName)}`)
       }
     } catch (err) {
-      setError('SYNC_PROTOCOL_FAILED')
+      setError('Something went wrong. Please try again.')
     } finally {
       setAccepting(false)
     }
@@ -89,35 +85,32 @@ export default function InvitePage() {
       })
       router.push('/doppelganger')
     } catch (err) {
-      setError('SIGNAL_REJECTION_ERROR')
+      setError('Could not decline the invite')
     }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#030303] flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-500 font-black tracking-widest uppercase text-xs italic">DECODING INCOMING SIGNAL...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-primary-500/30 border-t-primary-500 rounded-full animate-spin"></div>
       </div>
     )
   }
 
-  if (error) {
+  if (error && !invite) {
     return (
-      <div className="min-h-screen bg-[#030303] flex items-center justify-center">
-        <div className="max-w-md mx-auto px-6 text-center">
-          <div className="w-20 h-20 bg-red-500/10 border border-red-500/20 rounded-[2rem] flex items-center justify-center mx-auto mb-8 animate-shake">
-            <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="max-w-sm mx-auto px-6 text-center">
+          <div className="w-12 h-12 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-center mx-auto mb-5">
+            <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </div>
-          <h1 className="text-3xl font-black text-white italic tracking-tighter uppercase mb-4">SIGNAL_DECODE_ERR</h1>
-          <p className="text-gray-500 font-medium mb-10 italic uppercase text-[10px] tracking-widest leading-relaxed">{error}</p>
+          <h1 className="text-xl font-bold text-white mb-2">Invalid Invite</h1>
+          <p className="text-sm text-gray-500 mb-8">{error}</p>
           <Link href="/doppelganger">
-            <button className="px-8 py-4 bg-white text-black rounded-2xl font-black text-xs tracking-[0.2em] uppercase hover:bg-gray-100 transition-all">
-              RETURN_TO_HANGAR
+            <button className="px-6 py-3 bg-white/5 text-white rounded-xl text-sm font-medium border border-white/10 hover:bg-white/10 transition-all">
+              Back to Event
             </button>
           </Link>
         </div>
@@ -126,74 +119,74 @@ export default function InvitePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#030303] py-24 animate-fadeIn flex items-center justify-center">
-      <div className="max-w-xl w-full mx-auto px-6">
-        <div className="glass-dark rounded-[3rem] border border-white/5 overflow-hidden relative group">
-          {/* Animated Background Element */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/5 blur-[80px] rounded-full group-hover:bg-purple-500/10 transition-all duration-1000"></div>
-
-          <div className="bg-white/5 border-b border-white/5 px-8 pt-12 pb-10 text-center relative z-10">
-            <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-purple-500/20">
-              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+    <div className="min-h-screen py-16 md:py-24 flex items-center justify-center animate-fadeIn">
+      <div className="max-w-md w-full mx-auto px-6">
+        <div className="glass-dark rounded-[2.5rem] border border-white/5 overflow-hidden">
+          {/* Header */}
+          <div className="px-8 pt-10 pb-8 text-center border-b border-white/5">
+            <div className="w-14 h-14 bg-primary-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
               </svg>
             </div>
-            <h3 className="text-[10px] font-black text-purple-400 uppercase tracking-[0.4em] mb-2 italic">SIGNAL_INTERCEPTED</h3>
-            <h1 className="text-4xl md:text-5xl font-black text-white italic tracking-tighter uppercase">{invite.eventName}</h1>
+            <p className="text-xs text-gray-500 mb-1">You've been invited to join</p>
+            <h1 className="text-2xl font-bold text-white">{invite.teamName}</h1>
           </div>
 
-          <div className="p-8 md:p-12 relative z-10 text-center">
-            <div className="bg-[#0A0A0A] border border-white/5 rounded-[2rem] p-8 mb-10 shadow-inner">
-              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] mb-3">SQUAD_IDENTIFIED</p>
-              <h2 className="text-3xl font-black text-white italic tracking-tighter uppercase mb-4">{invite.teamName}</h2>
-              <div className="flex items-center justify-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></div>
-                <p className="text-[10px] text-purple-400 font-black uppercase tracking-widest italic">ENLISTMENT REQUESTED BY {invite.inviterName}</p>
+          {/* Body */}
+          <div className="p-8 text-center">
+            <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-5 mb-6">
+              <div className="flex items-center justify-center gap-3 mb-3">
+                <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center text-xs font-bold text-white">
+                  {invite.inviterName?.charAt(0)?.toUpperCase() || '?'}
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-medium text-white">{invite.inviterName}</p>
+                  <p className="text-xs text-gray-500">invited you</p>
+                </div>
               </div>
+              <p className="text-xs text-gray-500">
+                Event: <span className="text-gray-400">{invite.eventName}</span>
+              </p>
             </div>
 
-            {/* Show signup hint for non-logged-in users */}
+            {/* Error inside form */}
+            {error && (
+              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
+                {error}
+              </div>
+            )}
+
             {!isLoggedIn && (
-              <div className="mb-6 p-4 bg-purple-500/10 border border-purple-500/20 rounded-2xl">
-                <p className="text-[10px] text-purple-400 font-bold uppercase tracking-widest">
-                  NEW_RECRUIT_DETECTED — SIGNUP REQUIRED TO JOIN SQUAD
+              <div className="mb-5 p-3 bg-primary-500/10 border border-primary-500/20 rounded-xl">
+                <p className="text-xs text-primary-400 font-medium">
+                  You'll need to create an account to join the team
                 </p>
               </div>
             )}
 
-            <div className="grid grid-cols-1 gap-4">
+            <div className="space-y-3">
               <button
                 onClick={handleAccept}
                 disabled={accepting}
-                className="w-full py-6 bg-white text-black rounded-[2rem] font-black text-sm tracking-[0.2em] uppercase hover:bg-gray-100 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-2xl shadow-white/5"
+                className="w-full py-4 bg-primary-500 text-white rounded-xl font-semibold text-sm hover:bg-primary-400 transition-all active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {accepting ? (
                   <>
-                    <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
-                    SYNCING_PROTOCOL...
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Joining...
                   </>
                 ) : (
-                  <>
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    {isLoggedIn ? 'CONFIRM_ENLISTMENT' : 'SIGNUP_&_JOIN'}
-                  </>
+                  isLoggedIn ? 'Accept & Join Team' : 'Sign Up & Join'
                 )}
               </button>
 
               <button
                 onClick={handleDecline}
-                className="w-full py-4 text-gray-600 font-black text-[10px] tracking-[0.3em] uppercase hover:text-white transition-opacity"
+                className="w-full py-3 text-gray-500 text-sm font-medium hover:text-white transition-colors"
               >
-                REJECT_SIGNAL
+                Decline
               </button>
-            </div>
-
-            <div className="mt-12 flex items-center gap-4 opacity-20">
-              <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-white/20"></div>
-              <span className="text-[8px] font-black text-white uppercase tracking-[0.5em] italic">SECURE_TRANSMISSION</span>
-              <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-white/20"></div>
             </div>
           </div>
         </div>

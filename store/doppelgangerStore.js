@@ -19,10 +19,9 @@ export const useDoppelgangerStore = create((set, get) => ({
   // Error state
   error: null,
 
-  // Cache timestamps
-  lastFetched: null,
-  lastTeamFetched: null,
-  lastLeaderboardFetched: null,
+  // Polling
+  _pollInterval: null,
+  _leaderboardPollInterval: null,
 
   // Setters
   setEvent: (event) => set({ event }),
@@ -32,15 +31,126 @@ export const useDoppelgangerStore = create((set, get) => ({
   setSubmission: (submission) => set({ submission }),
   setError: (error) => set({ error }),
 
+  // Start polling team data every N seconds
+  startPolling: (teamId, intervalMs = 10000) => {
+    const { _pollInterval } = get()
+    if (_pollInterval) clearInterval(_pollInterval)
+
+    const poll = () => {
+      get()._silentFetchTeam(teamId)
+    }
+
+    const interval = setInterval(poll, intervalMs)
+    set({ _pollInterval: interval })
+  },
+
+  // Stop polling
+  stopPolling: () => {
+    const { _pollInterval } = get()
+    if (_pollInterval) {
+      clearInterval(_pollInterval)
+      set({ _pollInterval: null })
+    }
+  },
+
+  // Start polling leaderboard data
+  startLeaderboardPolling: (eventId, intervalMs = 15000) => {
+    const { _leaderboardPollInterval } = get()
+    if (_leaderboardPollInterval) clearInterval(_leaderboardPollInterval)
+
+    const poll = () => {
+      get()._silentFetchLeaderboard(eventId)
+    }
+
+    const interval = setInterval(poll, intervalMs)
+    set({ _leaderboardPollInterval: interval })
+  },
+
+  // Stop polling leaderboard
+  stopLeaderboardPolling: () => {
+    const { _leaderboardPollInterval } = get()
+    if (_leaderboardPollInterval) {
+      clearInterval(_leaderboardPollInterval)
+      set({ _leaderboardPollInterval: null })
+    }
+  },
+
+  // Silent leaderboard fetch (used by polling) — also checks event status
+  _silentFetchLeaderboard: async (eventId) => {
+    try {
+      const [lbRes, evtRes] = await Promise.all([
+        fetch(`/api/doppelganger/leaderboard?event_id=${eventId}`),
+        fetch('/api/doppelganger')
+      ])
+      const lbData = await lbRes.json()
+      const evtData = await evtRes.json()
+
+      if (!lbRes.ok) return
+
+      const current = get()
+      const newLeaderboard = lbData.leaderboard || []
+      const updates = {}
+
+      if (JSON.stringify(current.leaderboard) !== JSON.stringify(newLeaderboard)) {
+        updates.leaderboard = newLeaderboard
+        updates.lastLeaderboardFetched = Date.now()
+      }
+
+      if (evtRes.ok && evtData.event) {
+        const newEvent = evtData.event
+        if (JSON.stringify(current.event) !== JSON.stringify(newEvent)) {
+          updates.event = newEvent
+        }
+      }
+
+      if (Object.keys(updates).length > 0) {
+        set(updates)
+      }
+    } catch {
+      // Silent fail
+    }
+  },
+
+  // Silent fetch — updates state without loading spinners (used by polling)
+  _silentFetchTeam: async (teamId) => {
+    try {
+      const response = await fetch(`/api/doppelganger/teams/${teamId}`)
+      const data = await response.json()
+
+      if (!response.ok) return
+
+      const current = get()
+      const newTeam = data.team
+      const newMembers = newTeam.members || []
+      const newLogs = newTeam.logs || []
+      const newSubmission = newTeam.submission || null
+
+      // Only update state if data actually changed (avoids unnecessary re-renders)
+      const teamChanged = JSON.stringify(current.team) !== JSON.stringify(newTeam)
+      const membersChanged = JSON.stringify(current.members) !== JSON.stringify(newMembers)
+      const logsChanged = JSON.stringify(current.logs) !== JSON.stringify(newLogs)
+      const submissionChanged = JSON.stringify(current.submission) !== JSON.stringify(newSubmission)
+
+      if (teamChanged || membersChanged || logsChanged || submissionChanged) {
+        set({
+          team: newTeam,
+          members: newMembers,
+          logs: newLogs,
+          submission: newSubmission,
+          lastTeamFetched: Date.now()
+        })
+      }
+    } catch {
+      // Silent fail — polling errors shouldn't disrupt the UI
+    }
+  },
+
   // Fetch active event
   fetchEvent: async (force = false) => {
-    const { lastFetched, event } = get()
+    const { event } = get()
 
-    if (!force && event && lastFetched) {
-      const fiveMinutes = 5 * 60 * 1000
-      if (Date.now() - lastFetched < fiveMinutes) {
-        return event
-      }
+    if (!force && event) {
+      return event
     }
 
     set({ loading: true, error: null })
@@ -56,7 +166,6 @@ export const useDoppelgangerStore = create((set, get) => ({
       set({
         event: data.event,
         team: data.userTeam || null,
-        lastFetched: Date.now()
       })
 
       return data.event
@@ -72,9 +181,9 @@ export const useDoppelgangerStore = create((set, get) => ({
   fetchTeam: async (teamId, force = false) => {
     const { lastTeamFetched, team } = get()
 
-    if (!force && team?.id === teamId && lastTeamFetched) {
-      const oneMinute = 60 * 1000
-      if (Date.now() - lastTeamFetched < oneMinute) {
+    if (!force && team?.name === decodeURIComponent(teamId) && lastTeamFetched) {
+      const tenSeconds = 10 * 1000
+      if (Date.now() - lastTeamFetched < tenSeconds) {
         return team
       }
     }
@@ -148,7 +257,6 @@ export const useDoppelgangerStore = create((set, get) => ({
         throw new Error(data.error || 'Failed to invite member')
       }
 
-      // Refresh team data
       await get().fetchTeam(teamId, true)
       return data.member
     } catch (err) {
@@ -173,7 +281,6 @@ export const useDoppelgangerStore = create((set, get) => ({
         throw new Error(data.error || 'Failed to remove member')
       }
 
-      // Refresh team data
       await get().fetchTeam(teamId, true)
       return true
     } catch (err) {
@@ -296,23 +403,26 @@ export const useDoppelgangerStore = create((set, get) => ({
   },
 
   // Reset store
-  reset: () => set({
-    event: null,
-    team: null,
-    members: [],
-    logs: [],
-    submission: null,
-    leaderboard: [],
-    loading: false,
-    loadingTeam: false,
-    loadingMembers: false,
-    loadingLogs: false,
-    loadingLeaderboard: false,
-    error: null,
-    lastFetched: null,
-    lastTeamFetched: null,
-    lastLeaderboardFetched: null
-  }),
+  reset: () => {
+    get().stopPolling()
+    get().stopLeaderboardPolling()
+    set({
+      event: null,
+      team: null,
+      members: [],
+      logs: [],
+      submission: null,
+      leaderboard: [],
+      loading: false,
+      loadingTeam: false,
+      loadingMembers: false,
+      loadingLogs: false,
+      loadingLeaderboard: false,
+      error: null,
+      lastTeamFetched: null,
+      lastLeaderboardFetched: null
+    })
+  },
 
   // Clear error
   clearError: () => set({ error: null })

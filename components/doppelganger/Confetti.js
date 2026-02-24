@@ -7,27 +7,38 @@ export default function Confetti({ duration = 5000 }) {
   const [isActive, setIsActive] = useState(true)
 
   useEffect(() => {
-    // Generate confetti particles
     const colors = ['#a855f7', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#ffffff']
     const newParticles = []
 
+    // Two burst origins — left-center and right-center
+    const origins = [
+      { x: 25, y: 60 },
+      { x: 75, y: 60 }
+    ]
+
     for (let i = 0; i < 150; i++) {
+      const origin = origins[i % origins.length]
+      const angle = -90 + (Math.random() - 0.5) * 140 // spread upward in a cone
+      const velocity = 600 + Math.random() * 500
+      const rad = (angle * Math.PI) / 180
+
       newParticles.push({
         id: i,
-        x: Math.random() * 100,
-        delay: Math.random() * 3,
-        fallDuration: 3 + Math.random() * 2,
+        originX: origin.x + (Math.random() - 0.5) * 10,
+        originY: origin.y + (Math.random() - 0.5) * 5,
+        vx: Math.cos(rad) * velocity,
+        vy: Math.sin(rad) * velocity,
+        delay: Math.random() * 0.3,
         color: colors[Math.floor(Math.random() * colors.length)],
         size: 6 + Math.random() * 8,
         rotation: Math.random() * 360,
-        drift: (Math.random() - 0.5) * 100,
+        spin: (Math.random() - 0.5) * 1080,
         type: Math.random() > 0.5 ? 'rect' : 'circle'
       })
     }
 
     setParticles(newParticles)
 
-    // Stop confetti after duration
     const timer = setTimeout(() => {
       setIsActive(false)
     }, duration)
@@ -40,18 +51,25 @@ export default function Confetti({ duration = 5000 }) {
   return (
     <>
       <style>
-        {`
-          @keyframes confetti-fall {
+        {particles.map(p => `
+          @keyframes confetti-${p.id} {
             0% {
-              transform: translateY(-20px) translateX(0px) rotate(0deg);
+              transform: translate(0, 0) rotate(${p.rotation}deg);
+              opacity: 1;
+            }
+            20% {
+              transform: translate(${p.vx * 0.2}px, ${p.vy * 0.2}px) rotate(${p.rotation + p.spin * 0.2}deg);
+              opacity: 1;
+            }
+            60% {
               opacity: 1;
             }
             100% {
-              transform: translateY(100vh) translateX(var(--drift)) rotate(720deg);
+              transform: translate(${p.vx * 0.35}px, ${p.vy * 0.2 + 800}px) rotate(${p.rotation + p.spin}deg);
               opacity: 0;
             }
           }
-        `}
+        `).join('')}
       </style>
       <div
         style={{
@@ -62,25 +80,24 @@ export default function Confetti({ duration = 5000 }) {
           overflow: 'hidden'
         }}
       >
-        {particles.map((particle) => (
+        {particles.map((p) => (
           <div
-            key={particle.id}
+            key={p.id}
             style={{
               position: 'absolute',
-              left: `${particle.x}%`,
-              top: 0,
-              '--drift': `${particle.drift}px`,
-              animation: `confetti-fall ${particle.fallDuration}s ease-out forwards`,
-              animationDelay: `${particle.delay}s`,
+              left: `${p.originX}%`,
+              top: `${p.originY}%`,
+              animation: `confetti-${p.id} 2.5s cubic-bezier(0.15, 0.8, 0.3, 1) forwards`,
+              animationDelay: `${p.delay}s`,
+              opacity: 0,
             }}
           >
             <div
               style={{
-                width: particle.size,
-                height: particle.type === 'rect' ? particle.size * 0.6 : particle.size,
-                backgroundColor: particle.color,
-                borderRadius: particle.type === 'circle' ? '50%' : '2px',
-                transform: `rotate(${particle.rotation}deg)`,
+                width: p.size,
+                height: p.type === 'rect' ? p.size * 0.6 : p.size,
+                backgroundColor: p.color,
+                borderRadius: p.type === 'circle' ? '50%' : '2px',
               }}
             />
           </div>

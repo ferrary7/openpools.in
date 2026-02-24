@@ -18,54 +18,66 @@ export default function MemberCard({ member, isCaptain = false, canRemove = fals
   }
 
   return (
-    <div className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 ${isAccepted
-      ? 'glass-dark border-white/5 hover:border-white/20'
-      : 'bg-[#0A0A0A]/40 border-white/5 border-dashed'
+    <div className={`flex items-center justify-between p-4 rounded-2xl transition-all duration-300 ${isAccepted
+      ? 'bg-white/[0.03] border border-white/5 hover:border-white/15'
+      : 'border border-dashed border-white/10'
       }`}>
-      <div className="flex items-center gap-4">
-        {/* Avatar placeholder */}
-        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-black font-black italic tracking-tighter shadow-lg ${isCaptain
-          ? 'bg-gradient-to-br from-purple-400 to-pink-400'
-          : isAccepted
-            ? 'bg-white'
-            : 'bg-gray-800 text-gray-500 border border-white/5'
-          }`}>
-          {member.user?.full_name?.charAt(0) || member.email?.charAt(0) || '?'}
-        </div>
+      <div className="flex items-center gap-3">
+        {member.user?.profile_picture_url ? (
+          <img
+            src={member.user.profile_picture_url}
+            alt={member.user?.full_name || 'User'}
+            className={`w-10 h-10 rounded-xl object-cover shrink-0 ${isCaptain
+              ? 'ring-2 ring-primary-500'
+              : isAccepted
+                ? 'ring-1 ring-white/20'
+                : 'ring-1 ring-white/10'
+              }`}
+          />
+        ) : (
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold shrink-0 ${isCaptain
+            ? 'bg-primary-500 text-white'
+            : isAccepted
+              ? 'bg-white/10 text-white'
+              : 'bg-white/5 text-gray-500'
+            }`}>
+            {member.user?.full_name?.charAt(0)?.toUpperCase() || member.email?.charAt(0)?.toUpperCase() || '?'}
+          </div>
+        )}
 
-        <div>
-          <div className="flex items-center gap-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
             {member.user?.full_name ? (
               <Link href={`/user/${member.user.username || member.user.id}`}>
-                <span className="font-bold text-white hover:text-purple-400 transition-colors uppercase italic tracking-tight text-sm">
+                <span className="text-sm font-semibold text-white hover:text-primary-400 transition-colors truncate">
                   {member.user.full_name}
                 </span>
               </Link>
             ) : (
-              <span className="font-bold text-gray-500 uppercase tracking-tight text-xs">{member.email}</span>
+              <span className="text-sm text-gray-500 truncate">{member.email}</span>
             )}
 
             {isCaptain && (
-              <span className="px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded-full text-[8px] font-black uppercase tracking-widest border border-purple-500/20">
-                CAPTAIN
+              <span className="px-2 py-0.5 bg-primary-500/15 text-primary-400 rounded-md text-[9px] font-bold uppercase tracking-wider">
+                Lead
               </span>
             )}
           </div>
 
-          <div className="flex items-center gap-3 mt-1">
+          <div className="flex items-center gap-2 mt-0.5">
             {member.user?.username && (
-              <span className="text-[10px] text-gray-600 font-black tracking-widest uppercase">@{member.user.username}</span>
+              <span className="text-xs text-gray-600">@{member.user.username}</span>
             )}
 
             {isPending && (
-              <span className="text-[10px] text-amber-500 font-black uppercase tracking-widest italic animate-pulse">ENLISTING...</span>
+              <span className="text-[10px] text-amber-500/80 font-medium">Invited</span>
             )}
 
             {member.is_verified && (
-              <div className="flex items-center gap-1.5 px-2 py-0.5 bg-green-500/10 rounded-md border border-green-500/20">
-                <div className="w-1 h-1 rounded-full bg-green-500"></div>
-                <span className="text-[8px] font-black text-green-500 uppercase tracking-widest">SIGNAL CLEAR</span>
-              </div>
+              <span className="flex items-center gap-1 text-[10px] text-emerald-500/80 font-medium">
+                <span className="w-1 h-1 rounded-full bg-emerald-500"></span>
+                Verified
+              </span>
             )}
           </div>
         </div>
@@ -75,17 +87,18 @@ export default function MemberCard({ member, isCaptain = false, canRemove = fals
         <button
           onClick={handleRemove}
           disabled={removing}
-          className="p-2 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all disabled:opacity-50"
+          className="p-1.5 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all disabled:opacity-50"
           title={isPending ? 'Cancel invite' : 'Remove member'}
         >
           {removing ? (
-            <div className="w-5 h-5 border-2 border-gray-600 border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full animate-spin"></div>
           ) : (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           )}
         </button>
       )}
-    </div>)
+    </div>
+  )
 }

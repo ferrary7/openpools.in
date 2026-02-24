@@ -2,43 +2,33 @@
 
 import Link from 'next/link'
 
-export default function EventCard({ event, userTeam, isLoggedIn = true }) {
+export default function EventCard({ event, userTeam, isLoggedIn = true, isBentoView = false, steps = [] }) {
   if (!event) return null
 
   const now = new Date()
   const sprintStart = new Date(event.sprint_start)
   const sprintEnd = new Date(event.sprint_end)
 
-  // Use event status from admin as primary source of truth
   const isRegistrationOpen = event.status === 'registration'
   const hasTeam = !!userTeam
 
   const getStatusInfo = () => {
     if (event.status === 'completed') {
-      return { label: 'MISSION COMPLETE', color: 'bg-green-500/20 text-green-400 border-green-500/30' }
+      return { label: 'Completed', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', dot: 'bg-emerald-500' }
     }
     if (event.status === 'judging') {
-      return { label: 'JUDGING IN PROGRESS', color: 'bg-amber-500/20 text-amber-400 border-amber-500/30' }
+      return { label: 'Reviewing', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20', dot: 'bg-amber-500' }
     }
     if (event.status === 'active') {
-      return { label: 'LIVE SPRINT', color: 'bg-red-500/20 text-red-400 border-red-500/30 animate-pulse' }
+      return { label: 'Live Now', color: 'bg-red-500/10 text-red-400 border-red-500/20', dot: 'bg-red-500 animate-pulse' }
     }
     if (event.status === 'registration') {
-      return { label: 'REGISTRATION OPEN', color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' }
+      return { label: 'Registering', color: 'bg-primary-500/10 text-primary-400 border-primary-500/20', dot: 'bg-primary-500' }
     }
-    return { label: 'COMING SOON', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' }
+    return { label: 'Upcoming', color: 'bg-gray-500/10 text-gray-400 border-gray-500/20', dot: 'bg-gray-400' }
   }
 
   const status = getStatusInfo()
-
-  const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
 
   const getTimeRemaining = () => {
     let targetDate
@@ -46,10 +36,10 @@ export default function EventCard({ event, userTeam, isLoggedIn = true }) {
 
     if (event.status === 'active') {
       targetDate = sprintEnd
-      label = 'SPRINT ENDS IN'
+      label = 'Ends'
     } else if (event.status === 'registration') {
       targetDate = sprintStart
-      label = 'SPRINT STARTS IN'
+      label = 'Starts'
     } else {
       return null
     }
@@ -62,149 +52,109 @@ export default function EventCard({ event, userTeam, isLoggedIn = true }) {
 
     if (hours > 24) {
       const days = Math.floor(hours / 24)
-      return { label, time: `${days}D ${hours % 24}H` }
+      return { label, value: days, unit: days === 1 ? 'DAY' : 'DAYS', sub: `${hours % 24}H` }
     }
-    return { label, time: `${hours}H ${minutes}M` }
+    return { label, value: hours, unit: hours === 1 ? 'HR' : 'HRS', sub: `${minutes}M` }
   }
 
   const countdown = getTimeRemaining()
 
   return (
-    <div className="glass-dark rounded-[3rem] p-1 border border-white/10 group transition-all duration-700 hover:border-white/20">
-      <div className="bg-[#050505]/60 rounded-[2.8rem] p-8 md:p-12 relative overflow-hidden h-full">
-        {/* Ambient Glow */}
-        <div className="absolute top-0 right-0 w-80 h-80 bg-purple-500/5 rounded-full blur-[100px] pointer-events-none group-hover:bg-purple-500/10 transition-all duration-700"></div>
+    <div className={`flex flex-col gap-4 animate-fadeInUp ${isBentoView ? '' : 'max-w-4xl mx-auto'}`}>
+      <div className="glass-dark rounded-[2.5rem] border-white/5 shadow-2xl overflow-hidden group">
+        <div className="grid grid-cols-1 lg:grid-cols-12">
+          {/* Main Info Section */}
+          <div className="lg:col-span-8 p-8 md:p-12 border-b lg:border-b-0 lg:border-r border-white/5">
+            <div className="flex justify-between items-start mb-10">
+              <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border ${status.color}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${status.dot} shadow-[0_0_8px_currentColor]`}></span>
+                {status.label}
+              </span>
 
-        <div className="relative z-10">
-          {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
-            <div className="flex items-center gap-6">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-2xl shadow-purple-500/20 group-hover:scale-110 transition-transform duration-500">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <div>
-                <h2 className="text-3xl md:text-4xl font-black text-white tracking-tighter mb-1 uppercase italic">{event.name}</h2>
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span>
-                  <p className="text-gray-500 text-xs font-black uppercase tracking-widest">{event.min_team_size}-{event.max_team_size} OPERATORS REQUIRED</p>
+              {countdown && (
+                <div className="text-right">
+                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1">{countdown.label} IN</span>
+                  <div className="flex items-baseline gap-1 justify-end">
+                    <span className="text-3xl font-black text-white leading-none">{countdown.value}</span>
+                    <span className="text-xs font-bold text-gray-500">{countdown.unit}</span>
+                  </div>
                 </div>
-              </div>
-            </div>
-            <div className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-[0.2em] border ${status.color}`}>
-              {status.label}
-            </div>
-          </div>
-
-          {/* Description */}
-          <p className="text-gray-400 text-lg leading-relaxed mb-12 max-w-3xl font-medium">
-            {event.description}
-          </p>
-
-          {/* Intel Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            <div className="glass-dark rounded-3xl p-6 border border-white/5 group/card hover:bg-white/[0.03] transition-all">
-              <p className="text-gray-500 text-[10px] font-black tracking-widest uppercase mb-4">Registration Window</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-white font-bold text-sm tracking-tight">{formatDate(event.registration_start)}</span>
-                <span className="text-gray-600 text-xs font-black">→</span>
-                <span className="text-white font-bold text-sm tracking-tight">{formatDate(event.registration_end)}</span>
-              </div>
+              )}
             </div>
 
-            <div className="glass-dark rounded-3xl p-6 border border-white/5 hover:bg-white/[0.03] transition-all">
-              <p className="text-gray-500 text-[10px] font-black tracking-widest uppercase mb-4">Combat Duration</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-white font-bold text-sm tracking-tight">{formatDate(event.sprint_start)}</span>
-                <span className="text-gray-600 text-xs font-black">→</span>
-                <span className="text-white font-bold text-sm tracking-tight">{formatDate(event.sprint_end)}</span>
-              </div>
-            </div>
+            <h2 className="text-4xl md:text-5xl font-black text-white mb-6 tracking-tighter leading-none">{event.name}</h2>
+            <p className="text-gray-400 text-base leading-relaxed max-w-xl font-light mb-12">
+              {event.description}
+            </p>
 
-            {countdown ? (
-              <div className="glass-dark rounded-3xl p-6 border border-purple-500/20 bg-purple-500/[0.03] hover:bg-purple-500/[0.08] transition-all relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-20 h-20 bg-purple-500/10 blur-2xl rounded-full"></div>
-                <p className="text-purple-400 text-[10px] font-black tracking-widest uppercase mb-4 relative z-10">{countdown.label}</p>
-                <p className="text-3xl font-black text-white tracking-widest relative z-10 italic">{countdown.time}</p>
-              </div>
-            ) : (
-              <div className="glass-dark rounded-3xl p-6 border border-white/5 flex items-center justify-center opacity-50 grayscale">
-                <span className="text-gray-600 text-[10px] font-black tracking-[0.3em] uppercase italic">System Standby</span>
-              </div>
-            )}
-          </div>
-
-          {/* Judging Banner */}
-          {event.status === 'judging' && (
-            <div className="mb-8 p-6 rounded-2xl bg-amber-500/10 border border-amber-500/20">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center">
-                  <svg className="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-amber-400 font-black text-sm uppercase tracking-wider">Judging In Progress</h3>
-                  <p className="text-amber-400/70 text-xs mt-1">Submissions are being evaluated. Results will be announced soon.</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Action button */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            {event.status === 'judging' ? (
-              <>
-                {hasTeam && (
-                  <Link href={`/doppelganger/team/${encodeURIComponent(userTeam.name)}`} className="flex-1 group/btn">
-                    <button className="w-full py-6 bg-white/5 text-white rounded-2xl font-black text-xl tracking-tighter uppercase italic border border-white/10 hover:bg-white/10 transition-all">
-                      VIEW YOUR SUBMISSION
+            {/* Action Buttons Integrated */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-6">
+              {event.status === 'judging' ? (
+                <>
+                  {hasTeam && (
+                    <Link href={`/doppelganger/team/${encodeURIComponent(userTeam.name)}`} className="flex-1">
+                      <button className="w-full py-5 bg-white/5 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] border border-white/5 hover:bg-white/10 transition-all active:scale-[0.98]">
+                        Your Submission
+                      </button>
+                    </Link>
+                  )}
+                  <Link href="/doppelganger/leaderboard" className="flex-1">
+                    <button className="w-full py-5 bg-amber-500 text-black rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-amber-400 transition-all active:scale-[0.98]">
+                      Leaderboard
                     </button>
                   </Link>
-                )}
-                <Link href="/doppelganger/leaderboard" className="flex-1 group/btn">
-                  <button className="w-full py-6 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-2xl font-black text-xl tracking-tighter uppercase italic shadow-2xl shadow-amber-500/20 hover:shadow-amber-500/40 transition-all hover:scale-[1.02] active:scale-[0.98]">
-                    VIEW LEADERBOARD
+                </>
+              ) : hasTeam ? (
+                <Link href={`/doppelganger/team/${encodeURIComponent(userTeam.name)}`} className="flex-1">
+                  <button className="w-full py-5 bg-white text-black rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-gray-200 transition-all active:scale-[0.98]">
+                    Team Dashboard: {userTeam.name}
                   </button>
                 </Link>
-              </>
-            ) : hasTeam ? (
-              <Link href={`/doppelganger/team/${encodeURIComponent(userTeam.name)}`} className="flex-1 group/btn">
-                <button className="w-full py-6 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl font-black text-xl tracking-tighter uppercase italic shadow-2xl shadow-purple-500/20 hover:shadow-purple-500/40 transition-all hover:scale-[1.02] active:scale-[0.98]">
-                  ENTER COMMAND CENTER: {userTeam.name}
-                </button>
-              </Link>
-            ) : isRegistrationOpen ? (
-              isLoggedIn ? (
-                <Link href="/doppelganger/team/create" className="flex-1 group/btn">
-                  <button className="w-full py-6 bg-white text-black rounded-2xl font-black text-xl tracking-tighter uppercase italic hover:bg-gray-100 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-2xl shadow-white/5">
-                    INITIALIZE SQUAD
-                  </button>
-                </Link>
+              ) : isRegistrationOpen ? (
+                isLoggedIn ? (
+                  <Link href="/doppelganger/team/create" className="flex-1">
+                    <button className="w-full py-5 bg-primary-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-primary-400 transition-all active:scale-[0.98] shadow-[0_0_20px_rgba(232,68,153,0.3)]">
+                      Enter The Sprint
+                    </button>
+                  </Link>
+                ) : (
+                  <Link href="/login?redirect=/doppelganger" className="flex-1">
+                    <button className="w-full py-5 bg-primary-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-primary-400 transition-all active:scale-[0.98]">
+                      Sign In to Enter
+                    </button>
+                  </Link>
+                )
               ) : (
-                <Link href="/login?redirect=/doppelganger" className="flex-1 group/btn">
-                  <button className="w-full py-6 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl font-black text-xl tracking-tighter uppercase italic shadow-2xl shadow-purple-500/20 hover:shadow-purple-500/40 transition-all hover:scale-[1.02] active:scale-[0.98]">
-                    SIGN IN TO PARTICIPATE
-                  </button>
-                </Link>
-              )
-            ) : (
-              <button disabled className="w-full py-6 bg-white/[0.03] text-gray-600 rounded-2xl font-black text-xl tracking-tighter uppercase italic border border-white/5 cursor-not-allowed">
-                REGISTRATION OFFLINE
-              </button>
-            )}
-
-            {/* Secondary CTA - hide during judging since leaderboard is primary */}
-            {event.status !== 'judging' && (
-              <Link href="/doppelganger/leaderboard" className="sm:w-auto">
-                <button className="h-full px-8 py-6 glass-dark text-white rounded-2xl font-black text-sm tracking-widest uppercase hover:bg-white/5 transition-all border border-white/10 group-hover:border-white/20">
-                  INTEL
+                <button disabled className="flex-1 py-5 bg-white/5 text-gray-500 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] border border-white/5 cursor-not-allowed">
+                  Registration Locked
                 </button>
-              </Link>
+              )}
+            </div>
+          </div>
+
+          {/* Steps Side Column (Sprint Flow) */}
+          <div className="lg:col-span-4 bg-white/5 p-8 md:p-12">
+            <h3 className="text-xl font-black text-white mb-8 tracking-tight uppercase">Sprint Flow</h3>
+            <div className="space-y-8">
+              {steps.map((step, i) => (
+                <div key={step.num} className="flex gap-4 group">
+                  <span className="text-[10px] font-black text-primary-600 mt-1">0{step.num}</span>
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-200 group-hover:text-primary-400 transition-colors uppercase tracking-tight">{step.title}</h4>
+                    <p className="text-[10px] text-gray-500 leading-tight mt-1">{step.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {!hasTeam && !isRegistrationOpen && (
+              <div className="mt-12 pt-8 border-t border-white/5 text-center">
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Next Sprint Soon</p>
+              </div>
             )}
           </div>
         </div>
       </div>
-    </div>)
+    </div>
+  )
 }
