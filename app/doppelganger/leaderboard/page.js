@@ -175,6 +175,35 @@ export default function LeaderboardPage() {
           ))}
         </div>
 
+        {/* Prize notice */}
+        <div className="mb-8 p-5 glass-dark rounded-2xl border border-yellow-500/20 animate-fadeInUp">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 bg-yellow-500/10 rounded-xl flex items-center justify-center shrink-0">
+              <svg className="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M18.75 4.236c.982.143 1.954.317 2.916.52A6.003 6.003 0 0116.27 9.728M18.75 4.236V4.5c0 2.108-.966 3.99-2.48 5.228" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-bold text-yellow-400 mb-1">Prize Money — Top 3 Teams</h3>
+              <div className="flex flex-wrap gap-4 mb-3">
+                {[
+                  { rank: '1st', prize: '₹10,000', color: 'text-yellow-400' },
+                  { rank: '2nd', prize: '₹7,000', color: 'text-gray-300' },
+                  { rank: '3rd', prize: '₹3,000', color: 'text-orange-400' },
+                ].map(({ rank, prize, color }) => (
+                  <div key={rank} className="flex items-center gap-1.5">
+                    <span className="text-xs text-gray-500">{rank}</span>
+                    <span className={`text-sm font-black ${color}`}>{prize}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-yellow-400/60">
+                Winning teams will be contacted via email, receive a digital certificate, and the prize money will be transferred directly to each team.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Stats bar */}
         <div className="flex items-center justify-between mb-6">
           <span className="text-xs text-gray-600">{leaderboard?.length || 0} teams</span>

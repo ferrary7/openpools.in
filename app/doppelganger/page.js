@@ -84,7 +84,7 @@ export default async function DoppelgangerPage() {
         <div className="grid grid-cols-1 md:grid-cols-12 auto-rows-[minmax(120px,auto)] gap-4">
 
           {/* Cell 1: Brand / Hero (8 cols) */}
-          <div className="md:col-span-8 md:row-span-4 glass-dark rounded-[2.5rem] p-10 md:p-16 relative overflow-hidden group border-white/5 shadow-2xl animate-fadeIn">
+          <div className="md:col-span-8 glass-dark rounded-[2.5rem] p-10 md:p-16 relative overflow-hidden group border-white/5 shadow-2xl animate-fadeIn">
             <div className="absolute top-0 right-0 p-8">
               <div className="text-[12rem] font-black leading-none text-white/[0.03] select-none tracking-tighter">DG</div>
             </div>
@@ -118,42 +118,56 @@ export default async function DoppelgangerPage() {
             </div>
           </div>
 
-          {/* Cell 2: Status / Timer & Timeline (4 cols) */}
-          <div className="md:col-span-4 md:row-span-4 flex flex-col gap-4">
-            {/* Timer */}
-            <div className="flex-1 glass-dark rounded-[2.5rem] p-8 border-primary-500/20 flex flex-col justify-center animate-fadeInUp shadow-xl" style={{ animationDelay: '0.1s' }}>
-              <div className="mb-6 flex items-center justify-between">
-                <span className="text-[10px] font-black text-primary-500 uppercase tracking-[0.3em]">Status</span>
-                <div className="px-3 py-1 bg-primary-500/10 rounded-full text-[10px] font-bold text-primary-400 border border-primary-500/20">Active</div>
-              </div>
+          {/* Cell 2: Timer & Prizes (4 cols) — sits in same row as Hero, matches its height */}
+          <div className="md:col-span-4 glass-dark rounded-[2.5rem] p-10 border-primary-500/20 flex flex-col justify-between relative overflow-hidden shadow-2xl animate-fadeInUp" style={{ animationDelay: '0.1s' }}>
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary-500/50 to-transparent"></div>
 
-              <div className="flex items-baseline gap-2 mb-2">
-                <span className="text-7xl font-black text-white tracking-tighter">30</span>
-                <span className="text-2xl font-bold text-gray-500">HOURS</span>
+            {/* 30H USP */}
+            <div className="text-center">
+              <div className="flex flex-col items-center">
+                <span className="text-[11rem] font-black text-white tracking-tighter leading-none drop-shadow-[0_0_40px_rgba(232,68,153,0.5)]">30</span>
+                <span className="text-xl font-black text-primary-500 tracking-[0.5em] -mt-2">HOURS</span>
               </div>
-              <p className="text-sm text-gray-400 font-medium uppercase tracking-wider">To ship your prototype</p>
+              <p className="text-sm text-gray-400 mt-4 font-medium">To build, ship & deploy</p>
+              <div className="flex items-center justify-center gap-4 mt-4">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse"></span>
+                  <span className="text-[10px] text-gray-600 uppercase tracking-widest font-bold">No sleep</span>
+                </div>
+                <div className="w-px h-3 bg-white/10"></div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  <span className="text-[10px] text-gray-600 uppercase tracking-widest font-bold">Real stakes</span>
+                </div>
+              </div>
             </div>
 
-            {/* Timeline Grid Cell */}
-            <div className="glass-dark rounded-[2.5rem] p-8 border-white/5 animate-fadeInUp shadow-xl" style={{ animationDelay: '0.2s' }}>
-              <div className="space-y-6">
-                <div>
-                  <p className="text-[10px] font-black text-primary-500 uppercase tracking-widest mb-1">Registration</p>
-                  <div className="text-sm font-bold text-gray-200">Feb 19, 09:23 PM</div>
-                  <div className="text-[11px] text-gray-500">thru Feb 20, 09:23 PM</div>
-                </div>
-                <div className="h-[1px] w-full bg-white/5"></div>
-                <div>
-                  <p className="text-[10px] font-black text-primary-500 uppercase tracking-widest mb-1">The Sprint</p>
-                  <div className="text-sm font-bold text-gray-200">Feb 19, 09:23 PM</div>
-                  <div className="text-[11px] text-gray-500">thru Feb 21, 09:23 PM</div>
-                </div>
+            {/* Prize Pool */}
+            <div>
+              <div className="flex justify-between items-baseline mb-5">
+                <h4 className="text-xs font-black text-gray-500 uppercase tracking-widest">Prize Pool</h4>
+                <span className="text-2xl font-black text-white">₹20,000</span>
+              </div>
+              <div className="space-y-3">
+                {[
+                  { rank: '1', prize: '₹10,000', color: 'bg-yellow-400', textColor: 'text-yellow-400', border: 'border-yellow-500/20', label: 'Gold' },
+                  { rank: '2', prize: '₹7,000',  color: 'bg-gray-400',   textColor: 'text-gray-300',   border: 'border-gray-400/20',   label: 'Silver' },
+                  { rank: '3', prize: '₹3,000',  color: 'bg-orange-500', textColor: 'text-orange-400', border: 'border-orange-500/20', label: 'Bronze' },
+                ].map((p) => (
+                  <div key={p.rank} className={`flex items-center justify-between px-4 py-3 rounded-2xl bg-white/[0.03] border ${p.border} hover:bg-white/5 transition-colors`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-xl ${p.color} flex items-center justify-center text-sm font-black text-black shrink-0`}>{p.rank}</div>
+                      <span className="text-sm font-bold text-gray-500 uppercase tracking-widest">{p.label}</span>
+                    </div>
+                    <span className={`text-3xl font-black ${p.textColor} tracking-tight`}>{p.prize}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
           {/* Cell 3: Main Event Card (8 cols) */}
-          <div className="md:col-span-8 animate-fadeInUp" style={{ animationDelay: '0.3s' }}>
+          <div className="md:col-span-8 animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
             <EventCard
               event={event}
               userTeam={userTeam}
@@ -163,46 +177,67 @@ export default async function DoppelgangerPage() {
             />
           </div>
 
-          {/* Cell 4: Scoring Performance (4 cols) */}
-          <div className="md:col-span-4 glass-dark rounded-[2.5rem] p-8 border-white/5 animate-fadeInUp flex flex-col justify-center" style={{ animationDelay: '0.4s' }}>
-            <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-8">Scoring Matrix</h3>
-            <div className="space-y-6">
-              {scoringCategories.map((item) => (
-                <div key={item.label} className="group">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-[10px] font-bold text-gray-400 group-hover:text-white transition-colors uppercase tracking-tight">{item.label}</span>
-                    <span className="text-[10px] font-black text-primary-500">{item.weight}%</span>
+          {/* Cell 4: Timeline & Evaluation (4 cols) — sits next to Event Card */}
+          <div className="md:col-span-4 glass-dark rounded-[2.5rem] p-8 border-white/5 flex flex-col shadow-2xl animate-fadeInUp" style={{ animationDelay: '0.3s' }}>
+            {/* Timeline */}
+            <div className="mb-8">
+              <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Timeline</h4>
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-[9px] font-black text-primary-500 uppercase tracking-widest">Registration</span>
+                    <span className="text-[9px] text-gray-500 font-bold">CLOSED</span>
                   </div>
-                  <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-primary-500 rounded-full transition-all duration-1000 group-hover:shadow-[0_0_12px_rgba(232,68,153,0.6)]"
-                      style={{ width: `${item.weight}%` }}
-                    ></div>
-                  </div>
+                  <div className="text-[11px] font-bold text-gray-200">Feb 19 - Feb 20</div>
                 </div>
-              ))}
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-[9px] font-black text-primary-500 uppercase tracking-widest">The Sprint</span>
+                    <span className="text-[9px] text-primary-400 font-black animate-pulse">RUNNING</span>
+                  </div>
+                  <div className="text-[11px] font-bold text-gray-200">Feb 19 - Feb 21</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Evaluation */}
+            <div className="pt-6 border-t border-white/5">
+              <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Evaluation</h4>
+              <div className="space-y-3">
+                {scoringCategories.slice(0, 3).map((item) => (
+                  <div key={item.label}>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-[9px] font-bold text-gray-400 uppercase">{item.label}</span>
+                      <span className="text-[9px] font-black text-primary-500">{item.weight}%</span>
+                    </div>
+                    <div className="h-0.5 w-full bg-white/5 rounded-full overflow-hidden">
+                      <div className="h-full bg-primary-500" style={{ width: `${item.weight}%` }}></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Cell 5: Leaderboard CTA (12 cols) */}
-          <Link href="/doppelganger/leaderboard" className="md:col-span-12 group relative overflow-hidden rounded-[2.5rem] animate-fadeInUp h-[160px]" style={{ animationDelay: '0.5s' }}>
-            <div className="absolute inset-0 bg-primary-600 transition-transform duration-700 group-hover:scale-110"></div>
+          {/* Cell 6: Listings CTA (12 cols) */}
+          <Link href="/doppelganger/leaderboard" className="md:col-span-12 group relative overflow-hidden rounded-[2.5rem] animate-fadeInUp h-[140px] border border-white/5 shadow-2xl" style={{ animationDelay: '0.4s' }}>
+            <div className="absolute inset-0 bg-primary-600 transition-transform duration-1000 group-hover:scale-105"></div>
             <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-transparent to-transparent"></div>
             <div className="relative h-full p-10 flex items-center justify-between">
               <div className="flex items-center gap-8">
-                <div className="w-16 h-16 bg-white/20 backdrop-blur-xl rounded-[1.25rem] flex items-center justify-center text-white border border-white/20">
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-14 h-14 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center text-white border border-white/20">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M18.75 4.236c.982.143-1.954.317-2.916.52A6.003 6.003 0 0016.27 9.728M18.75 4.236V4.5c0 2.108-.966 3.99-2.48 5.228m0 0a6.023 6.023 0 01-2.77.853m0 0l.001.001h-.001m0 0a6.024 6.024 0 01-2.77-.853" />
                   </svg>
                 </div>
                 <div>
-                  <h4 className="text-5xl font-black text-white tracking-tighter leading-none mb-1">GLOBAL RANKINGS</h4>
-                  <p className="text-white/60 font-bold uppercase tracking-widest text-xs">Explore the high-signal leaderboard</p>
+                  <h4 className="text-4xl font-black text-white tracking-tighter leading-none mb-1">GLOBAL RANKINGS</h4>
+                  <p className="text-white/60 font-bold uppercase tracking-widest text-[10px]">Explore the high-signal leaderboard</p>
                 </div>
               </div>
 
-              <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center group-hover:translate-x-2 transition-transform">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center group-hover:translate-x-2 transition-transform">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
               </div>

@@ -25,6 +25,8 @@ export default function Leaderboard({ teams, loading }) {
     )
   }
 
+  const prizes = { 1: '₹10,000', 2: '₹7,000', 3: '₹3,000' }
+
   const getRankStyle = (rank) => {
     if (rank === 1) return { bg: 'bg-yellow-500', border: 'border-yellow-500/20', badge: 'bg-yellow-500/10 text-yellow-400' }
     if (rank === 2) return { bg: 'bg-gray-400', border: 'border-gray-400/20', badge: 'bg-gray-400/10 text-gray-300' }
@@ -71,6 +73,13 @@ export default function Leaderboard({ teams, loading }) {
                   {team.problemTitle || 'Pending...'}
                 </p>
               </div>
+
+              {/* Prize */}
+              {prizes[rank] && (
+                <div className={`shrink-0 px-3 py-1.5 rounded-xl ${style.badge} border ${style.border} text-xs font-black tracking-tight`}>
+                  {prizes[rank]}
+                </div>
+              )}
 
               {/* Score */}
               <div className="flex items-center gap-6 md:border-l md:border-white/5 md:pl-5">
