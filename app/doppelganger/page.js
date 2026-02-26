@@ -2,6 +2,7 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { getActiveEvent, getUserTeam } from '@/lib/doppelganger'
 import { EventCard, EventPoller } from '@/components/doppelganger'
+import PrizeCards from '@/components/doppelganger/PrizeCards'
 import Link from 'next/link'
 
 export const metadata = {
@@ -142,28 +143,7 @@ export default async function DoppelgangerPage() {
               </div>
             </div>
 
-            {/* Prize Pool */}
-            <div>
-              <div className="flex justify-between items-baseline mb-5">
-                <h4 className="text-xs font-black text-gray-500 uppercase tracking-widest">Prize Pool</h4>
-                <span className="text-2xl font-black text-white">₹20,000</span>
-              </div>
-              <div className="space-y-3">
-                {[
-                  { rank: '1', prize: '₹10,000', color: 'bg-yellow-400', textColor: 'text-yellow-400', border: 'border-yellow-500/20', label: 'Gold' },
-                  { rank: '2', prize: '₹7,000',  color: 'bg-gray-400',   textColor: 'text-gray-300',   border: 'border-gray-400/20',   label: 'Silver' },
-                  { rank: '3', prize: '₹3,000',  color: 'bg-orange-500', textColor: 'text-orange-400', border: 'border-orange-500/20', label: 'Bronze' },
-                ].map((p) => (
-                  <div key={p.rank} className={`flex items-center justify-between px-4 py-3 rounded-2xl bg-white/[0.03] border ${p.border} hover:bg-white/5 transition-colors`}>
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-xl ${p.color} flex items-center justify-center text-sm font-black text-black shrink-0`}>{p.rank}</div>
-                      <span className="text-sm font-bold text-gray-500 uppercase tracking-widest">{p.label}</span>
-                    </div>
-                    <span className={`text-3xl font-black ${p.textColor} tracking-tight`}>{p.prize}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <PrizeCards />
           </div>
 
           {/* Cell 3: Main Event Card (8 cols) */}
