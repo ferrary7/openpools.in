@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
-function useCountUp(target, duration = 1200, delay = 0) {
+function useCountUp(target, duration = 1200, delay = 0, triggered = false) {
   const [count, setCount] = useState(0)
 
   useEffect(() => {
+    if (!triggered) return
+
     let startTime = null
     let animationFrame
     let timeout
@@ -14,7 +16,7 @@ function useCountUp(target, duration = 1200, delay = 0) {
       const animate = (timestamp) => {
         if (!startTime) startTime = timestamp
         const progress = Math.min((timestamp - startTime) / duration, 1)
-        const eased = 1 - Math.pow(1 - progress, 3) // ease-out cubic
+        const eased = 1 - Math.pow(1 - progress, 3)
         setCount(Math.floor(eased * target))
         if (progress < 1) {
           animationFrame = requestAnimationFrame(animate)
@@ -29,20 +31,37 @@ function useCountUp(target, duration = 1200, delay = 0) {
       clearTimeout(timeout)
       cancelAnimationFrame(animationFrame)
     }
-  }, [target, duration, delay])
+  }, [triggered, target, duration, delay])
 
   return count
 }
 
 export default function PrizeCards() {
-  const first  = useCountUp(10000, 1200, 0)
-  const second = useCountUp(7000,  1000, 150)
-  const third  = useCountUp(3000,  800,  300)
+  const ref = useRef(null)
+  const [triggered, setTriggered] = useState(false)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setTriggered(true)
+          observer.disconnect() // only once
+        }
+      },
+      { threshold: 0.3 }
+    )
+    if (ref.current) observer.observe(ref.current)
+    return () => observer.disconnect()
+  }, [])
+
+  const first  = useCountUp(10000, 1200, 0,   triggered)
+  const second = useCountUp(7000,  1000, 150,  triggered)
+  const third  = useCountUp(3000,  800,  300,  triggered)
 
   const fmt = (n) => n.toLocaleString('en-IN')
 
   return (
-    <div>
+    <div ref={ref}>
       <div className="flex justify-between items-baseline mb-4">
         <h4 className="text-[10px] font-black text-gray-600 uppercase tracking-[0.3em]">Prize Pool</h4>
         <span className="text-sm font-black text-primary-500">₹20,000 total</span>
