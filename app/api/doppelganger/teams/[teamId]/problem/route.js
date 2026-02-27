@@ -77,23 +77,23 @@ export async function POST(request, { params }) {
     }
 
     // Get combined keywords
-    const combinedKeywords = await getTeamCombinedKeywords(supabase, teamId)
+    const { combined, perMember } = await getTeamCombinedKeywords(supabase, teamId)
 
-    if (combinedKeywords.length < 5) {
+    if (combined.length < 5) {
       return NextResponse.json({
         error: 'Not enough keywords to generate problem'
       }, { status: 400 })
     }
 
     // Generate problem statement
-    const problem = await generateProblemStatement(combinedKeywords)
+    const problem = await generateProblemStatement(combined, perMember)
 
     // Save to team
     const { error } = await supabase
       .from('dg_teams')
       .update({
         problem_statement: problem,
-        combined_keywords: combinedKeywords,
+        combined_keywords: combined,
         is_locked: true
       })
       .eq('id', teamId)
