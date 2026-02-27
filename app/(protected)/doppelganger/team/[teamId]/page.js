@@ -119,7 +119,8 @@ export default function TeamDashboardPage() {
   const maxTeamSize = team.event?.max_team_size || 4
 
   const meetsMinimum = acceptedMemberCount >= minTeamSize
-  const canGenerateProblem = meetsMinimum && team.is_verified && !hasProblem
+  const sprintStarted = team.event?.status === 'active'
+  const canGenerateProblem = meetsMinimum && team.is_verified && !hasProblem && sprintStarted
   const canInviteMore = teamMemberCount < maxTeamSize
 
   return (
@@ -330,7 +331,9 @@ export default function TeamDashboardPage() {
                       ? `Invite at least ${minTeamSize - acceptedMemberCount} more member${minTeamSize - acceptedMemberCount > 1 ? 's' : ''} to continue.`
                       : !team.is_verified
                         ? 'All members need to complete their skill profiles.'
-                        : 'Ready to generate your challenge.'}
+                        : !sprintStarted
+                          ? 'Your team is ready. Problem statements unlock when the sprint officially begins.'
+                          : 'Ready to generate your challenge.'}
                   </p>
                 </div>
               )}

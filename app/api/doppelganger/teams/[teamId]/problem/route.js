@@ -42,6 +42,13 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'Only captain can generate problem' }, { status: 403 })
     }
 
+    // Block generation until sprint is officially started by admin
+    if (team.event.status !== 'active') {
+      return NextResponse.json({
+        error: 'Problem statements can only be generated after the sprint has started'
+      }, { status: 403 })
+    }
+
     // Check if team already has a problem
     if (team.problem_statement) {
       return NextResponse.json({ error: 'Problem already generated' }, { status: 400 })
