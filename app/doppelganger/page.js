@@ -166,16 +166,24 @@ export default async function DoppelgangerPage() {
                 <div>
                   <div className="flex justify-between mb-1">
                     <span className="text-[9px] font-black text-primary-500 uppercase tracking-widest">Registration</span>
-                    <span className="text-[9px] text-gray-500 font-bold">CLOSED</span>
+                    <span className={`text-[9px] font-black ${event.status === 'registration' ? 'text-primary-400 animate-pulse' : 'text-gray-500'}`}>
+                      {event.status === 'registration' ? 'OPEN' : 'CLOSED'}
+                    </span>
                   </div>
-                  <div className="text-[11px] font-bold text-gray-200">Feb 19 - Feb 20</div>
+                  <div className="text-[11px] font-bold text-gray-200">
+                    {new Date(event.registration_start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(event.registration_end).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </div>
                 </div>
                 <div>
                   <div className="flex justify-between mb-1">
                     <span className="text-[9px] font-black text-primary-500 uppercase tracking-widest">The Sprint</span>
-                    <span className="text-[9px] text-primary-400 font-black animate-pulse">RUNNING</span>
+                    <span className={`text-[9px] font-black ${event.status === 'active' ? 'text-primary-400 animate-pulse' : 'text-gray-500'}`}>
+                      {event.status === 'registration' ? 'UPCOMING' : event.status === 'active' ? 'RUNNING' : 'CLOSED'}
+                    </span>
                   </div>
-                  <div className="text-[11px] font-bold text-gray-200">Feb 19 - Feb 21</div>
+                  <div className="text-[11px] font-bold text-gray-200">
+                    {new Date(event.sprint_start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(event.sprint_end).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </div>
                 </div>
               </div>
             </div>

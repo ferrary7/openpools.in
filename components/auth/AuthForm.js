@@ -25,9 +25,17 @@ export default function AuthForm({ mode = 'login' }) {
       if (signInError) throw signInError
 
       // Run post-auth logic server-side and get redirect URL
-      const res = await fetch('/api/auth/finalize', { method: 'POST' })
-      const { redirectTo } = await res.json()
-      router.push(redirectTo || '/dashboard')
+      let redirectTo = '/dashboard'
+      try {
+        const res = await fetch('/api/auth/finalize', { method: 'POST' })
+        if (res.ok) {
+          const data = await res.json()
+          redirectTo = data.redirectTo || '/dashboard'
+        }
+      } catch {
+        // finalize failed, fall back to dashboard
+      }
+      router.push(redirectTo)
     } catch (err) {
       setError(err.message)
       setLoading(false)

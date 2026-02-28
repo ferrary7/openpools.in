@@ -77,6 +77,7 @@ async function claimPendingInvite(userId, userEmail) {
 }
 
 export async function POST() {
+  try {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -129,4 +130,8 @@ export async function POST() {
   return NextResponse.json({
     redirectTo: profile?.onboarding_completed ? '/dashboard' : '/onboarding',
   })
+  } catch (err) {
+    console.error('Auth finalize error:', err)
+    return NextResponse.json({ redirectTo: '/dashboard' })
+  }
 }
