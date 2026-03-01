@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { usePathname } from 'next/navigation'
 
 export default function SupportButton() {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
+  const pathname = usePathname()
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -13,6 +15,8 @@ export default function SupportButton() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  if (pathname?.startsWith('/chat/') || pathname?.startsWith('/admin')) return null
 
   return (
     <div ref={ref} className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
