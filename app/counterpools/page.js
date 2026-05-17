@@ -213,7 +213,7 @@ export default function CounterpoolsPage() {
             <div>
               <p className="text-sm font-light text-white/60 mb-2">Total Prize Pool</p>
               <p className={`${playfairDisplay.className} text-5xl font-bold text-white`}>
-                ₹1,00,000
+                coming up soon
               </p>
             </div>
           </div>
