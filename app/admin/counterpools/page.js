@@ -201,6 +201,26 @@ export default function AdminCounterpools() {
             </div>
 
             <div className="p-6 space-y-6">
+              {/* Problem Overview */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 mb-2">Sector</div>
+                  <div className="text-sm font-semibold text-gray-900">{currentProblem.domain}</div>
+                </div>
+                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 mb-2">Difficulty</div>
+                  <div className="text-sm font-semibold text-gray-900">{currentProblem.difficulty}</div>
+                </div>
+                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 mb-2">Status</div>
+                  <div className="text-sm font-semibold text-gray-900">{currentProblem.status}</div>
+                </div>
+                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 mb-2">Teams Interested</div>
+                  <div className="text-sm font-semibold text-gray-900">{currentProblem.teams_interested || 0}</div>
+                </div>
+              </div>
+
               {/* Problem Title */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Problem Title</h3>
@@ -213,19 +233,58 @@ export default function AdminCounterpools() {
                 <p className="text-gray-600">{currentProblem.email}</p>
               </div>
 
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Submitter Details</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-600">
+                  <p><span className="font-medium text-gray-900">Name:</span> {currentProblem.full_name}</p>
+                  <p><span className="font-medium text-gray-900">LinkedIn:</span> {currentProblem.linkedin_url ? <a href={currentProblem.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 break-all">{currentProblem.linkedin_url}</a> : 'Not provided'}</p>
+                  <p><span className="font-medium text-gray-900">Solution Adoption:</span> {currentProblem.solution_adoption ? 'Yes' : 'No'}</p>
+                  <p><span className="font-medium text-gray-900">Hiring Interest:</span> {currentProblem.hiring_interest ? 'Yes' : 'No'}</p>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Problem Statement</h3>
+                <textarea
+                  readOnly
+                  value={currentProblem.description || ''}
+                  rows="8"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 text-gray-700 text-sm leading-relaxed"
+                />
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Expected Outcome</h3>
+                <textarea
+                  readOnly
+                  value={currentProblem.expected_outcome || ''}
+                  rows="5"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-50 text-gray-700 text-sm leading-relaxed"
+                />
+              </div>
+
               {/* Links/URLs */}
               {currentProblem.links && (
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Problem Links</h3>
                   <div className="space-y-2">
                     {currentProblem.links.split('\n').map((link, idx) => (
-                      <a key={idx} href={link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 break-all text-sm">
-                        {link}
-                      </a>
+                      link.trim() && (
+                        <a key={idx} href={link.trim()} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 break-all text-sm block">
+                          {link.trim()}
+                        </a>
+                      )
                     ))}
                   </div>
                 </div>
               )}
+
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Keywords / Signals</h3>
+                <p className="text-gray-600 text-sm whitespace-pre-wrap">
+                  {currentProblem.keywords || 'None added yet'}
+                </p>
+              </div>
 
               {/* Keywords */}
               <div>

@@ -115,7 +115,7 @@ export default function CounterpoolsPage() {
             </div>
 
             <div className="relative z-10">
-              <div className="flex items-center gap-4 mb-6">
+              <div className="flex items-center gap-4 mb-6 hidden md:flex">
                 <p className="text-xs font-bold text-white/50 uppercase tracking-[0.3em]">
                   Phase Two // Hackathon
                 </p>
@@ -124,6 +124,13 @@ export default function CounterpoolsPage() {
                   <span className="w-1.5 h-1.5 bg-[#d84a1b] rounded-full"></span>
                   Opens June 15, 2026
                 </div>
+              </div>
+              
+              {/* Mobile header without badge */}
+              <div className="flex items-center gap-4 mb-6 md:hidden">
+                <p className="text-xs font-bold text-white/50 uppercase tracking-[0.3em]">
+                  Phase Two // Hackathon
+                </p>
               </div>
 
               <h2 className={`${playfairDisplay.className} text-5xl sm:text-6xl md:text-7xl lg:text-[80px] font-bold italic leading-[1.1] mb-6 text-white`}>
@@ -134,7 +141,7 @@ export default function CounterpoolsPage() {
               </p>
             </div>
 
-            <div className="relative z-10 mt-12 flex items-center justify-between border-t border-white/10 pt-8">
+            <div className="relative z-10 mt-12 flex flex-col md:flex-row md:items-center md:justify-between border-t border-white/10 pt-8 gap-8 md:gap-0">
               <div className="flex items-center gap-6">
                 <div className="flex -space-x-4">
                   {[1, 2, 3].map(i => (
@@ -149,7 +156,7 @@ export default function CounterpoolsPage() {
                 <span className="text-xs font-bold uppercase tracking-widest text-white/40">Awaiting Teams</span>
               </div>
 
-              <div className="bg-white/5 border border-white/10 text-white/40 px-8 py-4 font-bold text-sm uppercase tracking-widest cursor-not-allowed">
+              <div className="bg-white/5 border border-white/10 text-white/40 px-8 py-4 font-bold text-sm uppercase tracking-widest cursor-not-allowed w-full md:w-auto text-center md:text-left">
                 Opens June 15, 2026
               </div>
             </div>

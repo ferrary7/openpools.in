@@ -116,9 +116,13 @@ export default function ProblemsSubmission() {
           <h1 className={`${playfairDisplay.className} text-4xl sm:text-5xl md:text-6xl lg:text-7xl italic mb-6 leading-[0.95] text-white`}>
             your challenge awaits
           </h1>
-          <p className="text-sm sm:text-base font-medium uppercase tracking-[0.2em] text-white/70 mb-16 max-w-2xl mx-auto">
-            Thank you for contributing to the arena. Your problem has been submitted for verification and will appear once approved.
-          </p>
+
+          <div className="max-w-2xl mx-auto mb-16 border border-white/10 bg-black/25 backdrop-blur-sm px-6 py-5 text-left">
+            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#d84a1b] mb-3">What happens next</p>
+            <p className="text-sm sm:text-base text-white/75 leading-relaxed">
+              We&apos;ll review the submission, verify it, and send you a confirmation email as soon as it&apos;s live.
+            </p>
+          </div>
 
           {/* Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center">
@@ -364,7 +368,7 @@ export default function ProblemsSubmission() {
                           onChange={handleChange}
                           placeholder="https://example.com/resource&#10;https://example.com/docs"
                           rows="2"
-                          className={`w-full bg-white/[0.03] border border-white/10 p-6 text-base text-white placeholder-white/30 focus:outline-none focus:border-[#d84a1b] transition-colors rounded-none resize-y leading-relaxed font-mono text-sm ${errors.links ? 'border-red-500' : ''}`}
+                          className={`w-full bg-white/[0.03] border border-white/10 p-6 text-base text-white placeholder-white/30 focus:outline-none focus:border-[#d84a1b] transition-colors rounded-none resize-y leading-relaxed font-mono ${errors.links ? 'border-red-500' : ''}`}
                         />
                       </div>
                      </div>
