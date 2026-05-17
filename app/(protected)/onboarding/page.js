@@ -609,13 +609,7 @@ export default function OnboardingPage() {
       }
 
       // Check for pending doppelganger invite
-      const pendingInvite = localStorage.getItem('dg_pending_invite')
-      if (pendingInvite) {
-        localStorage.removeItem('dg_pending_invite')
-        router.push(`/doppelganger/invite/${pendingInvite}`)
-      } else {
-        router.push('/dashboard')
-      }
+      router.push('/dashboard')
 
       // 4. Generate AI insights in background (non-blocking)
       // Dashboard's InsightsRefresher will also trigger this, DNA page handles loading state

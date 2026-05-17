@@ -3,6 +3,13 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Logo from '@/components/ui/Logo'
+import { Playfair_Display } from 'next/font/google'
+
+const playfairDisplay = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  style: ['normal', 'italic'],
+})
 import CompaniesSection from '@/components/ui/CompaniesSection'
 import HeroSection from '@/components/ui/HeroSection'
 import HowItWorks from '@/components/ui/HowItWorks'
@@ -63,6 +70,58 @@ export default function Home() {
 
       <main>
         <HeroSection user={user} authLoading={authLoading} />
+
+        {/* Counterpools — Brutalist Takeover Card */}
+        <section className="relative overflow-hidden">
+          {/* Architectural grid overlay */}
+          <div
+            className="absolute inset-0 bg-[#d84a1b] opacity-100"
+            style={{
+              backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,0.06) 40px, rgba(255,255,255,0.06) 41px), repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(0,0,0,0.08) 40px, rgba(0,0,0,0.08) 41px)`
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0f0f0f] via-transparent to-black" />
+
+          <Link href="/counterpools" className="relative z-10 block group">
+            <div className="max-w-[1400px] mx-auto px-6 md:px-12 py-24 md:py-36 flex flex-col md:flex-row items-start md:items-end justify-between gap-12">
+
+              {/* Left: Label + Headline */}
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-8">
+                  <span className="w-2 h-2 rounded-full bg-[#d84a1b] animate-pulse" />
+                  <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/50">New Initiative</span>
+                  <span className="px-3 py-1 bg-white/10 text-white text-[10px] font-bold uppercase tracking-wider">
+                    Opens June 15, 2026
+                  </span>
+                </div>
+
+                <h2 className={`${playfairDisplay.className} text-[64px] sm:text-[96px] md:text-[130px] lg:text-[160px] font-bold italic leading-[0.85] tracking-tighter text-white group-hover:text-white/90 transition-colors`}>
+                  counter
+                  <br />
+                  <span className="text-[#d84a1b] group-hover:text-white transition-colors duration-500">pools.</span>
+                </h2>
+
+                <p className="mt-8 text-sm md:text-base text-white/60 font-medium uppercase tracking-[0.2em] max-w-md">
+                  Solve problems that aren&apos;t yours. Like they are.
+                </p>
+              </div>
+
+              {/* Right: Description + Arrow */}
+              <div className="flex flex-col items-start md:items-end gap-8 md:pb-4">
+                <p className="text-sm text-white/40 max-w-[280px] leading-relaxed md:text-right">
+                  Industry experts post real-world challenges. Elite teams build the solutions. Built on openpools.
+                </p>
+                <div className="flex items-center gap-4 group-hover:gap-6 transition-all duration-300">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/70">Explore</span>
+                  <div className="w-12 h-12 border border-white/30 rounded-full flex items-center justify-center group-hover:bg-white group-hover:border-white transition-all duration-300">
+                    <span className="text-white text-lg group-hover:text-black transition-colors duration-300">&rarr;</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </Link>
+        </section>
 
         <div id="how-it-works">
           <HowItWorks />

@@ -75,16 +75,7 @@ export default function NotificationBell() {
     }
 
     // Navigate based on notification type
-    if (notification.type === 'dg_invite') {
-      // Extract token from message if present
-      const tokenMatch = notification.message.match(/Token: ([a-zA-Z0-9-_]+)/)
-      if (tokenMatch) {
-        router.push(`/doppelganger/invite/${tokenMatch[1]}`)
-      } else {
-        router.push('/doppelganger')
-      }
-      setIsOpen(false)
-    } else if (notification.related_user_id) {
+    if (notification.related_user_id) {
       if (notification.type === 'new_message') {
         router.push(`/chat/${notification.related_user?.username || notification.related_user_id}`)
       } else {

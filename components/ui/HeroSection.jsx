@@ -5,6 +5,13 @@ import Link from 'next/link'
 import Logo from './Logo'
 import DNAHelixCanvas from '../dna/DNAHelixCanvas'
 import { createClient } from '@/lib/supabase/client'
+import { Playfair_Display } from 'next/font/google'
+
+const playfairDisplay = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  style: ['normal', 'italic'],
+})
 
 export default function HeroSection({ user, authLoading }) {
   const [scrollY, setScrollY] = useState(0)
@@ -220,6 +227,28 @@ export default function HeroSection({ user, authLoading }) {
 
                   {/* Right Col - Stats & Matches */}
                   <div className="col-span-4 flex flex-col gap-4">
+
+                    {/* Counterpools Hackathon CTA Card - TOP */}
+                    <Link href="/counterpools" className="block group/cp">
+                      <div className="relative rounded-xl overflow-hidden bg-[#d84a1b] p-5 hover:scale-[1.02] transition-transform duration-300">
+                        {/* Grid overlay */}
+                        <div
+                          className="absolute inset-0 opacity-20"
+                          style={{ backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 12px, rgba(0,0,0,0.15) 12px, rgba(0,0,0,0.15) 13px), repeating-linear-gradient(90deg, transparent, transparent 12px, rgba(0,0,0,0.1) 12px, rgba(0,0,0,0.1) 13px)` }}
+                        />
+                        <div className="relative z-10">
+                          <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-white/60 block mb-2">join the hackathon</span>
+                          <p className={`${playfairDisplay.className} text-3xl font-bold italic text-white leading-[0.9] mb-3`}>
+                            counterpools.
+                          </p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/50">Jun 15, 2026</span>
+                            <span className="text-white group-hover/cp:translate-x-1 transition-transform duration-200 inline-block text-sm">&rarr;</span>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+
                     {/* Matches Card */}
                     <div className="bg-[#1a1a1a] rounded-xl border border-white/5 p-5 relative overflow-hidden">
                       <div className="flex items-center gap-3 mb-2">
@@ -264,6 +293,7 @@ export default function HeroSection({ user, authLoading }) {
                         <div className="h-1.5 w-1/2 bg-white/10 rounded-full"></div>
                       </div>
                     </div>
+
                   </div>
                 </div>
               </div>

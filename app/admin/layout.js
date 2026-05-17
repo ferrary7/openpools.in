@@ -27,9 +27,9 @@ export default function AdminLayout({ children }) {
 
   const menuItems = [
     { name: 'Dashboard', href: '/admin', icon: '📊' },
+    { name: 'Counterpools', href: '/admin/counterpools', icon: '⚡' },
     { name: 'Employees', href: '/admin/employees', icon: '👥' },
     { name: 'Organizations', href: '/admin/organizations', icon: '🏢' },
-    { name: 'Doppelganger', href: '/admin/doppelganger', icon: '🪞' },
     { name: 'Invite Users', href: '/admin/invite', icon: '✉️' },
     { name: 'Premium', href: '/admin/premium', icon: '⭐' },
     { name: 'Analytics', href: '/admin/analytics', icon: '📈' },

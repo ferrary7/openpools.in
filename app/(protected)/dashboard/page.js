@@ -1,10 +1,17 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { Playfair_Display } from 'next/font/google'
 import KeywordDrawer from '@/components/dashboard/KeywordDrawer'
-import CompaniesSection from '@/components/ui/CompaniesSection'
+// import CompaniesSection from '@/components/ui/CompaniesSection'
 import InsightsRefresher from '@/components/dashboard/InsightsRefresher'
 import MatchesCount from '@/components/dashboard/MatchesCount'
 import PremiumBadge from '@/components/ui/PremiumBadge'
+
+const playfairDisplay = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  style: ['normal', 'italic'],
+})
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -45,14 +52,6 @@ export default async function DashboardPage() {
     .select('*', { count: 'exact', head: true })
     .eq('status', 'accepted')
     .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-
-  // Check for active doppelganger event (includes judging and completed for viewing)
-  const { data: doppelgangerEvent } = await supabase
-    .from('dg_events')
-    .select('id, status')
-    .in('status', ['registration', 'active', 'judging', 'completed'])
-    .limit(1)
-    .single()
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -155,7 +154,7 @@ export default async function DashboardPage() {
               {/* CENTER PANEL (Main Features) */}
               <div className="lg:col-span-2 space-y-8">
                 {/* Hero Cards */}
-                <div className={`grid grid-cols-1 md:grid-cols-2 ${doppelgangerEvent ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-6`}>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
                   {/* Antenna */}
                   <Link href="/ask-antenna" className="group block h-full">
                     <div className="relative overflow-hidden rounded-2xl bg-[#1e1e1e] p-6 hover:shadow-2xl hover:shadow-pink-500/30 shadow-xl transition-all duration-300 hover:-translate-y-2 border-2 border-gray-800 hover:border-pink-500/50 h-full flex flex-col">
@@ -214,44 +213,52 @@ export default async function DashboardPage() {
                     </div>
                   </Link>
 
-                  {/* Doppelganger - Only show if event exists */}
-                  {doppelgangerEvent && (
-                    <Link href="/doppelganger" className="group block h-full">
-                      <div className="relative overflow-hidden rounded-2xl bg-[#1e1e1e] p-6 hover:shadow-2xl hover:shadow-primary-500/30 shadow-xl transition-all duration-300 hover:-translate-y-2 border-2 border-gray-800 hover:border-primary-500/50 h-full flex flex-col">
-                        <div className="absolute inset-0 opacity-20">
-                          <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-primary-500/30 to-pink-500/20 rounded-full blur-3xl"></div>
+
+                </div>
+
+                {/* Counterpools — Brutalist Banner Card */}
+                <Link href="/counterpools" className="group block">
+                  <div className="relative overflow-hidden rounded-2xl" style={{ minHeight: '180px' }}>
+                    {/* Base orange */}
+                    <div className="absolute inset-0 bg-[#d84a1b]" />
+                    {/* Architectural grid */}
+                    <div
+                      className="absolute inset-0 opacity-20"
+                      style={{ backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 24px, rgba(255,255,255,0.08) 24px, rgba(255,255,255,0.08) 25px), repeating-linear-gradient(90deg, transparent, transparent 24px, rgba(0,0,0,0.1) 24px, rgba(0,0,0,0.1) 25px)` }}
+                    />
+                    {/* Fade to black on the right */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-black/60" />
+                    {/* Top fade from dashboard bg */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-gray-50/10 to-transparent" />
+
+                    <div className="relative z-10 p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                      {/* Left */}
+                      <div>
+                        <div className="flex items-center gap-3 mb-3">
+                          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                          <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/60">New Initiative — Opens Jun 15, 2026</span>
                         </div>
-                        <div className="absolute -inset-0.5 bg-gradient-to-r from-primary-500 via-pink-500 to-primary-500 rounded-2xl opacity-0 group-hover:opacity-30 blur transition-opacity"></div>
-                        <div className="relative flex-1 flex flex-col">
-                          <div className="flex items-center gap-3 mb-4">
-                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center shadow-lg shadow-primary-500/50">
-                              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0z" />
-                              </svg>
-                            </div>
-                            <div>
-                              <h2 className="text-xl font-bold text-white"><span className="text-gray-300">Doppel</span><span className="text-pink-400">ganger</span></h2>
-                              <p className="text-gray-400 text-xs">30-hour sprint</p>
-                            </div>
-                          </div>
-                          <p className="text-gray-300 text-sm mb-4 flex-1">Match your signal twin and ship in 30 hours</p>
-                          <div className="mb-4">
-                            <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold border ${doppelgangerEvent.status === 'completed' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' : doppelgangerEvent.status === 'judging' ? 'bg-amber-500/10 text-amber-300 border-amber-500/20' : 'bg-primary-500/10 text-primary-300 border-primary-500/20'}`}>
-                              <span className={`w-1.5 h-1.5 rounded-full ${doppelgangerEvent.status === 'completed' ? 'bg-emerald-400' : doppelgangerEvent.status === 'judging' ? 'bg-amber-400' : 'bg-primary-400'}`}></span>
-                              {doppelgangerEvent.status === 'completed' ? 'Completed' : doppelgangerEvent.status === 'judging' ? 'Judging' : 'Live Event'}
-                            </span>
-                          </div>
-                          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-500 to-pink-500 text-white rounded-xl text-sm font-semibold group-hover:from-primary-600 group-hover:to-pink-600 transition-all shadow-lg shadow-primary-500/30 mt-auto">
-                            {doppelgangerEvent.status === 'completed' ? 'View Results' : doppelgangerEvent.status === 'judging' ? 'View Standings' : 'Join Sprint'}
-                            <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                            </svg>
-                          </div>
+                        <h3 className={`${playfairDisplay.className} text-4xl md:text-5xl font-bold italic text-white leading-[0.9] tracking-tighter`}>
+                          counterpools.
+                        </h3>
+                        <p className="mt-3 text-sm text-white/60 font-medium max-w-sm">
+                          Solve problems that aren&apos;t yours. Like they are.
+                        </p>
+                      </div>
+
+                      {/* Right */}
+                      <div className="flex items-center gap-4 flex-shrink-0">
+                        <div className="text-right hidden md:block">
+                          <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/40 mb-1">Hackathon</p>
+                          <p className="text-xs text-white/60">Post problems. Build solutions.</p>
+                        </div>
+                        <div className="w-12 h-12 rounded-full border border-white/30 flex items-center justify-center group-hover:bg-white transition-all duration-300">
+                          <span className="text-white text-lg group-hover:text-[#d84a1b] transition-colors duration-300">&rarr;</span>
                         </div>
                       </div>
-                    </Link>
-                  )}
-                </div>
+                    </div>
+                  </div>
+                </Link>
 
                 {/* MOBILE STATS - Only on mobile, forced below Hero Cards */}
                 <div className="lg:hidden grid grid-cols-2 gap-4">
@@ -362,10 +369,11 @@ export default async function DashboardPage() {
               </div>
             </div>
 
-            {/* Trusted By - Below everything in the main content area */}
+            {/* Trusted By — hidden for now
             <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
               <CompaniesSection />
             </div>
+            */}
           </div>
         </div>
       </div>

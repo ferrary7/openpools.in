@@ -1,5 +1,5 @@
 import './globals.css'
-import SupportButton from '@/components/ui/SupportButton'
+// import SupportButton from '@/components/ui/SupportButton'
 
 export const metadata = {
   title: 'OpenPools.in - Professional Matchmaking Platform',
@@ -32,7 +32,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         {children}
-        <SupportButton />
+        {/* <SupportButton /> */}
       </body>
     </html>
   )
